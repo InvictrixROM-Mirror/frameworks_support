@@ -16,30 +16,36 @@
 
 package android.support.design.widget;
 
+import static android.support.design.testutils.CollapsingToolbarLayoutActions.setContentScrimColor;
+import static android.support.design.testutils.SwipeUtils.swipeDown;
+import static android.support.design.testutils.SwipeUtils.swipeUp;
 import static android.support.design.testutils.TestUtilsActions.setText;
 import static android.support.design.testutils.TestUtilsActions.setTitle;
 import static android.support.test.espresso.Espresso.onView;
+import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 
 import static org.junit.Assert.assertEquals;
 
+import android.graphics.Color;
 import android.os.Build;
+import android.os.SystemClock;
 import android.support.annotation.CallSuper;
 import android.support.annotation.IdRes;
+import android.support.annotation.IntRange;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.StringRes;
 import android.support.design.test.R;
 import android.support.design.testutils.Shakespeare;
-import android.support.test.espresso.action.CoordinatesProvider;
-import android.support.test.espresso.action.GeneralSwipeAction;
-import android.support.test.espresso.action.Press;
-import android.support.test.espresso.action.Swipe;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.view.View;
 import android.widget.TextView;
+
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 
 public abstract class AppBarLayoutBaseTest extends BaseDynamicCoordinatorLayoutTest {
 
@@ -55,38 +61,12 @@ public abstract class AppBarLayoutBaseTest extends BaseDynamicCoordinatorLayoutT
 
     protected static void performVerticalSwipeUpGesture(@IdRes int containerId, final int swipeX,
             final int swipeStartY, final int swipeAmountY) {
-        onView(withId(containerId)).perform(new GeneralSwipeAction(
-                Swipe.SLOW,
-                new CoordinatesProvider() {
-                    @Override
-                    public float[] calculateCoordinates(View view) {
-                        return new float[] { swipeX, swipeStartY };
-                    }
-                },
-                new CoordinatesProvider() {
-                    @Override
-                    public float[] calculateCoordinates(View view) {
-                        return new float[] { swipeX, swipeStartY - swipeAmountY };
-                    }
-                }, Press.FINGER));
+        onView(withId(containerId)).perform(swipeUp(swipeX, swipeStartY, swipeAmountY));
     }
 
     protected static void performVerticalSwipeDownGesture(@IdRes int containerId, final int swipeX,
             final int swipeStartY, final int swipeAmountY) {
-        onView(withId(containerId)).perform(new GeneralSwipeAction(
-                Swipe.SLOW,
-                new CoordinatesProvider() {
-                    @Override
-                    public float[] calculateCoordinates(View view) {
-                        return new float[] { swipeX, swipeStartY };
-                    }
-                },
-                new CoordinatesProvider() {
-                    @Override
-                    public float[] calculateCoordinates(View view) {
-                        return new float[] { swipeX, swipeStartY + swipeAmountY };
-                    }
-                }, Press.FINGER));
+        onView(withId(containerId)).perform(swipeDown(swipeX, swipeStartY, swipeAmountY));
     }
 
     @CallSuper
@@ -110,13 +90,15 @@ public abstract class AppBarLayoutBaseTest extends BaseDynamicCoordinatorLayoutT
         final CharSequence activityTitle = activity.getString(titleResId);
         activity.setTitle(activityTitle);
         if (mCollapsingToolbar != null) {
-            onView(withId(R.id.collapsing_app_bar)).perform(setTitle(activityTitle));
+            onView(withId(R.id.collapsing_app_bar))
+                    .perform(setTitle(activityTitle))
+                    .perform(setContentScrimColor(Color.MAGENTA));
         }
 
         TextView dialog = (TextView) mCoordinatorLayout.findViewById(R.id.textview_dialogue);
         if (dialog != null) {
-            onView(withId(R.id.textview_dialogue)).perform(
-                    setText(TextUtils.concat(Shakespeare.DIALOGUE)));
+            onView(withId(R.id.textview_dialogue))
+                    .perform(setText(TextUtils.concat(Shakespeare.DIALOGUE)));
         }
 
         mDefaultElevationValue = mAppBar.getResources()
@@ -127,5 +109,26 @@ public abstract class AppBarLayoutBaseTest extends BaseDynamicCoordinatorLayoutT
         if (Build.VERSION.SDK_INT >= 21) {
             assertEquals(expectedValue, ViewCompat.getElevation(mAppBar), 0.05f);
         }
+    }
+
+    protected void assertScrimAlpha(@IntRange(from = 0, to = 255) int alpha) {
+        SystemClock.sleep(300);
+        onView(withId(R.id.collapsing_app_bar))
+                .check(matches(withScrimAlpha(alpha)));
+    }
+
+    static Matcher withScrimAlpha(final int alpha) {
+        return new TypeSafeMatcher<CollapsingToolbarLayout>() {
+            @Override
+            public void describeTo(Description description) {
+                description.appendText(
+                        "CollapsingToolbarLayout has content scrim with alpha: " + alpha);
+            }
+
+            @Override
+            protected boolean matchesSafely(CollapsingToolbarLayout view) {
+                return alpha == view.getScrimAlpha();
+            }
+        };
     }
 }

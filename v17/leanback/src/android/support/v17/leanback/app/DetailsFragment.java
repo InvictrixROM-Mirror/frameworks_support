@@ -18,6 +18,7 @@ import android.app.FragmentTransaction;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v17.leanback.R;
+import android.support.v17.leanback.media.PlaybackGlueHost;
 import android.support.v17.leanback.transition.TransitionHelper;
 import android.support.v17.leanback.widget.BaseOnItemViewClickedListener;
 import android.support.v17.leanback.widget.BaseOnItemViewSelectedListener;
@@ -190,6 +191,7 @@ public class DetailsFragment extends BaseFragment {
             getChildFragmentManager().beginTransaction()
                     .replace(R.id.details_rows_dock, mRowsFragment).commit();
         }
+        installTitleView(inflater, mRootView, savedInstanceState);
         mRowsFragment.setAdapter(mAdapter);
         mRowsFragment.setOnItemViewSelectedListener(mOnItemViewSelectedListener);
         mRowsFragment.setOnItemViewClickedListener(mOnItemViewClickedListener);
@@ -328,7 +330,8 @@ public class DetailsFragment extends BaseFragment {
      * Creates an instance of {@link VideoFragment}. Subclasses can override this method
      * and provide their own instance of a {@link Fragment}. When you provide your own instance of
      * video fragment, you MUST also provide a custom
-     * {@link android.support.v17.leanback.app.PlaybackGlue.PlaybackGlueHost}.
+     * {@link android.support.v17.leanback.media.PlaybackGlueHost}.
+     * @hide
      */
     public Fragment onCreateVideoFragment() {
         return new VideoFragment();
@@ -336,10 +339,11 @@ public class DetailsFragment extends BaseFragment {
 
     /**
      * Creates an instance of
-     * {@link android.support.v17.leanback.app.PlaybackGlue.PlaybackGlueHost}. The implementation
+     * {@link android.support.v17.leanback.media.PlaybackGlueHost}. The implementation
      * of this host depends on the instance of video fragment {@link #onCreateVideoFragment()}.
+     * @hide
      */
-    public PlaybackGlue.PlaybackGlueHost onCreateVideoFragmentHost(Fragment fragment) {
+    public PlaybackGlueHost onCreateVideoFragmentHost(Fragment fragment) {
         return new VideoFragmentGlueHost((VideoFragment) fragment);
     }
 
@@ -348,6 +352,7 @@ public class DetailsFragment extends BaseFragment {
      * fragment is being restored, it will return the video fragment in there.
      *
      * @return Fragment the added or restored fragment responsible for rendering video.
+     * @hide
      */
     public final Fragment findOrCreateVideoFragment() {
         Fragment fragment = getFragmentManager().findFragmentById(R.id.video_surface_container);
@@ -363,18 +368,22 @@ public class DetailsFragment extends BaseFragment {
 
     /**
      * This method initializes a video fragment, create an instance of
-     * {@link android.support.v17.leanback.app.PlaybackGlue.PlaybackGlueHost} using that fragment
+     * {@link android.support.v17.leanback.media.PlaybackGlueHost} using that fragment
      * and return it.
+     * @hide
      */
-    public final PlaybackGlue.PlaybackGlueHost createPlaybackGlueHost() {
+    public final PlaybackGlueHost createPlaybackGlueHost() {
         Fragment fragment = findOrCreateVideoFragment();
         return onCreateVideoFragmentHost(fragment);
     }
 
     void onRowSelected(int selectedPosition, int selectedSubPosition) {
         ObjectAdapter adapter = getAdapter();
-        if (adapter == null || adapter.size() == 0
-                || (selectedPosition == 0 && selectedSubPosition == 0)) {
+        if (( mRowsFragment != null && mRowsFragment.getView() != null
+                && mRowsFragment.getView().hasFocus())
+                && (adapter == null || adapter.size() == 0
+                || (getVerticalGridView().getSelectedPosition() == 0
+                && getVerticalGridView().getSelectedSubPosition() == 0))) {
             showTitle(true);
         } else {
             showTitle(false);
@@ -494,6 +503,7 @@ public class DetailsFragment extends BaseFragment {
      *
      * @return The new created DetailsParallaxManager.
      * @see #getParallaxManager()
+     * @hide
      */
     public DetailsParallaxManager onCreateParallaxManager() {
         return new DetailsParallaxManager();
@@ -505,6 +515,7 @@ public class DetailsFragment extends BaseFragment {
      *
      * @return The DetailsParallaxManager instance attached to the DetailsFragment.
      * @see #onCreateParallaxManager()
+     * @hide
      */
     public DetailsParallaxManager getParallaxManager() {
         if (mDetailsParallaxManager == null) {
@@ -521,6 +532,7 @@ public class DetailsFragment extends BaseFragment {
      * view to hide the VideoFragment before it is ready to play.
      *
      * @see #findOrCreateVideoFragment()
+     * @hide
      */
     public View getBackgroundView() {
         return mRootView == null ? null : mRootView.findViewById(R.id.details_background_view);
@@ -540,20 +552,31 @@ public class DetailsFragment extends BaseFragment {
         mRootView.setOnFocusSearchListener(new BrowseFrameLayout.OnFocusSearchListener() {
             @Override
             public View onFocusSearch(View focused, int direction) {
-                if (mVideoFragment == null) {
-                    return null;
-                }
                 if (mRowsFragment.getVerticalGridView() != null
                         && mRowsFragment.getVerticalGridView().hasFocus()) {
                     if (direction == View.FOCUS_UP) {
-                        slideOutGridView();
-                        return mVideoFragment.getView();
+                        if (mVideoFragment != null && mVideoFragment.getView() != null) {
+                            slideOutGridView();
+                            showTitle(false);
+                            return mVideoFragment.getView();
+                        } else if (getTitleView() != null) {
+                            return getTitleView();
+                        }
                     }
-                } else if (mVideoFragment.getView() != null
+                } else if (mVideoFragment != null && mVideoFragment.getView() != null
                         && mVideoFragment.getView().hasFocus()) {
                     if (direction == View.FOCUS_DOWN) {
-                        slideInGridView();
-                        return mRowsFragment.getVerticalGridView();
+                        if (mRowsFragment.getVerticalGridView() != null) {
+                            showTitle(true);
+                            slideInGridView();
+                            return mRowsFragment.getVerticalGridView();
+                        }
+                    }
+                } else if (getTitleView() != null && getTitleView().hasFocus()) {
+                    if (direction == View.FOCUS_DOWN) {
+                        if (mRowsFragment.getVerticalGridView() != null) {
+                            return mRowsFragment.getVerticalGridView();
+                        }
                     }
                 }
                 return focused;
@@ -571,6 +594,7 @@ public class DetailsFragment extends BaseFragment {
                 if (mVideoFragment != null && mVideoFragment.getView() != null
                         && mVideoFragment.getView().hasFocus()) {
                     if (keyCode == KeyEvent.KEYCODE_BACK) {
+                        showTitle(true);
                         slideInGridView();
                         getVerticalGridView().requestFocus();
                         return true;

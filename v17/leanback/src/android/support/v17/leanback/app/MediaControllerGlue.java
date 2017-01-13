@@ -14,7 +14,9 @@ import android.util.Log;
  * A helper class for implementing a glue layer between a
  * {@link PlaybackOverlayFragment} and a
  * {@link android.support.v4.media.session.MediaControllerCompat}.
+ * @deprecated Use {@link android.support.v17.leanback.media.MediaControllerGlue}.
  */
+@Deprecated
 public abstract class MediaControllerGlue extends PlaybackControlGlue {
     static final String TAG = "MediaControllerGlue";
     static final boolean DEBUG = false;
@@ -55,10 +57,7 @@ public abstract class MediaControllerGlue extends PlaybackControlGlue {
      * @param context
      * @param fragment
      * @param seekSpeeds Array of seek speeds for fast forward and rewind.
-     * @deprecated Use
-     * {@link #MediaControllerGlue(Context, PlaybackGlue.PlaybackGlueHost, int[], int[])}.
      */
-    @Deprecated
     public MediaControllerGlue(Context context,
                                PlaybackOverlayFragment fragment,
                                int[] seekSpeeds) {
@@ -78,30 +77,12 @@ public abstract class MediaControllerGlue extends PlaybackControlGlue {
      * @param fragment
      * @param fastForwardSpeeds Array of seek speeds for fast forward.
      * @param rewindSpeeds Array of seek speeds for rewind.
-     * @deprecated Use
-     * {@link #MediaControllerGlue(Context, PlaybackGlue.PlaybackGlueHost, int[], int[])}.
      */
-    @Deprecated
     public MediaControllerGlue(Context context,
                                PlaybackOverlayFragment fragment,
                                int[] fastForwardSpeeds,
                                int[] rewindSpeeds) {
         super(context, fragment, fastForwardSpeeds, rewindSpeeds);
-    }
-
-    /**
-     * Constructor for the glue.
-     *
-     * @param context
-     * @param host Optional; if using a {@link PlaybackGlue.PlaybackGlueHost}, pass it in.
-     * @param fastForwardSpeeds Array of seek speeds for fast forward.
-     * @param rewindSpeeds Array of seek speeds for rewind.
-     */
-    public MediaControllerGlue(Context context,
-            PlaybackGlueHost host,
-            int[] fastForwardSpeeds,
-            int[] rewindSpeeds) {
-        super(context, host, fastForwardSpeeds, rewindSpeeds);
     }
 
     /**

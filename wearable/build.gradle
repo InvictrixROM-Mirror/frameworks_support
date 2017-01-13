@@ -1,0 +1,72 @@
+apply plugin: android.support.SupportLibraryPlugin
+archivesBaseName = 'wearable'
+
+dependencies {
+    compile project(':support-annotations')
+    compile project(':support-core-ui')
+    androidTestCompile ("com.android.support.test:runner:${project.rootProject.ext.testRunnerVersion}") {
+        exclude module: 'support-annotations'
+    }
+    androidTestCompile ("com.android.support.test.espresso:espresso-core:${project.rootProject.ext.espressoVersion}") {
+        exclude module: 'support-annotations'
+    }
+    testCompile 'junit:junit:4.12'
+    testCompile "org.mockito:mockito-core:1.9.5"
+    testCompile ("com.android.support.test:runner:${project.rootProject.ext.testRunnerVersion}") {
+        exclude module: 'support-annotations'
+    }
+    androidTestCompile "org.mockito:mockito-core:1.9.5"
+    androidTestCompile "com.google.dexmaker:dexmaker:1.2"
+    androidTestCompile "com.google.dexmaker:dexmaker-mockito:1.2"
+}
+
+android {
+    compileSdkVersion project.ext.currentSdk
+
+    defaultConfig {
+        minSdkVersion 20
+    }
+
+    sourceSets {
+        main.java.srcDir 'src'
+        main.res.srcDirs 'res', 'res-public'
+    }
+
+    buildTypes.all {
+        consumerProguardFiles 'proguard-rules.pro'
+    }
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: uri(rootProject.ext.supportRepoOut)) {
+            }
+
+            pom.project {
+                name 'Android Wear Support UI'
+                description "Android Wear Support UI"
+                url 'http://developer.android.com/tools/extras/support-library.html'
+                inceptionYear '2016'
+
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution 'repo'
+                    }
+                }
+
+                scm {
+                    url "http://source.android.com"
+                    connection "scm:git:https://android.googlesource.com/platform/frameworks/support"
+                }
+                developers {
+                    developer {
+                        name 'The Android Open Source Project'
+                    }
+                }
+            }
+        }
+    }
+}

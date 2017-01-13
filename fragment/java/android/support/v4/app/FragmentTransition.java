@@ -40,14 +40,16 @@ class FragmentTransition {
      * REPLACE operations have already been replaced by add/remove operations.
      */
     private static final int[] INVERSE_OPS = {
-            BackStackRecord.OP_NULL,   // inverse of OP_NULL (error)
-            BackStackRecord.OP_REMOVE, // inverse of OP_ADD
-            BackStackRecord.OP_NULL,   // inverse of OP_REPLACE (error)
-            BackStackRecord.OP_ADD,    // inverse of OP_REMOVE
-            BackStackRecord.OP_SHOW,   // inverse of OP_HIDE
-            BackStackRecord.OP_HIDE,   // inverse of OP_SHOW
-            BackStackRecord.OP_ATTACH, // inverse of OP_DETACH
-            BackStackRecord.OP_DETACH, // inverse of OP_ATTACH
+            BackStackRecord.OP_NULL,              // inverse of OP_NULL (error)
+            BackStackRecord.OP_REMOVE,            // inverse of OP_ADD
+            BackStackRecord.OP_NULL,              // inverse of OP_REPLACE (error)
+            BackStackRecord.OP_ADD,               // inverse of OP_REMOVE
+            BackStackRecord.OP_SHOW,              // inverse of OP_HIDE
+            BackStackRecord.OP_HIDE,              // inverse of OP_SHOW
+            BackStackRecord.OP_ATTACH,            // inverse of OP_DETACH
+            BackStackRecord.OP_DETACH,            // inverse of OP_ATTACH
+            BackStackRecord.OP_UNSET_PRIMARY_NAV, // inverse of OP_SET_PRIMARY_NAV
+            BackStackRecord.OP_SET_PRIMARY_NAV,   // inverse of OP_UNSET_PRIMARY_NAV
     };
 
     /**
@@ -364,10 +366,12 @@ class FragmentTransition {
                 }
 
                 if (exitingViews != null) {
-                    ArrayList<View> tempExiting = new ArrayList<>();
-                    tempExiting.add(nonExistentView);
-                    FragmentTransitionCompat21.replaceTargets(exitTransition, exitingViews,
-                            tempExiting);
+                    if (exitTransition != null) {
+                        ArrayList<View> tempExiting = new ArrayList<>();
+                        tempExiting.add(nonExistentView);
+                        FragmentTransitionCompat21.replaceTargets(exitTransition, exitingViews,
+                                tempExiting);
+                    }
                     exitingViews.clear();
                     exitingViews.add(nonExistentView);
                 }
@@ -476,9 +480,17 @@ class FragmentTransition {
 
         if (nameOverrides.isEmpty()) {
             sharedElementTransition = null;
+            if (outSharedElements != null) {
+                outSharedElements.clear();
+            }
+            if (inSharedElements != null) {
+                inSharedElements.clear();
+            }
         } else {
-            sharedElementsOut.addAll(outSharedElements.values());
-            sharedElementsIn.addAll(inSharedElements.values());
+            addSharedElementsWithMatchingNames(sharedElementsOut, outSharedElements,
+                    nameOverrides.keySet());
+            addSharedElementsWithMatchingNames(sharedElementsIn, inSharedElements,
+                    nameOverrides.values());
         }
 
         if (enterTransition == null && exitTransition == null && sharedElementTransition == null) {
@@ -520,6 +532,25 @@ class FragmentTransition {
             }
         });
         return sharedElementTransition;
+    }
+
+    /**
+     * Add Views from sharedElements into views that have the transitionName in the
+     * nameOverridesSet.
+     *
+     * @param views               Views list to add shared elements to
+     * @param sharedElements      List of shared elements
+     * @param nameOverridesSet    The transition names for all views to be copied from
+     *                            sharedElements to views.
+     */
+    private static void addSharedElementsWithMatchingNames(ArrayList<View> views,
+            ArrayMap<String, View> sharedElements, Collection<String> nameOverridesSet) {
+        for (int i = sharedElements.size() - 1; i >= 0; i--) {
+            View view = sharedElements.valueAt(i);
+            if (nameOverridesSet.contains(ViewCompat.getTransitionName(view))) {
+                views.add(view);
+            }
+        }
     }
 
     /**
@@ -974,6 +1005,9 @@ class FragmentTransition {
             SparseArray<FragmentContainerTransition> transitioningFragments, boolean isPop,
             boolean isOptimizedTransaction) {
         final Fragment fragment = op.fragment;
+        if (fragment == null) {
+            return; // no fragment, no transition
+        }
         final int containerId = fragment.mContainerId;
         if (containerId == 0) {
             return; // no container, no transition
@@ -1013,7 +1047,8 @@ class FragmentTransition {
             case BackStackRecord.OP_DETACH:
                 if (isOptimizedTransaction) {
                     setFirstOut = !fragment.mAdded && fragment.mView != null
-                            && fragment.mView.getVisibility() == View.VISIBLE;
+                            && fragment.mView.getVisibility() == View.VISIBLE
+                            && fragment.mPostponedAlpha >= 0;
                 } else {
                     setFirstOut = fragment.mAdded && !fragment.mHidden;
                 }

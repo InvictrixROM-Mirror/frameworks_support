@@ -19,6 +19,7 @@ package android.support.v17.leanback.app;
 import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.graphics.drawable.Drawable;
+import android.support.v17.leanback.media.PlaybackGlue;
 import android.support.v17.leanback.widget.Parallax;
 import android.support.v17.leanback.widget.ParallaxRecyclerViewSource;
 import android.support.v17.leanback.widget.ParallaxTarget;
@@ -29,6 +30,7 @@ import android.support.v17.leanback.widget.ParallaxTarget;
  * class is also responsible for implementing
  * {@link android.support.v17.leanback.widget.BrowseFrameLayout.OnFocusSearchListener} and
  * {@link android.support.v7.widget.RecyclerView.OnScrollListener} in {@link DetailsFragment}.
+ * @hide
  */
 public class DetailsFragmentVideoHelper {
     private static final long BACKGROUND_CROSS_FADE_DURATION = 500;

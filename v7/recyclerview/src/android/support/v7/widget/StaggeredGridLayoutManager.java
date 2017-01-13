@@ -2074,7 +2074,7 @@ public class StaggeredGridLayoutManager extends RecyclerView.LayoutManager imple
     /** @hide */
     @Override
     public void collectAdjacentPrefetchPositions(int dx, int dy, RecyclerView.State state,
-            RecyclerView.PrefetchRegistry prefetchRegistry) {
+            LayoutPrefetchRegistry layoutPrefetchRegistry) {
         /* This method uses the simplifying assumption that the next N items (where N = span count)
          * will be assigned, one-to-one, to spans, where ordering is based on which span  extends
          * least beyond the viewport.
@@ -2097,16 +2097,24 @@ public class StaggeredGridLayoutManager extends RecyclerView.LayoutManager imple
         if (mPrefetchDistances == null || mPrefetchDistances.length < mSpanCount) {
             mPrefetchDistances = new int[mSpanCount];
         }
+
+        int itemPrefetchCount = 0;
         for (int i = 0; i < mSpanCount; i++) {
-            mPrefetchDistances[i] = mLayoutState.mItemDirection == LAYOUT_START
+            // compute number of pixels past the edge of the viewport that the current span extends
+            int distance = mLayoutState.mItemDirection == LAYOUT_START
                     ? mLayoutState.mStartLine - mSpans[i].getStartLine(mLayoutState.mStartLine)
                     : mSpans[i].getEndLine(mLayoutState.mEndLine) - mLayoutState.mEndLine;
+            if (distance >= 0) {
+                // span extends to the edge, so prefetch next item
+                mPrefetchDistances[itemPrefetchCount] = distance;
+                itemPrefetchCount++;
+            }
         }
-        Arrays.sort(mPrefetchDistances, 0, mSpanCount);
+        Arrays.sort(mPrefetchDistances, 0, itemPrefetchCount);
 
         // then assign them in order to the next N views (where N = span count)
-        for (int i = 0; i < mSpanCount && mLayoutState.hasMore(state); i++) {
-            prefetchRegistry.addPosition(mLayoutState.mCurrentPosition, mPrefetchDistances[i]);
+        for (int i = 0; i < itemPrefetchCount && mLayoutState.hasMore(state); i++) {
+            layoutPrefetchRegistry.addPosition(mLayoutState.mCurrentPosition, mPrefetchDistances[i]);
             mLayoutState.mCurrentPosition += mLayoutState.mItemDirection;
         }
     }

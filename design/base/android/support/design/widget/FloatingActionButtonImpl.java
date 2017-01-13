@@ -18,7 +18,6 @@ package android.support.design.widget;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
-import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
@@ -52,8 +51,8 @@ abstract class FloatingActionButtonImpl {
     float mPressedTranslationZ;
 
     interface InternalVisibilityChangedListener {
-        public void onShown();
-        public void onHidden();
+        void onShown();
+        void onHidden();
     }
 
     static final int SHOW_HIDE_ANIM_DURATION = 200;
@@ -67,16 +66,14 @@ abstract class FloatingActionButtonImpl {
 
     final VisibilityAwareImageButton mView;
     final ShadowViewDelegate mShadowViewDelegate;
-    final ValueAnimatorCompat.Creator mAnimatorCreator;
 
     private final Rect mTmpRect = new Rect();
     private ViewTreeObserver.OnPreDrawListener mPreDrawListener;
 
     FloatingActionButtonImpl(VisibilityAwareImageButton view,
-            ShadowViewDelegate shadowViewDelegate, ValueAnimatorCompat.Creator animatorCreator) {
+            ShadowViewDelegate shadowViewDelegate) {
         mView = view;
         mShadowViewDelegate = shadowViewDelegate;
-        mAnimatorCreator = animatorCreator;
     }
 
     abstract void setBackgroundDrawable(ColorStateList backgroundTint,
@@ -182,10 +179,14 @@ abstract class FloatingActionButtonImpl {
     }
 
     GradientDrawable createShapeDrawable() {
-        GradientDrawable d = new GradientDrawable();
+        GradientDrawable d = newGradientDrawableForShape();
         d.setShape(GradientDrawable.OVAL);
         d.setColor(Color.WHITE);
         return d;
+    }
+
+    GradientDrawable newGradientDrawableForShape() {
+        return new GradientDrawable();
     }
 
     boolean isOrWillBeShown() {

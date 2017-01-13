@@ -15,6 +15,7 @@
  */
 package android.support.v7.widget;
 
+import android.support.annotation.Nullable;
 import android.support.v4.os.TraceCompat;
 import android.view.View;
 
@@ -58,7 +59,8 @@ final class GapWorker implements Runnable {
     /**
      * Prefetch information associated with a specific RecyclerView.
      */
-    static class PrefetchRegistryImpl implements RecyclerView.PrefetchRegistry {
+    static class LayoutPrefetchRegistryImpl
+            implements RecyclerView.LayoutManager.LayoutPrefetchRegistry {
         int mPrefetchDx;
         int mPrefetchDy;
         int[] mPrefetchArray;
@@ -96,6 +98,7 @@ final class GapWorker implements Runnable {
 
                 if (mCount > layout.mPrefetchMaxCountObserved) {
                     layout.mPrefetchMaxCountObserved = mCount;
+                    layout.mPrefetchMaxObservedInInitialPrefetch = nested;
                     view.mRecycler.updateViewCacheSize();
                 }
             }
@@ -216,7 +219,7 @@ final class GapWorker implements Runnable {
         int totalTaskIndex = 0;
         for (int i = 0; i < viewCount; i++) {
             RecyclerView view = mRecyclerViews.get(i);
-            PrefetchRegistryImpl prefetchRegistry = view.mPrefetchRegistry;
+            LayoutPrefetchRegistryImpl prefetchRegistry = view.mPrefetchRegistry;
             final int viewVelocity = Math.abs(prefetchRegistry.mPrefetchDx)
                     + Math.abs(prefetchRegistry.mPrefetchDy);
             for (int j = 0; j < prefetchRegistry.mCount * 2; j += 2) {
@@ -256,7 +259,7 @@ final class GapWorker implements Runnable {
         return false;
     }
 
-    private RecyclerView.ViewHolder flushWorkWithDeadline(RecyclerView view,
+    private RecyclerView.ViewHolder prefetchPositionWithDeadline(RecyclerView view,
             int position, long deadlineNs) {
         if (isPrefetchPositionAttached(view, position)) {
             // don't attempt to prefetch attached views
@@ -283,30 +286,45 @@ final class GapWorker implements Runnable {
         return holder;
     }
 
+    private void prefetchInnerRecyclerViewWithDeadline(@Nullable RecyclerView innerView,
+            long deadlineNs) {
+        if (innerView == null) {
+            return;
+        }
+
+        if (innerView.mDataSetHasChangedAfterLayout
+                && innerView.mChildHelper.getUnfilteredChildCount() != 0) {
+            // RecyclerView has new data, but old attached views. Clear everything, so that
+            // we can prefetch without partially stale data.
+            innerView.removeAndRecycleViews();
+        }
+
+        // do nested prefetch!
+        final LayoutPrefetchRegistryImpl innerPrefetchRegistry = innerView.mPrefetchRegistry;
+        innerPrefetchRegistry.collectPrefetchPositionsFromView(innerView, true);
+
+        if (innerPrefetchRegistry.mCount != 0) {
+            try {
+                TraceCompat.beginSection(RecyclerView.TRACE_NESTED_PREFETCH_TAG);
+                innerView.mState.prepareForNestedPrefetch(innerView.mAdapter);
+                for (int i = 0; i < innerPrefetchRegistry.mCount * 2; i += 2) {
+                    // Note that we ignore immediate flag for inner items because
+                    // we have lower confidence they're needed next frame.
+                    final int innerPosition = innerPrefetchRegistry.mPrefetchArray[i];
+                    prefetchPositionWithDeadline(innerView, innerPosition, deadlineNs);
+                }
+            } finally {
+                TraceCompat.endSection();
+            }
+        }
+    }
+
     private void flushTaskWithDeadline(Task task, long deadlineNs) {
         long taskDeadlineNs = task.immediate ? RecyclerView.FOREVER_NS : deadlineNs;
-        RecyclerView.ViewHolder holder = flushWorkWithDeadline(task.view,
+        RecyclerView.ViewHolder holder = prefetchPositionWithDeadline(task.view,
                 task.position, taskDeadlineNs);
         if (holder != null && holder.mNestedRecyclerView != null) {
-            // do nested prefetch!
-            final RecyclerView innerView = holder.mNestedRecyclerView;
-            final PrefetchRegistryImpl innerPrefetchRegistry = innerView.mPrefetchRegistry;
-            innerPrefetchRegistry.collectPrefetchPositionsFromView(innerView, true);
-
-            if (innerPrefetchRegistry.mCount != 0) {
-                try {
-                    TraceCompat.beginSection(RecyclerView.TRACE_NESTED_PREFETCH_TAG);
-                    innerView.mState.prepareForNestedPrefetch(innerView.mAdapter);
-                    for (int i = 0; i < innerPrefetchRegistry.mCount * 2; i += 2) {
-                        // Note that we ignore immediate flag for inner items because
-                        // we have lower confidence they're needed next frame.
-                        final int innerPosition = innerPrefetchRegistry.mPrefetchArray[i];
-                        flushWorkWithDeadline(innerView, innerPosition, deadlineNs);
-                    }
-                } finally {
-                    TraceCompat.endSection();
-                }
-            }
+            prefetchInnerRecyclerViewWithDeadline(holder.mNestedRecyclerView.get(), deadlineNs);
         }
     }
 

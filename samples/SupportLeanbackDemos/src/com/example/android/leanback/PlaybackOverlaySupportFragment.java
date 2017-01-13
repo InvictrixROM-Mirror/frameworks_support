@@ -18,30 +18,32 @@ package com.example.android.leanback;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v17.leanback.app.BackgroundManager;
-import android.support.v17.leanback.app.PlaybackSupportFragment;
-import android.support.v17.leanback.app.PlaybackSupportFragmentGlueHost;
+import android.os.Handler;
 import android.support.v17.leanback.widget.Action;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.HeaderItem;
 import android.support.v17.leanback.widget.ListRow;
 import android.support.v17.leanback.widget.ListRowPresenter;
+import android.support.v17.leanback.widget.OnItemViewClickedListener;
+import android.support.v17.leanback.widget.OnItemViewSelectedListener;
 import android.support.v17.leanback.widget.PlaybackControlsRow;
 import android.support.v17.leanback.widget.PlaybackControlsRowPresenter;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.PresenterSelector;
+import android.support.v17.leanback.widget.Row;
+import android.support.v17.leanback.widget.RowPresenter;
 import android.support.v17.leanback.widget.SparseArrayObjectAdapter;
 import android.util.Log;
 
 public class PlaybackOverlaySupportFragment
-        extends android.support.v17.leanback.app.PlaybackSupportFragment
+        extends android.support.v17.leanback.app.PlaybackOverlaySupportFragment
         implements PlaybackOverlaySupportActivity.PictureInPictureListener {
     private static final String TAG = "leanback.PlaybackControlsFragment";
 
     /**
      * Change this to choose a different overlay background.
      */
-    private static final int BACKGROUND_TYPE = PlaybackSupportFragment.BG_LIGHT;
+    private static final int BACKGROUND_TYPE = PlaybackOverlaySupportFragment.BG_LIGHT;
 
     /**
      * Change the number of related content rows.
@@ -55,9 +57,34 @@ public class PlaybackOverlaySupportFragment
 
     private static final int ROW_CONTROLS = 0;
 
-    private PlaybackControlHelper mGlue;
+    private PlaybackControlSupportHelper mGlue;
     private PlaybackControlsRowPresenter mPlaybackControlsRowPresenter;
     private ListRowPresenter mListRowPresenter;
+    final Handler mHandler = new Handler();
+
+    // Artificial delay to simulate a media being prepared. The onRowChanged callback should be
+    // called and the playback row UI should be updated after this delay.
+    private static final int MEDIA_PREPARATION_DELAY = 500;
+
+    private OnItemViewClickedListener mOnItemViewClickedListener = new OnItemViewClickedListener() {
+        @Override
+        public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item,
+                                  RowPresenter.ViewHolder rowViewHolder, Row row) {
+            Log.i(TAG, "onItemClicked: " + item + " row " + row);
+            if (item instanceof Action) {
+                mGlue.onActionClicked((Action) item);
+            }
+        }
+    };
+
+    private OnItemViewSelectedListener mOnItemViewSelectedListener =
+            new OnItemViewSelectedListener() {
+                @Override
+                public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item,
+                                           RowPresenter.ViewHolder rowViewHolder, Row row) {
+                    Log.i(TAG, "onItemSelected: " + item + " row " + row);
+                }
+    };
 
     public SparseArrayObjectAdapter getAdapter() {
         return (SparseArrayObjectAdapter) super.getAdapter();
@@ -69,12 +96,13 @@ public class PlaybackOverlaySupportFragment
         super.onCreate(savedInstanceState);
 
         setBackgroundType(BACKGROUND_TYPE);
+        setOnItemViewSelectedListener(mOnItemViewSelectedListener);
 
         createComponents(getActivity());
     }
 
     private void createComponents(Context context) {
-        mGlue = new PlaybackControlHelper(context, new PlaybackSupportFragmentGlueHost(this)) {
+        mGlue = new PlaybackControlSupportHelper(context, this) {
             @Override
             public int getUpdatePeriod() {
                 int totalTime = getControlsRow().getTotalTime();
@@ -105,6 +133,15 @@ public class PlaybackOverlaySupportFragment
             }
         };
 
+        mGlue.setInitialized(false);
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mGlue.setInitialized(true);
+            }
+        }, MEDIA_PREPARATION_DELAY);
+        mGlue.setOnItemViewClickedListener(mOnItemViewClickedListener);
+
         mPlaybackControlsRowPresenter = mGlue.createControlsRowAndPresenter();
         mPlaybackControlsRowPresenter.setSecondaryActionsHidden(SECONDARY_HIDDEN);
         mListRowPresenter = new ListRowPresenter();
@@ -132,13 +169,14 @@ public class PlaybackOverlaySupportFragment
             HeaderItem header = new HeaderItem(i, "Row " + i);
             getAdapter().set(ROW_CONTROLS + 1 + i, new ListRow(header, listRowAdapter));
         }
+
     }
 
     @Override
     public void onStart() {
         super.onStart();
         mGlue.setFadingEnabled(true);
-        mGlue.enableProgressUpdating(mGlue.hasValidMedia() && mGlue.isMediaPlaying());
+        mGlue.enableProgressUpdating(true);
         ((PlaybackOverlaySupportActivity) getActivity()).registerPictureInPictureListener(this);
     }
 

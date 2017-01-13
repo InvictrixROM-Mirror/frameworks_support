@@ -82,6 +82,11 @@ project(':support-animated-vector-drawable').projectDir = new File(rootDir, 'gra
 include ':support-transition'
 project(':support-transition').projectDir = new File(rootDir, 'transition')
 
+include ':support-exifinterface'
+project(':support-exifinterface').projectDir = new File(rootDir, 'exifinterface')
+
+include ':support-wearable'
+project(':support-wearable').projectDir = new File(rootDir, 'wearable')
 
 /////////////////////////////
 //
@@ -96,6 +101,9 @@ project(':support-design-demos').projectDir = new File(samplesRoot, 'SupportDesi
 
 include ':support-leanback-demos'
 project(':support-leanback-demos').projectDir = new File(samplesRoot, 'SupportLeanbackDemos')
+
+include ':support-leanback-jank'
+project(':support-leanback-jank').projectDir = new File(samplesRoot, 'SupportLeanbackJank')
 
 include ':support-percent-demos'
 project(':support-percent-demos').projectDir = new File(samplesRoot, 'SupportPercentDemos')
@@ -125,3 +133,6 @@ File externalRoot = new File(rootDir, '../../external')
 
 include ':doclava'
 project(':doclava').projectDir = new File(externalRoot, 'doclava')
+
+include ':jdiff'
+project(':jdiff').projectDir = new File(externalRoot, 'jdiff')

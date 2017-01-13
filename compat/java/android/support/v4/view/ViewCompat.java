@@ -31,6 +31,7 @@ import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RestrictTo;
+import android.support.v4.internal.view.TooltipCompat;
 import android.support.v4.os.BuildCompat;
 import android.support.v4.view.accessibility.AccessibilityNodeInfoCompat;
 import android.support.v4.view.accessibility.AccessibilityNodeProviderCompat;
@@ -304,6 +305,7 @@ public class ViewCompat {
     public static final int SCROLL_AXIS_VERTICAL = 1 << 1;
 
     /** @hide */
+    @RestrictTo(LIBRARY_GROUP)
     @Retention(RetentionPolicy.SOURCE)
     @IntDef(flag = true,
             value = {
@@ -488,6 +490,7 @@ public class ViewCompat {
         void offsetLeftAndRight(View view, int offset);
         void setPointerIcon(View view, PointerIconCompat pointerIcon);
         Display getDisplay(View view);
+        void setTooltip(View view, CharSequence tooltip);
     }
 
     static class BaseViewCompatImpl implements ViewCompatImpl {
@@ -1161,6 +1164,11 @@ public class ViewCompat {
         public Display getDisplay(View view) {
             return ViewCompatBase.getDisplay(view);
         }
+
+        @Override
+        public void setTooltip(View view, CharSequence tooltip) {
+            TooltipCompat.setTooltip(view, tooltip);
+        }
     }
 
     static class HCViewCompatImpl extends BaseViewCompatImpl {
@@ -1815,10 +1823,19 @@ public class ViewCompat {
         }
     }
 
+    static class Api26ViewCompatImpl extends Api24ViewCompatImpl {
+        @Override
+        public void setTooltip(View view, CharSequence tooltip) {
+            ViewCompatApi26.setTooltip(view, tooltip);
+        }
+    }
+
     static final ViewCompatImpl IMPL;
     static {
         final int version = android.os.Build.VERSION.SDK_INT;
-        if (BuildCompat.isAtLeastN()) {
+        if (BuildCompat.isAtLeastO()) {
+            IMPL = new Api26ViewCompatImpl();
+        } else if (version >= 24) {
             IMPL = new Api24ViewCompatImpl();
         } else if (version >= 23) {
             IMPL = new MarshmallowViewCompatImpl();
@@ -3579,6 +3596,21 @@ public class ViewCompat {
      */
     public static Display getDisplay(@NonNull View view) {
         return IMPL.getDisplay(view);
+    }
+
+    /**
+     * Sets the tooltip for the view.
+     * <p>
+     * Compatibility:
+     * <ul>
+     * <li>API &lt; 26: Sets or clears (when tooltip is null) the view's OnLongClickListener.
+     * Creates a Toast on long click.
+     * </ul>
+     *
+     * @param tooltip the tooltip text
+     */
+    public static void setTooltip(@NonNull View view, @Nullable CharSequence tooltip) {
+        IMPL.setTooltip(view, tooltip);
     }
 
     protected ViewCompat() {}

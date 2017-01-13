@@ -21,7 +21,9 @@ import static android.support.v4.view.ViewPager.SCROLL_STATE_DRAGGING;
 import static android.support.v4.view.ViewPager.SCROLL_STATE_IDLE;
 import static android.support.v4.view.ViewPager.SCROLL_STATE_SETTLING;
 
-import android.annotation.TargetApi;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
@@ -29,7 +31,6 @@ import android.content.res.TypedArray;
 import android.database.DataSetObserver;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.ColorInt;
@@ -66,7 +67,6 @@ import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -271,7 +271,7 @@ public class TabLayout extends HorizontalScrollView {
     private final ArrayList<OnTabSelectedListener> mSelectedListeners = new ArrayList<>();
     private OnTabSelectedListener mCurrentVpSelectedListener;
 
-    private ValueAnimatorCompat mScrollAnimator;
+    private ValueAnimator mScrollAnimator;
 
     ViewPager mViewPager;
     private PagerAdapter mPagerAdapter;
@@ -1085,13 +1085,13 @@ public class TabLayout extends HorizontalScrollView {
 
         if (startScrollX != targetScrollX) {
             if (mScrollAnimator == null) {
-                mScrollAnimator = ViewUtils.createAnimator();
+                mScrollAnimator = new ValueAnimator();
                 mScrollAnimator.setInterpolator(AnimationUtils.FAST_OUT_SLOW_IN_INTERPOLATOR);
                 mScrollAnimator.setDuration(ANIMATION_DURATION);
-                mScrollAnimator.addUpdateListener(new ValueAnimatorCompat.AnimatorUpdateListener() {
+                mScrollAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                     @Override
-                    public void onAnimationUpdate(ValueAnimatorCompat animator) {
-                        scrollTo(animator.getAnimatedIntValue(), 0);
+                    public void onAnimationUpdate(ValueAnimator animator) {
+                        scrollTo((int) animator.getAnimatedValue(), 0);
                     }
                 });
             }
@@ -1486,7 +1486,7 @@ public class TabLayout extends HorizontalScrollView {
         }
     }
 
-    class TabView extends LinearLayout implements OnLongClickListener {
+    class TabView extends LinearLayout {
         private Tab mTab;
         private TextView mTextView;
         private ImageView mIconView;
@@ -1551,7 +1551,6 @@ public class TabLayout extends HorizontalScrollView {
             }
         }
 
-        @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
         @Override
         public void onInitializeAccessibilityEvent(AccessibilityEvent event) {
             super.onInitializeAccessibilityEvent(event);
@@ -1559,7 +1558,6 @@ public class TabLayout extends HorizontalScrollView {
             event.setClassName(ActionBar.Tab.class.getName());
         }
 
-        @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
         @Override
         public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
             super.onInitializeAccessibilityNodeInfo(info);
@@ -1754,44 +1752,7 @@ public class TabLayout extends HorizontalScrollView {
                     iconView.requestLayout();
                 }
             }
-
-            if (!hasText && !TextUtils.isEmpty(contentDesc)) {
-                setOnLongClickListener(this);
-            } else {
-                setOnLongClickListener(null);
-                setLongClickable(false);
-            }
-        }
-
-        @Override
-        public boolean onLongClick(final View v) {
-            final int[] screenPos = new int[2];
-            final Rect displayFrame = new Rect();
-            getLocationOnScreen(screenPos);
-            getWindowVisibleDisplayFrame(displayFrame);
-
-            final Context context = getContext();
-            final int width = getWidth();
-            final int height = getHeight();
-            final int midy = screenPos[1] + height / 2;
-            int referenceX = screenPos[0] + width / 2;
-            if (ViewCompat.getLayoutDirection(v) == ViewCompat.LAYOUT_DIRECTION_LTR) {
-                final int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
-                referenceX = screenWidth - referenceX; // mirror
-            }
-
-            Toast cheatSheet = Toast.makeText(context, mTab.getContentDescription(),
-                    Toast.LENGTH_SHORT);
-            if (midy < displayFrame.height()) {
-                // Show below the tab view
-                cheatSheet.setGravity(Gravity.TOP | GravityCompat.END, referenceX,
-                        screenPos[1] + height - displayFrame.top);
-            } else {
-                // Show along the bottom center
-                cheatSheet.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, height);
-            }
-            cheatSheet.show();
-            return true;
+            ViewCompat.setTooltip(this, hasText ? null : contentDesc);
         }
 
         public Tab getTab() {
@@ -1816,7 +1777,7 @@ public class TabLayout extends HorizontalScrollView {
         private int mIndicatorLeft = -1;
         private int mIndicatorRight = -1;
 
-        private ValueAnimatorCompat mIndicatorAnimator;
+        private ValueAnimator mIndicatorAnimator;
 
         SlidingTabStrip(Context context) {
             super(context);
@@ -2013,22 +1974,22 @@ public class TabLayout extends HorizontalScrollView {
             }
 
             if (startLeft != targetLeft || startRight != targetRight) {
-                ValueAnimatorCompat animator = mIndicatorAnimator = ViewUtils.createAnimator();
+                ValueAnimator animator = mIndicatorAnimator = new ValueAnimator();
                 animator.setInterpolator(AnimationUtils.FAST_OUT_SLOW_IN_INTERPOLATOR);
                 animator.setDuration(duration);
                 animator.setFloatValues(0, 1);
-                animator.addUpdateListener(new ValueAnimatorCompat.AnimatorUpdateListener() {
+                animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                     @Override
-                    public void onAnimationUpdate(ValueAnimatorCompat animator) {
+                    public void onAnimationUpdate(ValueAnimator animator) {
                         final float fraction = animator.getAnimatedFraction();
                         setIndicatorPosition(
                                 AnimationUtils.lerp(startLeft, targetLeft, fraction),
                                 AnimationUtils.lerp(startRight, targetRight, fraction));
                     }
                 });
-                animator.addListener(new ValueAnimatorCompat.AnimatorListenerAdapter() {
+                animator.addListener(new AnimatorListenerAdapter() {
                     @Override
-                    public void onAnimationEnd(ValueAnimatorCompat animator) {
+                    public void onAnimationEnd(Animator animator) {
                         mSelectedPosition = position;
                         mSelectionOffset = 0f;
                     }

@@ -74,6 +74,7 @@ import android.view.animation.Interpolator;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -187,6 +188,16 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
      * We convert it to an absolute direction such as FOCUS_DOWN or FOCUS_LEFT.
      */
     private static final boolean FORCE_ABS_FOCUS_SEARCH_DIRECTION = Build.VERSION.SDK_INT <= 15;
+
+    /**
+     * on API 15-, a focused child can still be considered a focused child of RV even after
+     * it's being removed or its focusable flag is set to false. This is because when this focused
+     * child is detached, the reference to this child is not removed in clearFocus. API 16 and above
+     * properly handle this case by calling ensureInputFocusOnFirstFocusable or rootViewRequestFocus
+     * to request focus on a new child, which will clear the focus on the old (detached) child as a
+     * side-effect.
+     */
+    private static final boolean IGNORE_DETACHED_FOCUSED_CHILD = Build.VERSION.SDK_INT <= 15;
 
     static final boolean DISPATCH_TEMP_DETACH = false;
     public static final int HORIZONTAL = 0;
@@ -439,8 +450,8 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
     final ViewFlinger mViewFlinger = new ViewFlinger();
 
     GapWorker mGapWorker;
-    GapWorker.PrefetchRegistryImpl mPrefetchRegistry =
-            ALLOW_THREAD_GAP_WORK ? new GapWorker.PrefetchRegistryImpl() : null;
+    GapWorker.LayoutPrefetchRegistryImpl mPrefetchRegistry =
+            ALLOW_THREAD_GAP_WORK ? new GapWorker.LayoutPrefetchRegistryImpl() : null;
 
     final State mState = new State();
 
@@ -979,6 +990,26 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
     }
 
     /**
+     * Removes and recycles all views - both those currently attached, and those in the Recycler.
+     */
+    void removeAndRecycleViews() {
+        // end all running animations
+        if (mItemAnimator != null) {
+            mItemAnimator.endAnimations();
+        }
+        // Since animations are ended, mLayout.children should be equal to
+        // recyclerView.children. This may not be true if item animator's end does not work as
+        // expected. (e.g. not release children instantly). It is safer to use mLayout's child
+        // count.
+        if (mLayout != null) {
+            mLayout.removeAndRecycleAllViews(mRecycler);
+            mLayout.removeAndRecycleScrapInt(mRecycler);
+        }
+        // we should clear it here before adapters are swapped to ensure correct callbacks.
+        mRecycler.clear();
+    }
+
+    /**
      * Replaces the current adapter with the new one and triggers listeners.
      * @param adapter The new adapter
      * @param compatibleWithPrevious If true, the new adapter is using the same View Holders and
@@ -994,20 +1025,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             mAdapter.onDetachedFromRecyclerView(this);
         }
         if (!compatibleWithPrevious || removeAndRecycleViews) {
-            // end all running animations
-            if (mItemAnimator != null) {
-                mItemAnimator.endAnimations();
-            }
-            // Since animations are ended, mLayout.children should be equal to
-            // recyclerView.children. This may not be true if item animator's end does not work as
-            // expected. (e.g. not release children instantly). It is safer to use mLayout's child
-            // count.
-            if (mLayout != null) {
-                mLayout.removeAndRecycleAllViews(mRecycler);
-                mLayout.removeAndRecycleScrapInt(mRecycler);
-            }
-            // we should clear it here before adapters are swapped to ensure correct callbacks.
-            mRecycler.clear();
+            removeAndRecycleViews();
         }
         mAdapterHelper.reset();
         final Adapter oldAdapter = mAdapter;
@@ -1021,7 +1039,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
         }
         mRecycler.onAdapterChanged(oldAdapter, mAdapter, compatibleWithPrevious);
         mState.mStructureChanged = true;
-        markKnownViewsInvalid(true);
+        markKnownViewsInvalid();
     }
 
     /**
@@ -2982,7 +3000,9 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             // custom onMeasure
             if (mAdapterUpdateDuringMeasure) {
                 eatRequestLayout();
+                onEnterLayoutOrScroll();
                 processAdapterUpdatesAndSetAnimationFlags();
+                onExitLayoutOrScroll();
 
                 if (mState.mRunPredictiveAnimations) {
                     mState.mInPreLayout = true;
@@ -3179,7 +3199,6 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             // Processing these items have no value since data set changed unexpectedly.
             // Instead, we just reset it.
             mAdapterHelper.reset();
-            markKnownViewsInvalid(false);
             mLayout.onItemsChanged(this);
         }
         // simple animations are a subset of advanced animations (which will cause a
@@ -3334,9 +3353,28 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
         // only recover focus if RV itself has the focus or the focused view is hidden
         if (!isFocused()) {
             final View focusedChild = getFocusedChild();
-            if (!mChildHelper.isHidden(focusedChild)
-                    // on API 15, this happens :/.
-                    && focusedChild.getParent() == this && focusedChild.hasFocus()) {
+            if (IGNORE_DETACHED_FOCUSED_CHILD
+                    && (focusedChild.getParent() == null || !focusedChild.hasFocus())) {
+                // Special handling of API 15-. A focused child can be invalid because mFocus is not
+                // cleared when the child is detached (mParent = null),
+                // This happens because clearFocus on API 15- does not invalidate mFocus of its
+                // parent when this child is detached.
+                // For API 16+, this is not an issue because requestFocus takes care of clearing the
+                // prior detached focused child. For API 15- the problem happens in 2 cases because
+                // clearChild does not call clearChildFocus on RV: 1. setFocusable(false) is called
+                // for the current focused item which calls clearChild or 2. when the prior focused
+                // child is removed, removeDetachedView called in layout step 3 which calls
+                // clearChild. We should ignore this invalid focused child in all our calculations
+                // for the next view to receive focus, and apply the focus recovery logic instead.
+                if (mChildHelper.getChildCount() == 0) {
+                    // No children left. Request focus on the RV itself since one of its children
+                    // was holding focus previously.
+                    requestFocus();
+                    return;
+                }
+            } else if (!mChildHelper.isHidden(focusedChild)) {
+                // If the currently focused child is hidden, apply the focus recovery logic.
+                // Otherwise return, i.e. the currently (unhidden) focused child is good enough :/.
                 return;
             }
         }
@@ -3579,6 +3617,14 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
         if (mRecycler.mChangedScrap != null) {
             mRecycler.mChangedScrap.clear();
         }
+        if (mLayout.mPrefetchMaxObservedInInitialPrefetch) {
+            // Initial prefetch has expanded cache, so reset until next prefetch.
+            // This prevents initial prefetches from expanding the cache permanently.
+            mLayout.mPrefetchMaxCountObserved = 0;
+            mLayout.mPrefetchMaxObservedInInitialPrefetch = false;
+            mRecycler.updateViewCacheSize();
+        }
+
         mLayout.onLayoutCompleted(mState);
         onExitLayoutOrScroll();
         resumeRequestLayout(false);
@@ -4033,8 +4079,8 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
      * Attached items are labeled as position unknown, and may no longer be cached.
      *
      * It is still possible for items to be prefetched while mDataSetHasChangedAfterLayout == true,
-     * so calling this method *must* be associated with clearing the recycler cache, so that the
-     * only items that remain in the cache, once layout occurs, are prefetched items.
+     * so calling this method *must* be associated with marking the cache invalid, so that the
+     * only valid items that remain in the cache, once layout occurs, are prefetched items.
      */
     void setDataSetChangedAfterLayout() {
         if (mDataSetHasChangedAfterLayout) {
@@ -4049,13 +4095,17 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             }
         }
         mRecycler.setAdapterPositionsAsUnknown();
+
+        // immediately mark all views as invalid, so prefetched views can be
+        // differentiated from views bound to previous data set - both in children, and cache
+        markKnownViewsInvalid();
     }
 
     /**
      * Mark all known views as invalid. Used in response to a, "the whole world might have changed"
      * data change event.
      */
-    void markKnownViewsInvalid(boolean dispatchToRecycler) {
+    void markKnownViewsInvalid() {
         final int childCount = mChildHelper.getUnfilteredChildCount();
         for (int i = 0; i < childCount; i++) {
             final ViewHolder holder = getChildViewHolderInt(mChildHelper.getUnfilteredChildAt(i));
@@ -4064,9 +4114,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             }
         }
         markItemDecorInsetsDirty();
-        if (dispatchToRecycler) {
-            mRecycler.markKnownViewsInvalid();
-        }
+        mRecycler.markKnownViewsInvalid();
     }
 
     /**
@@ -4838,9 +4886,6 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             assertNotInLayoutOrScroll(null);
             mState.mStructureChanged = true;
 
-            // clear cache, so we can trust any prefetched data that is cached before next layout
-            mRecycler.recycleAndClearCachedViews();
-
             setDataSetChangedAfterLayout();
             if (!mAdapterHelper.hasPendingUpdates()) {
                 requestLayout();
@@ -4987,7 +5032,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             if (oldAverage == 0) {
                 return newValue;
             }
-            return (oldAverage / 8 * 7) + (newValue / 8);
+            return (oldAverage / 4 * 3) + (newValue / 4);
         }
 
         void factorInCreateTime(int viewType, long createTimeNs) {
@@ -5083,7 +5128,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
      */
     static void clearNestedRecyclerViewIfNotNested(@NonNull ViewHolder holder) {
         if (holder.mNestedRecyclerView != null) {
-            View item = holder.mNestedRecyclerView;
+            View item = holder.mNestedRecyclerView.get();
             while (item != null) {
                 if (item == holder.itemView) {
                     return; // match found, don't need to clear
@@ -5464,7 +5509,10 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
                     holder = mAdapter.createViewHolder(RecyclerView.this, type);
                     if (ALLOW_THREAD_GAP_WORK) {
                         // only bother finding nested RV if prefetching
-                        holder.mNestedRecyclerView = findNestedRecyclerView(holder.itemView);
+                        RecyclerView innerView = findNestedRecyclerView(holder.itemView);
+                        if (innerView != null) {
+                            holder.mNestedRecyclerView = new WeakReference<>(innerView);
+                        }
                     }
 
                     long end = getNanoTime();
@@ -5699,7 +5747,12 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
                     recycled = true;
                 }
             } else {
-                holder.mNestedRecyclerView = null;
+                // NOTE: A view can fail to be recycled when it is scrolled off while an animation
+                // runs. In this case, the item is eventually recycled by
+                // ItemAnimatorRestoreListener#onAnimationFinished.
+
+                // TODO: consider cancelling an animation when an item is removed scrollBy,
+                // to return it to the pool faster
                 if (DEBUG) {
                     Log.d(TAG, "trying to recycle a non-recycleable holder. Hopefully, it will "
                             + "re-visit here. We are still removing it from animation lists");
@@ -6782,10 +6835,19 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
 
         /**
          * Written by {@link GapWorker} when prefetches occur to track largest number of view ever
-         * requested by a {@link #collectInitialPrefetchPositions(int, PrefetchRegistry)} or
-         * {@link #collectAdjacentPrefetchPositions(int, int, State, PrefetchRegistry)} call.
+         * requested by a {@link #collectInitialPrefetchPositions(int, LayoutPrefetchRegistry)} or
+         * {@link #collectAdjacentPrefetchPositions(int, int, State, LayoutPrefetchRegistry)} call.
+         *
+         * If expanded by a {@link #collectInitialPrefetchPositions(int, LayoutPrefetchRegistry)},
+         * will be reset upon layout to prevent initial prefetches (often large, since they're
+         * proportional to expected child count) from expanding cache permanently.
          */
         int mPrefetchMaxCountObserved;
+
+        /**
+         * If true, mPrefetchMaxCountObserved is only valid until next layout, and should be reset.
+         */
+        boolean mPrefetchMaxObservedInInitialPrefetch;
 
         /**
          * These measure specs might be the measure specs that were passed into RecyclerView's
@@ -6800,6 +6862,26 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
          */
         private int mWidthMode, mHeightMode;
         private int mWidth, mHeight;
+
+
+        /**
+         * Interface for LayoutManagers to request items to be prefetched, based on position, with
+         * specified distance from viewport, which indicates priority.
+         *
+         * @see LayoutManager#collectAdjacentPrefetchPositions(int, int, State, LayoutPrefetchRegistry)
+         * @see LayoutManager#collectInitialPrefetchPositions(int, LayoutPrefetchRegistry)
+         */
+        public interface LayoutPrefetchRegistry {
+            /**
+             * Requests an an item to be prefetched, based on position, with a specified distance,
+             * indicating priority.
+             *
+             * @param layoutPosition Position of the item to prefetch.
+             * @param pixelDistance Distance from the current viewport to the bounds of the item,
+             *                      must be non-negative.
+             */
+            void addPosition(int layoutPosition, int pixelDistance);
+        }
 
         void setRecyclerView(RecyclerView recyclerView) {
             if (recyclerView == null) {
@@ -7114,7 +7196,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
          * which positions the LayoutManager will soon need, given upcoming movement in subsequent
          * traversals.</p>
          *
-         * <p>The LayoutManager should call {@link PrefetchRegistry#addPosition(int, int)} for each
+         * <p>The LayoutManager should call {@link LayoutPrefetchRegistry#addPosition(int, int)} for each
          * item to be prepared, and these positions will have their ViewHolders created and bound,
          * if there is sufficient time available, in advance of being needed by a
          * scroll or layout.</p>
@@ -7122,19 +7204,17 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
          * @param dx X movement component.
          * @param dy Y movement component.
          * @param state State of RecyclerView
-         * @param prefetchRegistry PrefetchRegistry to add prefetch entries into.
+         * @param layoutPrefetchRegistry PrefetchRegistry to add prefetch entries into.
          *
          * @see #isItemPrefetchEnabled()
-         * @see #collectInitialPrefetchPositions(int, PrefetchRegistry)
-         *
-         * @hide
+         * @see #collectInitialPrefetchPositions(int, LayoutPrefetchRegistry)
          */
         public void collectAdjacentPrefetchPositions(int dx, int dy, State state,
-                PrefetchRegistry prefetchRegistry) {}
+                LayoutPrefetchRegistry layoutPrefetchRegistry) {}
 
         /**
          * Gather all positions from the LayoutManager to be prefetched in preperation for its
-         * Recyclerview to come on screen, due to the movement of another, containing RecyclerView.
+         * RecyclerView to come on screen, due to the movement of another, containing RecyclerView.
          *
          * <p>This method is only called when a RecyclerView is nested in another RecyclerView.</p>
          *
@@ -7146,21 +7226,19 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
          * vertically scrolling LayoutManager, this method would be called when the horizontal list
          * is about to come onscreen.</p>
          *
-         * <p>The LayoutManager should call {@link PrefetchRegistry#addPosition(int, int)} for each
+         * <p>The LayoutManager should call {@link LayoutPrefetchRegistry#addPosition(int, int)} for each
          * item to be prepared, and these positions will have their ViewHolders created and bound,
          * if there is sufficient time available, in advance of being needed by a
          * scroll or layout.</p>
          *
          * @param adapterItemCount number of items in the associated adapter.
-         * @param prefetchRegistry PrefetchRegistry to add prefetch entries into.
+         * @param layoutPrefetchRegistry PrefetchRegistry to add prefetch entries into.
          *
          * @see #isItemPrefetchEnabled()
-         * @see #collectAdjacentPrefetchPositions(int, int, State, PrefetchRegistry
-         *
-         * @hide
+         * @see #collectAdjacentPrefetchPositions(int, int, State, LayoutPrefetchRegistry)
          */
         public void collectInitialPrefetchPositions(int adapterItemCount,
-                PrefetchRegistry prefetchRegistry) {}
+                LayoutPrefetchRegistry layoutPrefetchRegistry) {}
 
         void dispatchAttachedToWindow(RecyclerView view) {
             mIsAttachedToWindow = true;
@@ -8127,9 +8205,11 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
         /**
          * Returns the number of items in the adapter bound to the parent RecyclerView.
          * <p>
-         * Note that this number is not necessarily equal to {@link State#getItemCount()}. In
-         * methods where State is available, you should use {@link State#getItemCount()} instead.
-         * For more details, check the documentation for {@link State#getItemCount()}.
+         * Note that this number is not necessarily equal to
+         * {@link State#getItemCount() State#getItemCount()}. In methods where {@link State} is
+         * available, you should use {@link State#getItemCount() State#getItemCount()} instead.
+         * For more details, check the documentation for
+         * {@link State#getItemCount() State#getItemCount()}.
          *
          * @return The number of items in the bound adapter
          * @see State#getItemCount()
@@ -9587,24 +9667,6 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
     }
 
     /**
-     * Interface for LayoutManagers to request items to be prefetched, based on position, with
-     * specified distance from viewport, which indicates priority.
-     *
-     * @hide
-     */
-    public interface PrefetchRegistry {
-        /**
-         * Requests an an item to be prefetched, based on position, with a specified distance,
-         * indicating priority.
-         *
-         * @param layoutPosition Position of the item to prefetch.
-         * @param pixelDistance Distance from the current viewport to the bounds of the item,
-         *                      must be non-negative.
-         */
-        void addPosition(int layoutPosition, int pixelDistance);
-    }
-
-    /**
      * An ItemDecoration allows the application to add a special drawing and layout offset
      * to specific item views from the adapter's data set. This can be useful for drawing dividers
      * between items, highlights, visual grouping boundaries and more.
@@ -9857,7 +9919,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
      */
     public static abstract class ViewHolder {
         public final View itemView;
-        RecyclerView mNestedRecyclerView;
+        WeakReference<RecyclerView> mNestedRecyclerView;
         int mPosition = NO_POSITION;
         int mOldPosition = NO_POSITION;
         long mItemId = NO_ID;

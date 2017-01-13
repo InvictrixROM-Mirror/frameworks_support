@@ -1,10 +1,22 @@
-import android.support.doclava.DoclavaMultilineJavadocOptionFileOption
-import com.android.build.gradle.internal.coverage.JacocoReportTask
-import com.android.build.gradle.internal.tasks.DeviceProviderInstrumentTestTask
-
+import android.support.checkapi.ApiXmlConversionTask
 import android.support.checkapi.CheckApiTask
 import android.support.checkapi.UpdateApiTask
+import android.support.doclava.DoclavaMultilineJavadocOptionFileOption
 import android.support.doclava.DoclavaTask
+import android.support.jdiff.JDiffTask
+
+import com.android.build.gradle.internal.coverage.JacocoPlugin
+import com.android.build.gradle.internal.coverage.JacocoReportTask
+import com.android.build.gradle.internal.tasks.DeviceProviderInstrumentTestTask
+import org.gradle.internal.os.OperatingSystem
+
+import com.google.common.base.Charsets
+import com.google.common.hash.HashCode
+import com.google.common.hash.HashFunction
+import com.google.common.hash.Hashing
+import com.google.common.io.Files
+
+import groovy.io.FileType
 
 buildscript {
     repositories {
@@ -15,7 +27,7 @@ buildscript {
     }
     dependencies {
         // Keep gradle plugin version in sync with ub_supportlib-master manifest.
-        classpath 'com.android.tools.build:gradle:2.2.1'
+        classpath 'com.android.tools.build:gradle:2.2.4'
     }
 }
 
@@ -25,25 +37,50 @@ repositories {
 
 configurations {
     doclava
+    jdiff
 }
 
 dependencies {
     doclava project(':doclava')
+    jdiff project(':jdiff')
+    jdiff 'xerces:xmlParserAPIs:2.6.2'
+    jdiff 'xerces:xercesImpl:2.6.2'
 }
 
-gradle.ext.currentSdk = 'current'
-ext.supportVersion = '25.1.0-SNAPSHOT'
-ext.extraVersion = 40
-ext.supportRepoOut = ''
-ext.buildToolsVersion = '24.0.1'
-ext.buildNumber = Integer.toString(ext.extraVersion)
+// Version code components.
+ext.supportVersion = "26.0.0-SNAPSHOT"
 
+// This number gets incremented for each public release.
+ext.extraVersion = 41
+
+// Dependency versions.
 ext.testRunnerVersion = '0.6-alpha'
 ext.espressoVersion = '2.3-alpha'
 
 // Enforce the use of prebuilt dependencies in all sub-projects. This is
 // required for the doclava dependency.
 ext.usePrebuilts = "true"
+
+final String platform = OperatingSystem.current().isMacOsX() ? 'darwin' : 'linux'
+System.setProperty('android.dir', "${rootDir}/../../")
+final String fullSdkPath = "${rootDir}/../../prebuilts/fullsdk-${platform}"
+if (file(fullSdkPath).exists()) {
+    gradle.ext.currentSdk = 26
+    ext.buildToolsVersion = '26.0.0'
+    project.ext.androidJar = files("${fullSdkPath}/platforms/android-${gradle.ext.currentSdk}/android.jar")
+    System.setProperty('android.home', "${rootDir}/../../prebuilts/fullsdk-${platform}")
+    File props = file("local.properties")
+    props.write "sdk.dir=${fullSdkPath}"
+} else {
+    gradle.ext.currentSdk = 'current'
+    ext.buildToolsVersion = '24.0.1'
+    project.ext.androidJar = files("${project.rootDir}/../../prebuilts/sdk/current/android.jar")
+    File props = file("local.properties")
+    props.write "android.dir=../../"
+}
+
+ext.supportRepoOut = ''
+ext.buildNumber = Integer.toString(ext.extraVersion)
 
 /*
  * With the build server you are given two env variables.
@@ -73,13 +110,11 @@ ext.supportRepoOut = new File(buildDir, 'support_repo')
 ext.testApkDistOut = ext.distDir
 
 // Main task called by the build server.
-task(createArchive) << {
-}
+task(createArchive)
 
 // upload anchor for subprojects to upload their artifacts
 // to the local repo.
-task(mainUpload) << {
-}
+task(mainUpload)
 
 // repository creation task
 task createRepository(type: Zip, dependsOn: mainUpload) {
@@ -102,19 +137,12 @@ unzipRepo.doFirst {
 }
 
 // anchor for prepare repo. This is post unzip + sourceProp.
-task(prepareRepo) << {
-}
+task(prepareRepo)
 
 // lint every library
-task(lint) << {
-}
+task(lint)
 
-
-import com.google.common.io.Files
-import com.google.common.base.Charsets
-import com.android.build.gradle.internal.coverage.JacocoPlugin;
-
-task(createXml) << {
+task(createXml).doLast({
     def repoArchive = createRepository.archivePath
     def repoArchiveName = createRepository.archiveName
     def size = repoArchive.length()
@@ -141,10 +169,10 @@ task(createXml) << {
 </sdk:sdk-addon>"
 
     Files.write(xml, new File(project.ext.distDir, 'repo-extras.xml'), Charsets.UTF_8)
-}
+})
 createArchive.dependsOn createXml
 
-task(createSourceProp) << {
+task(createSourceProp).doLast({
     def sourceProp =
 "Extra.VendorDisplay=Android\n\
 Extra.Path=m2repository\n\
@@ -156,13 +184,10 @@ Pkg.Revision=${project.ext.extraVersion}.0.0\n\
 Extra.VendorId=android"
 
     Files.write(sourceProp, new File(project.ext.supportRepoOut, 'source.properties'), Charsets.UTF_8)
-}
+})
 createSourceProp.dependsOn unzipRepo
 prepareRepo.dependsOn createSourceProp
 
-import com.google.common.hash.HashCode
-import com.google.common.hash.HashFunction
-import com.google.common.hash.Hashing
 import java.nio.charset.Charset
 
 /**
@@ -175,16 +200,6 @@ String getSha1(File inputFile) {
     HashFunction hashFunction = Hashing.sha1()
     HashCode hashCode = hashFunction.hashString(inputFile.getAbsolutePath(), Charset.forName("UTF-8"))
     return hashCode.toString()
-}
-
-/**
- * Returns the Android prebuilt JAR for the specified API level.
- *
- * @param apiLevel the API level or "current"
- * @return a file collection containing the Android prebuilt JAR
- */
-FileCollection getAndroidPrebuilt(apiLevel) {
-    files("${project.rootDir}/../../prebuilts/sdk/$apiLevel/android.jar")
 }
 
 void registerForDocsTask(Task task, Project subProject, releaseVariant) {
@@ -205,19 +220,25 @@ task generateDocs(type: DoclavaTask, dependsOn: configurations.doclava) {
     destinationDir = new File(project.docsDir, "online")
 
     // Base classpath is Android SDK, sub-projects add their own.
-    classpath = getAndroidPrebuilt(gradle.ext.currentSdk)
+    classpath = project.ext.androidJar
 
     def hdfOption = new DoclavaMultilineJavadocOptionFileOption('hdf')
     hdfOption.add(
             ['android.whichdoc', 'online'],
             ['android.hasSamples', 'true']);
 
+    // Default hidden errors + hidden superclass (111) and
+    // deprecation mismatch (113) to match framework docs.
+    final def hidden = [105, 107, 111, 112, 113, 115, 116, 121]
+
+    doclavaErrors = (101..122) - hidden
+    doclavaWarnings = []
+    doclavaHidden += hidden
+
     options {
         addStringOption "templatedir",
                 "${project.rootDir}/../../build/tools/droiddoc/templates-sdk"
         addStringOption "federate Android", "http://developer.android.com"
-        addStringOption "federationapi Android",
-                "${project.rootDir}/../../prebuilts/sdk/api/24.txt"
         addStringOption "stubpackages", "android.support.*"
         addStringOption "samplesdir", "${project.rootDir}/samples"
         addOption hdfOption
@@ -226,13 +247,31 @@ task generateDocs(type: DoclavaTask, dependsOn: configurations.doclava) {
     exclude '**/BuildConfig.java'
 }
 
+JDiffTask createApiDiffsTask(String taskName, File oldApiXml, File newApiXml, File outDir,
+                             Configuration jdiff, Task... dependencies) {
+    return tasks.create(name: taskName, type: JDiffTask.class) {
+        dependsOn jdiff
+        dependsOn dependencies
+
+        docletpath = jdiff.resolve()
+
+        oldApiXmlFile oldApiXml
+        newApiXmlFile newApiXml
+        destinationDir = outDir
+
+        // This prefix is based on the assumption that the output diffs will
+        // ultimately land in frameworks/base/docs/html/sdk/support_api_diff/.
+        newJavadocPrefix = "../reference/"
+    }
+}
+
 // Generates API files.
 task generateApi(type: DoclavaTask, dependsOn: configurations.doclava) {
     docletpath = configurations.doclava.resolve()
     destinationDir = project.docsDir
 
     // Base classpath is Android SDK, sub-projects add their own.
-    classpath = getAndroidPrebuilt(gradle.ext.currentSdk)
+    classpath = project.ext.androidJar
 
     apiFile = new File(project.docsDir, 'release/current.txt')
     removedApiFile = new File(project.docsDir, 'release/removed.txt')
@@ -242,8 +281,6 @@ task generateApi(type: DoclavaTask, dependsOn: configurations.doclava) {
         addStringOption "templatedir",
                 "${project.rootDir}/../../build/tools/droiddoc/templates-sdk"
         addStringOption "federate Android", "http://developer.android.com"
-        addStringOption "federationapi Android",
-                "${project.rootDir}/../../prebuilts/sdk/api/24.txt"
         addStringOption "stubpackages", "android.support.*"
     }
     exclude '**/BuildConfig.java'
@@ -265,6 +302,12 @@ task checkApi(type: CheckApiTask, dependsOn: generateApi) {
     checkApiTaskPath = name
     updateApiTaskPath = updateApi.name
 
+    // Check that the API we're building hasn't changed from the development
+    // version. These typed of changes require an explicit API file update.
+    checkApiErrors = (2..30)-[22]
+    checkApiWarnings = []
+    checkApiHidden = [22]
+
     newApiFile = new File(project.docsDir, 'release/current.txt')
     oldApiFile = new File(project.rootDir, 'api/current.txt')
     newRemovedApiFile = new File(project.docsDir, 'release/removed.txt')
@@ -272,11 +315,153 @@ task checkApi(type: CheckApiTask, dependsOn: generateApi) {
 }
 createArchive.dependsOn checkApi
 
-subprojects {
-    // Only modify android projects.
-    if (project.name.equals('doclava')) return;
+// Checks generated API files against current version.
+task checkApiStable(type: CheckApiTask, dependsOn: generateApi) {
+    doclavaClasspath = generateApi.docletpath
 
-    // current SDK is set in studioCompat.gradle
+    checkApiTaskPath = name
+    updateApiTaskPath = updateApi.name
+
+    // Check that the API we're building hasn't broken the last-released
+    // library version. These types of changes are forbidden.
+    checkApiErrors = (7..18)
+    checkApiWarnings = [23, 24]
+    checkApiHidden = (2..6) + (19..22) + (25..30)
+
+    newApiFile = new File(project.docsDir, 'release/current.txt')
+    oldApiFile = getReleasedApiFile()
+    newRemovedApiFile = new File(project.docsDir, 'release/removed.txt')
+    oldRemovedApiFile = new File(project.rootDir, 'api/removed.txt')
+}
+checkApi.dependsOn checkApiStable
+
+/**
+ * Converts the <code>toApi</code>.txt file (or current.txt if not explicitly
+ * defined using -DtoAPi=<file>) to XML format for use by JDiff.
+ */
+task newApiXml(type: ApiXmlConversionTask, dependsOn: configurations.doclava) {
+    classpath configurations.doclava.resolve()
+
+    if (project.hasProperty("toApi")) {
+        // Use an explicit API file.
+        inputApiFile = new File(project.rootDir, "api/${toApi}.txt")
+    } else {
+        // Use the current API file (e.g. current.txt).
+        inputApiFile = generateApi.apiFile
+        dependsOn generateApi
+    }
+
+    int lastDot = inputApiFile.name.lastIndexOf('.')
+    outputApiXmlFile = new File(project.docsDir,
+            "release/" + inputApiFile.name.substring(0, lastDot) + ".xml")
+}
+
+/**
+ * Converts the <code>fromApi</code>.txt file (or the most recently released
+ * X.Y.Z.txt if not explicitly defined using -DfromAPi=<file>) to XML format
+ * for use by JDiff.
+ */
+task oldApiXml(type: ApiXmlConversionTask, dependsOn: configurations.doclava) {
+    classpath configurations.doclava.resolve()
+
+    if (project.hasProperty("fromApi")) {
+        // Use an explicit API file.
+        inputApiFile = new File(project.rootDir, "api/${fromApi}.txt")
+    } else if (project.hasProperty("toApi") && toApi.matches(~/(\d+\.){2}\d+/)) {
+        // If toApi matches released API (X.Y.Z) format, use the most recently
+        // released API file prior to toApi.
+        inputApiFile = getReleasedApiFile(toApi)
+    } else {
+        // Use the most recently released API file.
+        inputApiFile = getReleasedApiFile();
+    }
+
+    int lastDot = inputApiFile.name.lastIndexOf('.')
+    outputApiXmlFile = new File(project.docsDir,
+            "release/" + inputApiFile.name.substring(0, lastDot) + ".xml")
+}
+
+/**
+ * Generates API diffs.
+ * <p>
+ * By default, diffs are generated for the delta between current.txt and the
+ * next most recent X.Y.Z.txt API file. Behavior may be changed by specifying
+ * one or both of -DtoApi and -DfromApi.
+ * <p>
+ * If both fromApi and toApi are specified, diffs will be generated for
+ * fromApi -> toApi. For example, 25.0.0 -> 26.0.0 diffs could be generated by
+ * using:
+ * <br><code>
+ *   ./gradlew generateDiffs -DfromApi=25.0.0 -DtoApi=26.0.0
+ * </code>
+ * <p>
+ * If only toApi is specified, it MUST be specified as X.Y.Z and diffs will be
+ * generated for (release before toApi) -> toApi. For example, 24.2.0 -> 25.0.0
+ * diffs could be generated by using:
+ * <br><code>
+ *   ./gradlew generateDiffs -DtoApi=25.0.0
+ * </code>
+ * <p>
+ * If only fromApi is specified, diffs will be generated for fromApi -> current.
+ * For example, lastApiReview -> current diffs could be generated by using:
+ * <br><code>
+ *   ./gradlew generateDiffs -DfromApi=lastApiReview
+ * </code>
+ * <p>
+ */
+task generateDiffs(type: JDiffTask, dependsOn: [configurations.jdiff, configurations.doclava,
+                                                oldApiXml, newApiXml]) {
+    // Base classpath is Android SDK, sub-projects add their own.
+    classpath = project.ext.androidJar
+
+    // JDiff properties.
+    oldApiXmlFile = oldApiXml.outputApiXmlFile
+    newApiXmlFile = newApiXml.outputApiXmlFile
+    newJavadocPrefix = "../../../../reference/"
+
+    String newApi = newApiXmlFile.name
+    int lastDot = newApi.lastIndexOf('.')
+    newApi = newApi.substring(0, lastDot)
+
+    // Javadoc properties.
+    docletpath = configurations.jdiff.resolve()
+    destinationDir = new File(project.docsDir, "support_api_diff/$newApi")
+    title = "Support&nbsp;Library&nbsp;API&nbsp;Differences&nbsp;Report"
+
+    exclude '**/BuildConfig.java'
+    exclude '**/R.java'
+}
+
+/**
+ * Returns the most recently released API, optionally restricting to APIs
+ * before <code>beforeApi</code>.
+ *
+ * @param beforeApi the API to find an API file before, ex. 25.0.0
+ * @return the most recently released API file
+ */
+File getReleasedApiFile(String beforeApi = null) {
+    String beforeApiFileName = beforeApi != null ? beforeApi + ".txt" : null
+    File lastReleasedApiFile = null
+    File apiDir = new File(project.rootDir, 'api')
+
+    apiDir.eachFileMatch FileType.FILES, ~/(\d+\.){3}txt/, { File apiFile ->
+        // Is the current API file newer than the last one we saw?
+        if (lastReleasedApiFile == null || apiFile.name > lastReleasedApiFile.name) {
+            // Is the current API file older than the "before" API?
+            if (beforeApiFileName == null || apiFile.name < beforeApiFileName) {
+                lastReleasedApiFile = apiFile
+            }
+        }
+    }
+
+    return lastReleasedApiFile
+}
+
+subprojects {
+    // Only modify Android projects.
+    if (project.name.equals('doclava') || project.name.equals('jdiff')) return;
+
+    // Current SDK is set in studioCompat.gradle.
     project.ext.currentSdk = gradle.ext.currentSdk
     apply plugin: 'maven'
 
@@ -290,11 +475,16 @@ subprojects {
     }
 
     project.plugins.whenPluginAdded { plugin ->
-        if ("com.android.build.gradle.LibraryPlugin".equals(plugin.class.name)
-                || "com.android.build.gradle.AppPlugin".equals(plugin.class.name)) {
+        def isAndroidLibrary = "com.android.build.gradle.LibraryPlugin".equals(plugin.class.name)
+        def isAndroidApp = "com.android.build.gradle.AppPlugin".equals(plugin.class.name)
+        def isJavaLibrary = "org.gradle.api.plugins.JavaPlugin".equals(plugin.class.name)
+
+        if (isAndroidLibrary || isAndroidApp) {
             project.android.buildToolsVersion = rootProject.buildToolsVersion
-            // enable code coverage for debug builds only if we are not running inside the IDE
-            // enabling coverage reports breaks the method parameter resolution in the IDE debugger
+
+            // Enable code coverage for debug builds only if we are not running inside the IDE,
+            // since enabling coverage reports breaks the method parameter resolution in the IDE
+            // debugger.
             project.android.buildTypes.debug.testCoverageEnabled = !hasProperty('android.injected.invoked.from.ide')
 
             // Copy the class files in a jar to be later used to generate code coverage report
@@ -306,7 +496,9 @@ subprojects {
                     def jarifyTask = project.tasks.create(
                             name: "package${v.name.capitalize()}ClassFilesForCoverageReport",
                             type: Jar) {
-                        from v.javaCompile.destinationDir
+                        from v.testedVariant.javaCompile.destinationDir
+                        exclude "**/R.class"
+                        exclude "**/R\$*.class"
                         destinationDir file(project.distDir)
                         archiveName "${project.archivesBaseName}-${v.baseName}-allclasses.jar"
                     }
@@ -331,16 +523,17 @@ subprojects {
                 }
             }
 
-            // Ensure we run API lint checks.
+            // Enforce NewApi lint check as fatal.
             project.android.lintOptions.check 'NewApi'
             project.android.lintOptions.fatal 'NewApi'
             project.parent.lint.dependsOn project.lint
         }
 
-        // Create release and separate zip task for Android libraries (and android-annotations,
-        // which is just a Java library).
-        if ("com.android.build.gradle.LibraryPlugin".equals(plugin.class.name)
-                || "org.gradle.api.plugins.JavaPlugin".equals(plugin.class.name)) {
+        if (isAndroidLibrary || isJavaLibrary) {
+            // Add library to the aggregate dependency report.
+            task allDeps(type: DependencyReportTask) {}
+
+            // Create release and separate zip task for library.
             task release(type: Upload) {
                 configuration = configurations.archives
                 repositories {
@@ -382,7 +575,8 @@ subprojects {
                 return new File(artifactDir, version)
             }
 
-            task generateSourceProps(dependsOn: createRepository) << {
+            task generateSourceProps(dependsOn: createRepository)
+            generateSourceProps.doLast({
                 def content = "Maven.GroupId=$deployer.pom.groupId\n" +
                         "Maven.ArtifactId=$deployer.pom.artifactId\n" +
                         "Maven.Version=$deployer.pom.version\n" +
@@ -397,7 +591,7 @@ subprojects {
                         }.grep()) +
                         "\n"
                 Files.write(content, new File(versionDir(), 'source.properties'), Charsets.UTF_8)
-            }
+            })
 
             task createSeparateZip(type: Zip, dependsOn: generateSourceProps)  {
                 into archivesBaseName
@@ -407,9 +601,10 @@ subprojects {
             }
             project.parent.createArchive.dependsOn createSeparateZip
 
-            // before the upload, make sure the repo is ready.
+            // Before the upload, make sure the repo is ready.
             release.dependsOn rootProject.tasks.prepareRepo
-            // make the mainupload depend on this one.
+
+            // Make the mainupload depend on this one.
             mainUpload.dependsOn release
         }
     }
@@ -466,8 +661,17 @@ subprojects {
                 if (v.name == 'release') {
                     registerForDocsTask(rootProject.generateDocs, p, v)
                     registerForDocsTask(rootProject.generateApi, p, v)
+                    registerForDocsTask(rootProject.generateDiffs, p, v)
                 }
             }
+        }
+    }
+
+    // Update the version meta-data in each Manifest
+    project.afterEvaluate { p ->
+        if (p.hasProperty('android')) {
+            p.android.defaultConfig.manifestPlaceholders =
+                    ["support-version": rootProject.ext.supportVersion]
         }
     }
 }

@@ -28,8 +28,10 @@ import android.os.Message;
 import android.support.v17.leanback.R;
 import android.support.v17.leanback.animation.LogAccelerateInterpolator;
 import android.support.v17.leanback.animation.LogDecelerateInterpolator;
+import android.support.v17.leanback.media.PlaybackGlueHost;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.BaseOnItemViewClickedListener;
+import android.support.v17.leanback.widget.BaseOnItemViewSelectedListener;
 import android.support.v17.leanback.widget.ClassPresenterSelector;
 import android.support.v17.leanback.widget.ItemBridgeAdapter;
 import android.support.v17.leanback.widget.ObjectAdapter;
@@ -74,10 +76,11 @@ public class PlaybackFragment extends Fragment {
      * A dark translucent background.
      */
     public static final int BG_DARK = 1;
-    private PlaybackGlue.HostLifecycleCallback mHostLifecycleCallback;
+    private PlaybackGlueHost.HostCallback mHostCallback;
 
     /**
      * Resets the focus on the button in the middle of control row.
+     * @hide
      */
     public void resetFocus() {
         ItemBridgeAdapter.ViewHolder vh = (ItemBridgeAdapter.ViewHolder) getVerticalGridView()
@@ -109,25 +112,43 @@ public class PlaybackFragment extends Fragment {
     private ObjectAdapter mAdapter;
     private PlaybackRowPresenter mPresenter;
     private Row mRow;
+    private BaseOnItemViewSelectedListener mExternalItemSelectedListener;
     private BaseOnItemViewClickedListener mExternalItemClickedListener;
     private BaseOnItemViewClickedListener mPlaybackItemClickedListener;
-    private BaseOnItemViewClickedListener mOnItemViewClickedListener = new BaseOnItemViewClickedListener() {
-        @Override
-        public void onItemClicked(Presenter.ViewHolder itemViewHolder,
-                                  Object item,
-                                  RowPresenter.ViewHolder rowViewHolder,
-                                  Object row) {
-            if (mPlaybackItemClickedListener != null
-                    && rowViewHolder instanceof PlaybackRowPresenter.ViewHolder) {
-                mPlaybackItemClickedListener.onItemClicked(
-                        itemViewHolder, item, rowViewHolder, row);
-            }
-            if (mExternalItemClickedListener != null) {
-                mExternalItemClickedListener.onItemClicked(
-                        itemViewHolder, item, rowViewHolder, row);
-            }
-        }
-    };
+
+    private final BaseOnItemViewClickedListener mOnItemViewClickedListener =
+            new BaseOnItemViewClickedListener() {
+                @Override
+                public void onItemClicked(Presenter.ViewHolder itemViewHolder,
+                                          Object item,
+                                          RowPresenter.ViewHolder rowViewHolder,
+                                          Object row) {
+                    if (mPlaybackItemClickedListener != null
+                            && rowViewHolder instanceof PlaybackRowPresenter.ViewHolder) {
+                        mPlaybackItemClickedListener.onItemClicked(
+                                itemViewHolder, item, rowViewHolder, row);
+                    }
+                    if (mExternalItemClickedListener != null) {
+                        mExternalItemClickedListener.onItemClicked(
+                                itemViewHolder, item, rowViewHolder, row);
+                    }
+                }
+            };
+
+    private final BaseOnItemViewSelectedListener mOnItemViewSelectedListener =
+            new BaseOnItemViewSelectedListener() {
+                @Override
+                public void onItemSelected(Presenter.ViewHolder itemViewHolder,
+                                           Object item,
+                                           RowPresenter.ViewHolder rowViewHolder,
+                                           Object row) {
+                    if (mExternalItemSelectedListener != null) {
+                        mExternalItemSelectedListener.onItemSelected(
+                                itemViewHolder, item, rowViewHolder, row);
+                    }
+                }
+            };
+
     private final SetSelectionRunnable mSetSelectionRunnable = new SetSelectionRunnable();
 
     public ObjectAdapter getAdapter() {
@@ -137,6 +158,7 @@ public class PlaybackFragment extends Fragment {
     /**
      * Listener allowing the application to receive notification of fade in and/or fade out
      * completion events.
+     * @hide
      */
     public static class OnFadeCompleteListener {
         public void onFadeInComplete() {
@@ -295,6 +317,7 @@ public class PlaybackFragment extends Fragment {
 
     /**
      * Sets the listener to be called when fade in or out has completed.
+     * @hide
      */
     public void setFadeCompleteListener(OnFadeCompleteListener listener) {
         mFadeCompleteListener = listener;
@@ -302,6 +325,7 @@ public class PlaybackFragment extends Fragment {
 
     /**
      * Returns the listener to be called when fade in or out has completed.
+     * @hide
      */
     public OnFadeCompleteListener getFadeCompleteListener() {
         return mFadeCompleteListener;
@@ -312,13 +336,6 @@ public class PlaybackFragment extends Fragment {
      */
     public final void setOnKeyInterceptListener(View.OnKeyListener handler) {
         mInputEventHandler = handler;
-    }
-
-    /**
-     * Returns the input event handler.
-     */
-    public final View.OnKeyListener getEventHandler() {
-        return mInputEventHandler;
     }
 
     /**
@@ -409,6 +426,9 @@ public class PlaybackFragment extends Fragment {
         }
         getVerticalGridView().setOnTouchInterceptListener(mOnTouchInterceptListener);
         getVerticalGridView().setOnKeyInterceptListener(mOnKeyInterceptListener);
+        if (mHostCallback != null) {
+            mHostCallback.onHostResume();
+        }
     }
 
     private void startFadeTimer() {
@@ -742,6 +762,7 @@ public class PlaybackFragment extends Fragment {
         } else {
             mRowsFragment.setAdapter(mAdapter);
         }
+        mRowsFragment.setOnItemViewSelectedListener(mOnItemViewSelectedListener);
         mRowsFragment.setOnItemViewClickedListener(mOnItemViewClickedListener);
 
         mBgAlpha = 255;
@@ -751,11 +772,11 @@ public class PlaybackFragment extends Fragment {
     }
 
     /**
-     * Sets the {@link PlaybackGlue.HostLifecycleCallback}. Implementor of this interface will
+     * Sets the {@link PlaybackGlueHost.HostCallback}. Implementor of this interface will
      * take appropriate actions to take action when the hosting fragment starts/stops processing.
      */
-    public void setHostLifecycleCallback(PlaybackGlue.HostLifecycleCallback hostLifecycleCallback) {
-        this.mHostLifecycleCallback = hostLifecycleCallback;
+    public void setHostCallback(PlaybackGlueHost.HostCallback hostCallback) {
+        this.mHostCallback = hostCallback;
     }
 
     @Override
@@ -763,17 +784,34 @@ public class PlaybackFragment extends Fragment {
         super.onStart();
         setupChildFragmentLayout();
         mRowsFragment.setAdapter(mAdapter);
-        if (mHostLifecycleCallback != null) {
-            mHostLifecycleCallback.onHostStart();
+        if (mHostCallback != null) {
+            mHostCallback.onHostStart();
         }
     }
 
     @Override
     public void onStop() {
-        super.onStop();
-        if (mHostLifecycleCallback != null) {
-            mHostLifecycleCallback.onHostStop();
+        if (mHostCallback != null) {
+            mHostCallback.onHostStop();
         }
+        super.onStop();
+    }
+
+    @Override
+    public void onPause() {
+        if (mHostCallback != null) {
+            mHostCallback.onHostPause();
+        }
+        super.onPause();
+    }
+
+    /**
+     * This listener is called every time there is a selection in {@link RowsFragment}. This can
+     * be used by users to take additional actions such as animations.
+     * @hide
+     */
+    public void setOnItemViewSelectedListener(final BaseOnItemViewSelectedListener listener) {
+        mExternalItemSelectedListener = listener;
     }
 
     /**

@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package android.support.checkapi;
 
 import org.gradle.api.DefaultTask
@@ -15,8 +31,10 @@ import org.gradle.process.ExecResult
 
 /**
  * A task to invoke Doclava's ApiCheck tool.
- * By default, any API changes will be flagged as errors (strict mode). This can be losened to
- * merely backwards compatibility checks using {@link #configureAsBackwardsCompatCheck()}.
+ * <p>
+ * By default, any API changes will be flagged as errors (strict mode). This
+ * can be loosened to merely backwards compatibility checks using
+ * {@link #configureAsBackwardsCompatCheck()}.
  */
 @ParallelizableTask
 public class CheckApiTask extends DefaultTask {
@@ -273,6 +291,21 @@ All of these must be distinct files.""")
         checkApiWarnings = DEFAULT_CHECK_API_BACKWARDS_COMPAT_WARNINGS
         checkApiHidden = DEFAULT_CHECK_API_BACKWARDS_COMPAT_HIDDEN
         mOnFailMessage = DEFAULT_ERROR_MESSAGE_FOR_BACKWARDS_COMPAT
+    }
+
+    public void setCheckApiErrors(Collection errors) {
+        // Make it serializable.
+        checkApiErrors = errors as int[]
+    }
+
+    public void setCheckApiWarnings(Collection warnings) {
+        // Make it serializable.
+        checkApiWarnings = warnings as int[]
+    }
+
+    public void setCheckApiHidden(Collection hidden) {
+        // Make it serializable.
+        checkApiHidden = hidden as int[]
     }
 
     @TaskAction

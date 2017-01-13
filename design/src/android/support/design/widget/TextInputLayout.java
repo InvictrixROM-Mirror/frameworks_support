@@ -16,6 +16,7 @@
 
 package android.support.design.widget;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Canvas;
@@ -51,6 +52,7 @@ import android.support.v4.widget.Space;
 import android.support.v4.widget.TextViewCompat;
 import android.support.v7.content.res.AppCompatResources;
 import android.support.v7.widget.AppCompatDrawableManager;
+import android.support.v7.widget.AppCompatTextView;
 import android.support.v7.widget.TintTypedArray;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -130,6 +132,8 @@ public class TextInputLayout extends LinearLayout {
     private LinearLayout mIndicatorArea;
     private int mIndicatorsAdded;
 
+    private Typeface mTypeface;
+
     private boolean mErrorEnabled;
     TextView mErrorView;
     private int mErrorTextAppearance;
@@ -165,7 +169,7 @@ public class TextInputLayout extends LinearLayout {
     final CollapsingTextHelper mCollapsingTextHelper = new CollapsingTextHelper(this);
 
     private boolean mHintAnimationEnabled;
-    private ValueAnimatorCompat mAnimator;
+    private ValueAnimator mAnimator;
 
     private boolean mHasReconstructedEditTextBackground;
     private boolean mInDrawableStateChanged;
@@ -197,8 +201,6 @@ public class TextInputLayout extends LinearLayout {
         mCollapsingTextHelper.setTextSizeInterpolator(AnimationUtils.FAST_OUT_SLOW_IN_INTERPOLATOR);
         mCollapsingTextHelper.setPositionInterpolator(new AccelerateInterpolator());
         mCollapsingTextHelper.setCollapsedTextGravity(Gravity.TOP | GravityCompat.START);
-
-        mHintExpanded = mCollapsingTextHelper.getExpansionFraction() == 1f;
 
         final TintTypedArray a = TintTypedArray.obtainStyledAttributes(context, attrs,
                 R.styleable.TextInputLayout, defStyleAttr, R.style.Widget_Design_TextInputLayout);
@@ -285,21 +287,30 @@ public class TextInputLayout extends LinearLayout {
     }
 
     /**
-     * Set the typeface to use for both the expanded and floating hint.
+     * Set the typeface to use for the hint and any label views (such as counter and error views).
      *
      * @param typeface typeface to use, or {@code null} to use the default.
      */
     public void setTypeface(@Nullable Typeface typeface) {
-        mCollapsingTextHelper.setTypefaces(typeface);
+        if (typeface != mTypeface) {
+            mTypeface = typeface;
+
+            mCollapsingTextHelper.setTypefaces(typeface);
+            if (mCounterView != null) {
+                mCounterView.setTypeface(typeface);
+            }
+            if (mErrorView != null) {
+                mErrorView.setTypeface(typeface);
+            }
+        }
     }
 
     /**
-     * Returns the typeface used for both the expanded and floating hint.
+     * Returns the typeface used for the hint and any label views (such as counter and error views).
      */
     @NonNull
     public Typeface getTypeface() {
-        // This could be either the collapsed or expanded
-        return mCollapsingTextHelper.getCollapsedTypeface();
+        return mTypeface;
     }
 
     private void setEditText(EditText editText) {
@@ -368,8 +379,8 @@ public class TextInputLayout extends LinearLayout {
 
         updatePasswordToggleView();
 
-        // Update the label visibility with no animation
-        updateLabelState(false);
+        // Update the label visibility with no animation, but force a state change
+        updateLabelState(false, true);
     }
 
     private void updateInputLayoutMargins() {
@@ -396,6 +407,10 @@ public class TextInputLayout extends LinearLayout {
     }
 
     void updateLabelState(boolean animate) {
+        updateLabelState(animate, false);
+    }
+
+    void updateLabelState(final boolean animate, final boolean force) {
         final boolean isEnabled = isEnabled();
         final boolean hasText = mEditText != null && !TextUtils.isEmpty(mEditText.getText());
         final boolean isFocused = arrayContains(getDrawableState(), android.R.attr.state_focused);
@@ -415,12 +430,12 @@ public class TextInputLayout extends LinearLayout {
 
         if (hasText || (isEnabled() && (isFocused || isErrorShowing))) {
             // We should be showing the label so do so if it isn't already
-            if (mHintExpanded) {
+            if (force || mHintExpanded) {
                 collapseHint(animate);
             }
         } else {
             // We should not be showing the label so hide it
-            if (!mHintExpanded) {
+            if (force || !mHintExpanded) {
                 expandHint(animate);
             }
         }
@@ -585,7 +600,11 @@ public class TextInputLayout extends LinearLayout {
             }
 
             if (enabled) {
-                mErrorView = new TextView(getContext());
+                mErrorView = new AppCompatTextView(getContext());
+                mErrorView.setId(R.id.textinput_error);
+                if (mTypeface != null) {
+                    mErrorView.setTypeface(mTypeface);
+                }
                 boolean useDefaultColor = false;
                 try {
                     TextViewCompat.setTextAppearance(mErrorView, mErrorTextAppearance);
@@ -621,6 +640,19 @@ public class TextInputLayout extends LinearLayout {
                 mErrorView = null;
             }
             mErrorEnabled = enabled;
+        }
+    }
+
+    /**
+     * Sets the text color and size for the error message from the specified
+     * TextAppearance resource.
+     *
+     * @attr ref android.support.design.R.styleable#TextInputLayout_errorTextAppearance
+     */
+    public void setErrorTextAppearance(@StyleRes int resId) {
+        mErrorTextAppearance = resId;
+        if (mErrorView != null) {
+            TextViewCompat.setTextAppearance(mErrorView, resId);
         }
     }
 
@@ -725,7 +757,11 @@ public class TextInputLayout extends LinearLayout {
     public void setCounterEnabled(boolean enabled) {
         if (mCounterEnabled != enabled) {
             if (enabled) {
-                mCounterView = new TextView(getContext());
+                mCounterView = new AppCompatTextView(getContext());
+                mCounterView.setId(R.id.textinput_counter);
+                if (mTypeface != null) {
+                    mCounterView.setTypeface(mTypeface);
+                }
                 mCounterView.setMaxLines(1);
                 try {
                     TextViewCompat.setTextAppearance(mCounterView, mCounterTextAppearance);
@@ -1041,6 +1077,13 @@ public class TextInputLayout extends LinearLayout {
                         passwordVisibilityToggleRequested();
                     }
                 });
+            }
+
+            if (mEditText != null && ViewCompat.getMinimumHeight(mEditText) <= 0) {
+                // We should make sure that the EditText has the same min-height as the password
+                // toggle view. This ensure focus works properly, and there is no visual jump
+                // if the password toggle is enabled/disabled.
+                mEditText.setMinimumHeight(ViewCompat.getMinimumHeight(mPasswordToggleView));
             }
 
             mPasswordToggleView.setVisibility(VISIBLE);
@@ -1378,13 +1421,13 @@ public class TextInputLayout extends LinearLayout {
             return;
         }
         if (mAnimator == null) {
-            mAnimator = ViewUtils.createAnimator();
+            mAnimator = new ValueAnimator();
             mAnimator.setInterpolator(AnimationUtils.LINEAR_INTERPOLATOR);
             mAnimator.setDuration(ANIMATION_DURATION);
-            mAnimator.addUpdateListener(new ValueAnimatorCompat.AnimatorUpdateListener() {
+            mAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
-                public void onAnimationUpdate(ValueAnimatorCompat animator) {
-                    mCollapsingTextHelper.setExpansionFraction(animator.getAnimatedFloatValue());
+                public void onAnimationUpdate(ValueAnimator animator) {
+                    mCollapsingTextHelper.setExpansionFraction((float) animator.getAnimatedValue());
                 }
             });
         }

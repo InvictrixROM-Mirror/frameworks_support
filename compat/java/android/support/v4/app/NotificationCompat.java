@@ -2019,6 +2019,14 @@ public class NotificationCompat {
      * In order to get a backwards compatible behavior, the app needs to use the v7 version of the
      * notification builder together with this style, otherwise the user will see the normal
      * notification view.
+     *
+     * <br>
+     * Use {@link MessagingStyle#setConversationTitle(CharSequence)} to set a conversation title for
+     * group chats with more than two people. This could be the user-created name of the group or,
+     * if it doesn't have a specific name, a list of the participants in the conversation. Do not
+     * set a conversation title for one-on-one chats, since platforms use the existence of this
+     * field as a hint that the conversation is a group.
+     *
      * <br>
      * This class is a "rebuilder": It attaches to a Builder object and modifies its behavior, like
      * so:
@@ -2417,7 +2425,7 @@ public class NotificationCompat {
     public static class Action extends NotificationCompatBase.Action {
         final Bundle mExtras;
         private final RemoteInput[] mRemoteInputs;
-        private boolean mAllowGeneratedReplies = false;
+        private boolean mAllowGeneratedReplies;
 
         /**
          * Small icon representing the action.
@@ -2434,7 +2442,7 @@ public class NotificationCompat {
         public PendingIntent actionIntent;
 
         public Action(int icon, CharSequence title, PendingIntent intent) {
-            this(icon, title, intent, new Bundle(), null, false);
+            this(icon, title, intent, new Bundle(), null, true);
         }
 
         Action(int icon, CharSequence title, PendingIntent intent, Bundle extras,
@@ -2495,7 +2503,7 @@ public class NotificationCompat {
             private final int mIcon;
             private final CharSequence mTitle;
             private final PendingIntent mIntent;
-            private boolean mAllowGeneratedReplies;
+            private boolean mAllowGeneratedReplies = true;
             private final Bundle mExtras;
             private ArrayList<RemoteInput> mRemoteInputs;
 
@@ -2506,7 +2514,7 @@ public class NotificationCompat {
              * @param intent the {@link PendingIntent} to fire when users trigger this action
              */
             public Builder(int icon, CharSequence title, PendingIntent intent) {
-                this(icon, title, intent, new Bundle(), null, false);
+                this(icon, title, intent, new Bundle(), null, true);
             }
 
             /**
@@ -2575,7 +2583,7 @@ public class NotificationCompat {
              * @param allowGeneratedReplies {@code true} to allow generated replies, {@code false}
              * otherwise
              * @return this object for method chaining
-             * The default value is {@code false}
+             * The default value is {@code true}
              */
             public Builder setAllowGeneratedReplies(boolean allowGeneratedReplies) {
                 mAllowGeneratedReplies = allowGeneratedReplies;

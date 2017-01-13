@@ -19,6 +19,9 @@ package android.support.design.widget;
 import static android.support.annotation.RestrictTo.Scope.LIBRARY_GROUP;
 import static android.support.design.widget.AnimationUtils.FAST_OUT_SLOW_IN_INTERPOLATOR;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.os.Build;
@@ -28,7 +31,6 @@ import android.os.Message;
 import android.support.annotation.IntDef;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.annotation.RestrictTo;
 import android.support.design.R;
 import android.support.v4.view.ViewCompat;
@@ -61,7 +63,7 @@ public abstract class BaseTransientBottomBar<B extends BaseTransientBottomBar<B>
      * Base class for {@link BaseTransientBottomBar} callbacks.
      *
      * @param <B> The transient bottom bar subclass.
-     * @see BaseTransientBottomBar#setCallback(BaseCallback)
+     * @see BaseTransientBottomBar#addCallback(BaseCallback)
      */
     public abstract static class BaseCallback<B> {
         /** Indicates that the Snackbar was dismissed via a swipe.*/
@@ -168,8 +170,11 @@ public abstract class BaseTransientBottomBar<B extends BaseTransientBottomBar<B>
     static final int MSG_SHOW = 0;
     static final int MSG_DISMISS = 1;
 
-    private static final boolean IS_ON_JELLYBEAN = (Build.VERSION.SDK_INT >= 16)
-            && (Build.VERSION.SDK_INT <= 18);
+    // On JB/KK versions of the platform sometimes View.setTranslationY does not
+    // result in layout / draw pass, and CoordinatorLayout relies on a draw pass to
+    // happen to sync vertical positioning of all its child views
+    private static final boolean USE_OFFSET_API = (Build.VERSION.SDK_INT >= 16)
+            && (Build.VERSION.SDK_INT <= 19);
 
     static {
         sHandler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
@@ -194,8 +199,7 @@ public abstract class BaseTransientBottomBar<B extends BaseTransientBottomBar<B>
     private final ContentViewCallback mContentViewCallback;
     private int mDuration;
 
-    @Nullable private BaseCallback mCallback;
-    private List<BaseCallback> mCallbacks;
+    private List<BaseCallback<B>> mCallbacks;
 
     private final AccessibilityManager mAccessibilityManager;
 
@@ -331,35 +335,6 @@ public abstract class BaseTransientBottomBar<B extends BaseTransientBottomBar<B>
     }
 
     /**
-     * Set a callback to be called when this the visibility of this {@link BaseTransientBottomBar}
-     * changes. Note that this method is deprecated
-     * and you should use {@link #addCallback(BaseCallback)} to add a callback and
-     * {@link #removeCallback(BaseCallback)} to remove a registered callback.
-     *
-     * @param callback Callback to notify when transient bottom bar events occur.
-     * @deprecated Use {@link #addCallback(BaseCallback)}
-     * @see BaseCallback
-     * @see #addCallback(BaseCallback)
-     * @see #removeCallback(BaseCallback)
-     */
-    @Deprecated
-    @NonNull
-    public B setCallback(BaseCallback callback) {
-        // The logic in this method emulates what we had before support for multiple
-        // registered callbacks.
-        if (mCallback != null) {
-            removeCallback(mCallback);
-        }
-        if (callback != null) {
-            addCallback(callback);
-        }
-        // Update the deprecated field so that we can remove the passed callback the next
-        // time we're called
-        mCallback = callback;
-        return (B) this;
-    }
-
-    /**
      * Adds the specified callback to the list of callbacks that will be notified of transient
      * bottom bar events.
      *
@@ -367,12 +342,12 @@ public abstract class BaseTransientBottomBar<B extends BaseTransientBottomBar<B>
      * @see #removeCallback(BaseCallback)
      */
     @NonNull
-    public B addCallback(@NonNull BaseCallback callback) {
+    public B addCallback(@NonNull BaseCallback<B> callback) {
         if (callback == null) {
             return (B) this;
         }
         if (mCallbacks == null) {
-            mCallbacks = new ArrayList<BaseCallback>();
+            mCallbacks = new ArrayList<BaseCallback<B>>();
         }
         mCallbacks.add(callback);
         return (B) this;
@@ -386,7 +361,7 @@ public abstract class BaseTransientBottomBar<B extends BaseTransientBottomBar<B>
      * @see #addCallback(BaseCallback)
      */
     @NonNull
-    public B removeCallback(@NonNull BaseCallback callback) {
+    public B removeCallback(@NonNull BaseCallback<B> callback) {
         if (callback == null) {
             return (B) this;
         }
@@ -520,41 +495,39 @@ public abstract class BaseTransientBottomBar<B extends BaseTransientBottomBar<B>
     void animateViewIn() {
         if (Build.VERSION.SDK_INT >= 12) {
             final int viewHeight = mView.getHeight();
-            if (IS_ON_JELLYBEAN) {
+            if (USE_OFFSET_API) {
                 ViewCompat.offsetTopAndBottom(mView, viewHeight);
             } else {
                 ViewCompat.setTranslationY(mView, viewHeight);
             }
-            final ValueAnimatorCompat animator = ViewUtils.createAnimator();
+            final ValueAnimator animator = new ValueAnimator();
             animator.setIntValues(viewHeight, 0);
             animator.setInterpolator(FAST_OUT_SLOW_IN_INTERPOLATOR);
             animator.setDuration(ANIMATION_DURATION);
-            animator.addListener(new ValueAnimatorCompat.AnimatorListenerAdapter() {
+            animator.addListener(new AnimatorListenerAdapter() {
                 @Override
-                public void onAnimationStart(ValueAnimatorCompat animator) {
+                public void onAnimationStart(Animator animator) {
                     mContentViewCallback.animateContentIn(
                             ANIMATION_DURATION - ANIMATION_FADE_DURATION,
                             ANIMATION_FADE_DURATION);
                 }
 
                 @Override
-                public void onAnimationEnd(ValueAnimatorCompat animator) {
+                public void onAnimationEnd(Animator animator) {
                     onViewShown();
                 }
             });
-            animator.addUpdateListener(new ValueAnimatorCompat.AnimatorUpdateListener() {
+            animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 private int mPreviousAnimatedIntValue = viewHeight;
 
                 @Override
-                public void onAnimationUpdate(ValueAnimatorCompat animator) {
-                    int currentAnimatedIntValue = animator.getAnimatedIntValue();
-                    if (IS_ON_JELLYBEAN) {
-                        // On JB versions of the platform sometimes View.setTranslationY does not
-                        // result in layout / draw pass
+                public void onAnimationUpdate(ValueAnimator animator) {
+                    int currentAnimatedIntValue = (int) animator.getAnimatedValue();
+                    if (USE_OFFSET_API) {
                         ViewCompat.offsetTopAndBottom(mView,
                                 currentAnimatedIntValue - mPreviousAnimatedIntValue);
                     } else {
-                        ViewCompat.setTranslationY(mView, animator.getAnimatedIntValue());
+                        ViewCompat.setTranslationY(mView, currentAnimatedIntValue);
                     }
                     mPreviousAnimatedIntValue = currentAnimatedIntValue;
                 }
@@ -583,34 +556,32 @@ public abstract class BaseTransientBottomBar<B extends BaseTransientBottomBar<B>
 
     private void animateViewOut(final int event) {
         if (Build.VERSION.SDK_INT >= 12) {
-            final ValueAnimatorCompat animator = ViewUtils.createAnimator();
+            final ValueAnimator animator = new ValueAnimator();
             animator.setIntValues(0, mView.getHeight());
             animator.setInterpolator(FAST_OUT_SLOW_IN_INTERPOLATOR);
             animator.setDuration(ANIMATION_DURATION);
-            animator.addListener(new ValueAnimatorCompat.AnimatorListenerAdapter() {
+            animator.addListener(new AnimatorListenerAdapter() {
                 @Override
-                public void onAnimationStart(ValueAnimatorCompat animator) {
+                public void onAnimationStart(Animator animator) {
                     mContentViewCallback.animateContentOut(0, ANIMATION_FADE_DURATION);
                 }
 
                 @Override
-                public void onAnimationEnd(ValueAnimatorCompat animator) {
+                public void onAnimationEnd(Animator animator) {
                     onViewHidden(event);
                 }
             });
-            animator.addUpdateListener(new ValueAnimatorCompat.AnimatorUpdateListener() {
+            animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 private int mPreviousAnimatedIntValue = 0;
 
                 @Override
-                public void onAnimationUpdate(ValueAnimatorCompat animator) {
-                    int currentAnimatedIntValue = animator.getAnimatedIntValue();
-                    if (IS_ON_JELLYBEAN) {
-                        // On JB versions of the platform sometimes View.setTranslationY does not
-                        // result in layout / draw pass
+                public void onAnimationUpdate(ValueAnimator animator) {
+                    int currentAnimatedIntValue = (int) animator.getAnimatedValue();
+                    if (USE_OFFSET_API) {
                         ViewCompat.offsetTopAndBottom(mView,
                                 currentAnimatedIntValue - mPreviousAnimatedIntValue);
                     } else {
-                        ViewCompat.setTranslationY(mView, animator.getAnimatedIntValue());
+                        ViewCompat.setTranslationY(mView, currentAnimatedIntValue);
                     }
                     mPreviousAnimatedIntValue = currentAnimatedIntValue;
                 }
@@ -653,7 +624,7 @@ public abstract class BaseTransientBottomBar<B extends BaseTransientBottomBar<B>
             // removes itself as the result of being called, it won't mess up with our iteration
             int callbackCount = mCallbacks.size();
             for (int i = callbackCount - 1; i >= 0; i--) {
-                mCallbacks.get(i).onShown(this);
+                mCallbacks.get(i).onShown((B) this);
             }
         }
     }
@@ -666,7 +637,7 @@ public abstract class BaseTransientBottomBar<B extends BaseTransientBottomBar<B>
             // removes itself as the result of being called, it won't mess up with our iteration
             int callbackCount = mCallbacks.size();
             for (int i = callbackCount - 1; i >= 0; i--) {
-                mCallbacks.get(i).onDismissed(this, event);
+                mCallbacks.get(i).onDismissed((B) this, event);
             }
         }
         if (Build.VERSION.SDK_INT < 11) {

@@ -19,7 +19,6 @@ package android.support.v7.widget;
 import static android.support.annotation.RestrictTo.Scope.LIBRARY_GROUP;
 import static android.support.v7.widget.SuggestionsAdapter.getColumnString;
 
-import android.annotation.TargetApi;
 import android.app.PendingIntent;
 import android.app.SearchManager;
 import android.app.SearchableInfo;
@@ -402,7 +401,6 @@ public class SearchView extends LinearLayoutCompat implements CollapsibleActionV
         updateQueryHint();
     }
 
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     private void addOnLayoutChangeListenerToDropDownAnchorSDK11() {
         mDropDownAnchor.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override
@@ -511,8 +509,6 @@ public class SearchView extends LinearLayoutCompat implements CollapsibleActionV
         return mSearchSrcTextView.getInputType();
     }
 
-    /** @hide */
-    @RestrictTo(LIBRARY_GROUP)
     @Override
     public boolean requestFocus(int direction, Rect previouslyFocusedRect) {
         // Don't accept focus if in the middle of clearing focus
@@ -531,8 +527,6 @@ public class SearchView extends LinearLayoutCompat implements CollapsibleActionV
         }
     }
 
-    /** @hide */
-    @RestrictTo(LIBRARY_GROUP)
     @Override
     public void clearFocus() {
         mClearingFocus = true;

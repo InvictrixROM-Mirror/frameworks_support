@@ -16,7 +16,6 @@
 
 package android.support.v7.media;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -30,7 +29,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RequiresApi(16)
-@TargetApi(16)
 final class MediaRouterJellybean {
     private static final String TAG = "MediaRouterJellybean";
 
@@ -121,9 +119,9 @@ final class MediaRouterJellybean {
             Field globalRouterField = routerObj.getClass().getDeclaredField("sStatic");
             globalRouterField.setAccessible(true);
             Object globalRouterObj = globalRouterField.get(null);
-            Method method = globalRouterObj.getClass().getDeclaredMethod("isBluetoothA2dpOn", null);
+            Method method = globalRouterObj.getClass().getDeclaredMethod("isBluetoothA2dpOn");
             method.setAccessible(true);
-            Object result = method.invoke(globalRouterObj, null);
+            Object result = method.invoke(globalRouterObj);
             return (Boolean) result;
         } catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException
                 | NoSuchMethodException | InvocationTargetException e) {

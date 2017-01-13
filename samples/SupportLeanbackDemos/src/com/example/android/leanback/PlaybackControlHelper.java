@@ -19,9 +19,7 @@ package com.example.android.leanback;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
-import android.support.v17.leanback.app.MediaPlayerGlue;
 import android.support.v17.leanback.app.PlaybackControlGlue;
-import android.support.v17.leanback.app.PlaybackGlue;
 import android.support.v17.leanback.widget.Action;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.ControlButtonPresenterSelector;
@@ -33,7 +31,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Toast;
 
-abstract class PlaybackControlHelper extends MediaPlayerGlue {
+abstract class PlaybackControlHelper extends PlaybackControlGlue {
     /**
      * Change the location of the thumbs up/down controls
      */
@@ -56,17 +54,20 @@ abstract class PlaybackControlHelper extends MediaPlayerGlue {
     private PlaybackControlsRow.ThumbsDownAction mThumbsDownAction;
     private PlaybackControlsRow.PictureInPictureAction mPipAction;
 
-    private static Handler sHandler = new Handler();
+    private Handler mHandler = new Handler();
+    // simulating whether the media is yet prepared and ready to play
+    private boolean mInitialized = true;
+
     private final Runnable mUpdateProgressRunnable = new Runnable() {
         @Override
         public void run() {
             updateProgress();
-            sHandler.postDelayed(this, getUpdatePeriod());
+            mHandler.postDelayed(this, getUpdatePeriod());
         }
     };
 
-    public PlaybackControlHelper(Context context, PlaybackGlue.PlaybackGlueHost host) {
-        super(context, host, sFastForwardSpeeds, sFastForwardSpeeds);
+    PlaybackControlHelper(Context context, PlaybackOverlayFragment fragment) {
+        super(context, fragment, sFastForwardSpeeds);
         mThumbsUpAction = new PlaybackControlsRow.ThumbsUpAction(context);
         mThumbsUpAction.setIndex(PlaybackControlsRow.ThumbsUpAction.OUTLINE);
         mThumbsDownAction = new PlaybackControlsRow.ThumbsDownAction(context);
@@ -161,7 +162,7 @@ abstract class PlaybackControlHelper extends MediaPlayerGlue {
 
     @Override
     public boolean hasValidMedia() {
-        return true;
+        return mInitialized;
     }
 
     @Override
@@ -181,7 +182,7 @@ abstract class PlaybackControlHelper extends MediaPlayerGlue {
 
     @Override
     public int getMediaDuration() {
-        return FAUX_DURATION;
+        return mInitialized ? FAUX_DURATION : 0;
     }
 
     @Override
@@ -230,7 +231,7 @@ abstract class PlaybackControlHelper extends MediaPlayerGlue {
     }
 
     void onPlaybackComplete(final boolean ended) {
-        sHandler.post(new Runnable() {
+        mHandler.post(new Runnable() {
             @Override
             public void run() {
                 if (mRepeatAction.getIndex() == PlaybackControlsRow.RepeatAction.NONE) {
@@ -277,9 +278,21 @@ abstract class PlaybackControlHelper extends MediaPlayerGlue {
 
     @Override
     public void enableProgressUpdating(boolean enable) {
-        sHandler.removeCallbacks(mUpdateProgressRunnable);
+        mHandler.removeCallbacks(mUpdateProgressRunnable);
         if (enable) {
             mUpdateProgressRunnable.run();
         }
     }
-}
+
+    public boolean isInitialized() {
+        return mInitialized;
+    }
+
+    public void setInitialized(boolean initialized) {
+        if (mInitialized != initialized) {
+            mInitialized = initialized;
+            onMetadataChanged();
+            onStateChanged();
+        }
+    }
+};

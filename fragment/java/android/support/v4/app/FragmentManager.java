@@ -32,6 +32,7 @@ import android.support.annotation.IdRes;
 import android.support.annotation.RestrictTo;
 import android.support.annotation.StringRes;
 import android.support.v4.os.BuildCompat;
+import android.support.v4.util.ArraySet;
 import android.support.v4.util.DebugUtils;
 import android.support.v4.util.LogWriter;
 import android.support.v4.util.Pair;
@@ -385,6 +386,18 @@ public abstract class FragmentManager {
     public abstract void unregisterFragmentLifecycleCallbacks(FragmentLifecycleCallbacks cb);
 
     /**
+     * Return the currently active primary navigation fragment for this FragmentManager.
+     *
+     * <p>The primary navigation fragment's
+     * {@link Fragment#getChildFragmentManager() child FragmentManager} will be called first
+     * to process delegated navigation actions such as {@link #popBackStack()} if no ID
+     * or transaction name is provided to pop to.</p>
+     *
+     * @return the fragment designated as the primary navigation fragment
+     */
+    public abstract Fragment getPrimaryNavigationFragment();
+
+    /**
      * Print the FragmentManager's state into the given stream.
      *
      * @param prefix Text to print at the front of each line.
@@ -407,7 +420,7 @@ public abstract class FragmentManager {
      * Callback interface for listening to fragment state changes that happen
      * within a given FragmentManager.
      */
-    public abstract class FragmentLifecycleCallbacks {
+    public abstract static class FragmentLifecycleCallbacks {
         /**
          * Called right before the fragment's {@link Fragment#onAttach(Context)} method is called.
          * This is a good time to inject any required dependencies for the fragment before any of
@@ -543,6 +556,7 @@ final class FragmentManagerState implements Parcelable {
     FragmentState[] mActive;
     int[] mAdded;
     BackStackState[] mBackStack;
+    int mPrimaryNavActiveIndex = -1;
 
     public FragmentManagerState() {
     }
@@ -551,6 +565,7 @@ final class FragmentManagerState implements Parcelable {
         mActive = in.createTypedArray(FragmentState.CREATOR);
         mAdded = in.createIntArray();
         mBackStack = in.createTypedArray(BackStackState.CREATOR);
+        mPrimaryNavActiveIndex = in.readInt();
     }
 
     @Override
@@ -563,6 +578,7 @@ final class FragmentManagerState implements Parcelable {
         dest.writeTypedArray(mActive, flags);
         dest.writeIntArray(mAdded);
         dest.writeTypedArray(mBackStack, flags);
+        dest.writeInt(mPrimaryNavActiveIndex);
     }
 
     public static final Parcelable.Creator<FragmentManagerState> CREATOR
@@ -682,6 +698,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
     FragmentHostCallback mHost;
     FragmentContainer mContainer;
     Fragment mParent;
+    Fragment mPrimaryNav;
 
     static Field sAnimationListenerField = null;
 
@@ -815,6 +832,16 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         execPendingActions();
         ensureExecReady(true);
 
+        if (mPrimaryNav != null // We have a primary nav fragment
+                && id < 0 // No valid id (since they're local)
+                && name == null) { // no name to pop to (since they're local)
+            final FragmentManager childManager = mPrimaryNav.peekChildFragmentManager();
+            if (childManager != null && childManager.popBackStackImmediate()) {
+                // We did something, just not to this specific FragmentManager. Return true.
+                return true;
+            }
+        }
+
         boolean executePop = popBackStackState(mTmpRecords, mTmpIsPop, name, id, flags);
         if (executePop) {
             mExecutingActions = true;
@@ -883,7 +910,11 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
 
     @Override
     public List<Fragment> getFragments() {
-        return mActive;
+        List<Fragment> result = new ArrayList<>();
+        if (mActive != null) {
+            result.addAll(mActive);
+        }
+        return result;
     }
 
     @Override
@@ -1295,15 +1326,17 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                                 }
                                 if (container != null) {
                                     container.addView(f.mView);
-                                    f.mIsNewlyAdded = true;
                                 }
                                 if (f.mHidden) {
                                     f.mView.setVisibility(View.GONE);
-                                    f.mIsNewlyAdded = false; // No animation
                                 }
                                 f.onViewCreated(f.mView, f.mSavedFragmentState);
                                 dispatchOnFragmentViewCreated(f, f.mView, f.mSavedFragmentState,
                                         false);
+                                // Only animate the view if it is visible. This is done after
+                                // dispatchOnFragmentViewCreated in case visibility is changed
+                                f.mIsNewlyAdded = (f.mView.getVisibility() == View.VISIBLE)
+                                        && f.mContainer != null;
                             } else {
                                 f.mInnerView = null;
                             }
@@ -1369,10 +1402,12 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                         if (f.mView != null && f.mContainer != null) {
                             Animation anim = null;
                             if (mCurState > Fragment.INITIALIZING && !mDestroyed
-                                    && f.mView.getVisibility() == View.VISIBLE) {
+                                    && f.mView.getVisibility() == View.VISIBLE
+                                    && f.mPostponedAlpha >= 0) {
                                 anim = loadAnimation(f, transit, false,
                                         transitionStyle);
                             }
+                            f.mPostponedAlpha = 0;
                             if (anim != null) {
                                 final Fragment fragment = f;
                                 f.setAnimatingAway(f.mView);
@@ -1548,7 +1583,12 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             }
             if (f.mIsNewlyAdded && f.mContainer != null) {
                 // Make it visible and run the animations
-                f.mView.setVisibility(View.VISIBLE);
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+                    f.mView.setVisibility(View.VISIBLE);
+                } else if (f.mPostponedAlpha > 0f) {
+                    f.mView.setAlpha(f.mPostponedAlpha);
+                }
+                f.mPostponedAlpha = 0f;
                 f.mIsNewlyAdded = false;
                 // run animations:
                 Animation anim = loadAnimation(f, f.getNextTransition(), true,
@@ -2123,11 +2163,12 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         if (mAdded != null) {
             mTmpAddedFragments.addAll(mAdded);
         }
+        Fragment oldPrimaryNav = getPrimaryNavigationFragment();
         for (int recordNum = startIndex; recordNum < endIndex; recordNum++) {
             final BackStackRecord record = records.get(recordNum);
             final boolean isPop = isRecordPop.get(recordNum);
             if (!isPop) {
-                record.expandReplaceOps(mTmpAddedFragments);
+                oldPrimaryNav = record.expandOps(mTmpAddedFragments, oldPrimaryNav);
             }
             final int bumpAmount = isPop ? -1 : 1;
             record.bumpBackStackNesting(bumpAmount);
@@ -2143,9 +2184,11 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
 
         int postponeIndex = endIndex;
         if (allowOptimization) {
-            moveFragmentsToInvisible();
+            ArraySet<Fragment> addedFragments = new ArraySet<>();
+            addAddedFragments(addedFragments);
             postponeIndex = postponePostponableTransactions(records, isRecordPop,
-                    startIndex, endIndex);
+                    startIndex, endIndex, addedFragments);
+            makeRemovedFragmentsInvisible(addedFragments);
         }
 
         if (postponeIndex != startIndex && allowOptimization) {
@@ -2169,6 +2212,30 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
     }
 
     /**
+     * Any fragments that were removed because they have been postponed should have their views
+     * made invisible by setting their alpha to 0 on API >= 11 or setting visibility to INVISIBLE
+     * on API < 11.
+     *
+     * @param fragments The fragments that were added during operation execution. Only the ones
+     *                  that are no longer added will have their alpha changed.
+     */
+    private void makeRemovedFragmentsInvisible(ArraySet<Fragment> fragments) {
+        final int numAdded = fragments.size();
+        for (int i = 0; i < numAdded; i++) {
+            final Fragment fragment = fragments.valueAt(i);
+            if (!fragment.mAdded) {
+                final View view = fragment.getView();
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+                    fragment.getView().setVisibility(View.INVISIBLE);
+                } else {
+                    fragment.mPostponedAlpha = view.getAlpha();
+                    view.setAlpha(0f);
+                }
+            }
+        }
+    }
+
+    /**
      * Examine all transactions and determine which ones are marked as postponed. Those will
      * have their operations rolled back and moved to the end of the record list (up to endIndex).
      * It will also add the postponed transaction to the queue.
@@ -2181,7 +2248,8 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
      * postponed.
      */
     private int postponePostponableTransactions(ArrayList<BackStackRecord> records,
-            ArrayList<Boolean> isRecordPop, int startIndex, int endIndex) {
+            ArrayList<Boolean> isRecordPop, int startIndex, int endIndex,
+            ArraySet<Fragment> added) {
         int postponeIndex = endIndex;
         for (int i = endIndex - 1; i >= startIndex; i--) {
             final BackStackRecord record = records.get(i);
@@ -2212,7 +2280,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                 }
 
                 // different views may be visible now
-                moveFragmentsToInvisible();
+                addAddedFragments(added);
             }
         }
         return postponeIndex;
@@ -2245,15 +2313,26 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         }
         if (moveToState) {
             moveToState(mCurState, true);
-        } else if (mActive != null) {
+        }
+
+        if (mActive != null) {
             final int numActive = mActive.size();
             for (int i = 0; i < numActive; i++) {
                 // Allow added fragments to be removed during the pop since we aren't going
                 // to move them to the final state with moveToState(mCurState).
                 Fragment fragment = mActive.get(i);
-                if (fragment.mView != null && fragment.mIsNewlyAdded
+                if (fragment != null && fragment.mView != null && fragment.mIsNewlyAdded
                         && record.interactsWith(fragment.mContainerId)) {
-                    fragment.mIsNewlyAdded = false;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB
+                            && fragment.mPostponedAlpha > 0) {
+                        fragment.mView.setAlpha(fragment.mPostponedAlpha);
+                    }
+                    if (moveToState) {
+                        fragment.mPostponedAlpha = 0;
+                    } else {
+                        fragment.mPostponedAlpha = -1;
+                        fragment.mIsNewlyAdded = false;
+                    }
                 }
             }
         }
@@ -2317,10 +2396,11 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
 
     /**
      * Ensure that fragments that are added are moved to at least the CREATED state.
-     * Any newly-added Views are made INVISIBLE so that the Transaction can be postponed
-     * with {@link Fragment#postponeEnterTransition()}.
+     * Any newly-added Views are inserted into {@code added} so that the Transaction can be
+     * postponed with {@link Fragment#postponeEnterTransition()}. They will later be made
+     * invisible (by setting their alpha to 0) if they have been removed when postponed.
      */
-    private void moveFragmentsToInvisible() {
+    private void addAddedFragments(ArraySet<Fragment> added) {
         if (mCurState < Fragment.CREATED) {
             return;
         }
@@ -2333,7 +2413,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                 moveToState(fragment, state, fragment.getNextAnim(), fragment.getNextTransition(),
                         false);
                 if (fragment.mView != null && !fragment.mHidden && fragment.mIsNewlyAdded) {
-                    fragment.mView.setVisibility(View.INVISIBLE);
+                    added.add(fragment);
                 }
             }
         }
@@ -2363,7 +2443,10 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                 final int stateAfterAnimating = fragment.getStateAfterAnimating();
                 final View animatingAway = fragment.getAnimatingAway();
                 fragment.setAnimatingAway(null);
-                animatingAway.clearAnimation();
+                Animation animation = animatingAway.getAnimation();
+                if (animation != null) {
+                    animation.cancel();
+                }
                 moveToState(fragment, stateAfterAnimating, 0, 0, false);
             }
         }
@@ -2381,20 +2464,20 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
      */
     private boolean generateOpsForPendingActions(ArrayList<BackStackRecord> records,
             ArrayList<Boolean> isPop) {
-        int numActions;
+        boolean didSomething = false;
         synchronized (this) {
             if (mPendingActions == null || mPendingActions.size() == 0) {
                 return false;
             }
 
-            numActions = mPendingActions.size();
+            final int numActions = mPendingActions.size();
             for (int i = 0; i < numActions; i++) {
-                mPendingActions.get(i).generateOps(records, isPop);
+                didSomething |= mPendingActions.get(i).generateOps(records, isPop);
             }
             mPendingActions.clear();
             mHost.getHandler().removeCallbacks(mExecCommit);
         }
-        return numActions > 0;
+        return didSomething;
     }
 
     void doPendingDeferredStart() {
@@ -2693,6 +2776,9 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         fms.mActive = active;
         fms.mAdded = added;
         fms.mBackStack = backStack;
+        if (mPrimaryNav != null) {
+            fms.mPrimaryNavActiveIndex = mPrimaryNav.mIndex;
+        }
         return fms;
     }
 
@@ -2817,6 +2903,10 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             }
         } else {
             mBackStack = null;
+        }
+
+        if (fms.mPrimaryNavActiveIndex >= 0) {
+            mPrimaryNav = mActive.get(fms.mPrimaryNavActiveIndex);
         }
     }
 
@@ -3012,6 +3102,19 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                 }
             }
         }
+    }
+
+    public void setPrimaryNavigationFragment(Fragment f) {
+        if (f != null && (f.getFragmentManager() != this || f.mIndex >= mActive.size()
+                || mActive.get(f.mIndex) != f)) {
+            throw new IllegalArgumentException("Fragment " + f
+                    + " is not an active fragment of FragmentManager " + this);
+        }
+        mPrimaryNav = f;
+    }
+
+    public Fragment getPrimaryNavigationFragment() {
+        return mPrimaryNav;
     }
 
     public void registerFragmentLifecycleCallbacks(FragmentLifecycleCallbacks cb,
@@ -3459,6 +3562,16 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         @Override
         public boolean generateOps(ArrayList<BackStackRecord> records,
                 ArrayList<Boolean> isRecordPop) {
+            if (mPrimaryNav != null // We have a primary nav fragment
+                    && mId < 0 // No valid id (since they're local)
+                    && mName == null) { // no name to pop to (since they're local)
+                final FragmentManager childManager = mPrimaryNav.peekChildFragmentManager();
+                if (childManager != null && childManager.popBackStackImmediate()) {
+                    // We didn't add any operations for this FragmentManager even though
+                    // a child did do work.
+                    return false;
+                }
+            }
             return popBackStackState(records, isRecordPop, mName, mId, mFlags);
         }
     }

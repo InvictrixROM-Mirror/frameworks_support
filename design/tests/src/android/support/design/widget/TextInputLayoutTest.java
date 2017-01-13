@@ -19,19 +19,27 @@ package android.support.design.widget;
 import static android.support.design.testutils.TestUtilsActions.setCompoundDrawablesRelative;
 import static android.support.design.testutils.TestUtilsActions.setEnabled;
 import static android.support.design.testutils.TestUtilsMatchers.withCompoundDrawable;
+import static android.support.design.testutils.TestUtilsMatchers.withTextColor;
+import static android.support.design.testutils.TestUtilsMatchers.withTypeface;
+import static android.support.design.testutils.TextInputLayoutActions.setCounterEnabled;
+import static android.support.design.testutils.TextInputLayoutActions.setCounterMaxLength;
 import static android.support.design.testutils.TextInputLayoutActions.setError;
 import static android.support.design.testutils.TextInputLayoutActions.setErrorEnabled;
+import static android.support.design.testutils.TextInputLayoutActions.setErrorTextAppearance;
 import static android.support.design.testutils.TextInputLayoutActions
         .setPasswordVisibilityToggleEnabled;
+import static android.support.design.testutils.TextInputLayoutActions.setTypeface;
 import static android.support.design.testutils.TextInputLayoutMatchers
         .hasPasswordToggleContentDescription;
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.action.ViewActions.typeText;
 import static android.support.test.espresso.assertion.ViewAssertions.doesNotExist;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
-import static android.support.test.espresso.matcher.ViewMatchers.hasContentDescription;
 import static android.support.test.espresso.contrib.AccessibilityChecks.accessibilityAssertion;
+import static android.support.test.espresso.matcher.ViewMatchers.hasContentDescription;
+import static android.support.test.espresso.matcher.ViewMatchers.hasFocus;
 import static android.support.test.espresso.matcher.ViewMatchers.isChecked;
 import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.isEnabled;
@@ -47,18 +55,20 @@ import static org.junit.Assert.assertTrue;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Parcelable;
 import android.support.design.test.R;
+import android.support.design.testutils.TestUtils;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.espresso.NoMatchingViewException;
 import android.support.test.espresso.ViewAssertion;
-import android.support.test.espresso.contrib.AccessibilityChecks;
 import android.support.test.filters.SmallTest;
 import android.support.v4.widget.TextViewCompat;
 import android.util.AttributeSet;
 import android.util.SparseArray;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
@@ -72,6 +82,8 @@ public class TextInputLayoutTest extends BaseInstrumentationTestCase<TextInputLa
     private static final String ERROR_MESSAGE_2 = "Some other error has occured";
 
     private static final String INPUT_TEXT = "Random input text";
+
+    private static final Typeface CUSTOM_TYPEFACE = Typeface.SANS_SERIF;
 
     public class TestTextInputLayout extends TextInputLayout {
         public int animateToExpansionFractionCount = 0;
@@ -407,6 +419,65 @@ public class TextInputLayoutTest extends BaseInstrumentationTestCase<TextInputLa
     public void testPasswordToggleIsAccessible() {
         onView(withId(R.id.text_input_password_toggle))
                 .check(accessibilityAssertion());
+    }
+
+    @Test
+    public void testSetTypefaceUpdatesErrorView() {
+        onView(withId(R.id.textinput))
+                .perform(setErrorEnabled(true))
+                .perform(setError(ERROR_MESSAGE_1))
+                .perform(setTypeface(CUSTOM_TYPEFACE));
+
+        // Check that the error message is updated
+        onView(withText(ERROR_MESSAGE_1))
+                .check(matches(withTypeface(CUSTOM_TYPEFACE)));
+    }
+
+    @Test
+    public void testSetTypefaceUpdatesCharacterCountView() {
+        // Turn on character counting
+        onView(withId(R.id.textinput))
+                .perform(setCounterEnabled(true), setCounterMaxLength(10))
+                .perform(setTypeface(CUSTOM_TYPEFACE));
+
+        // Check that the counter message is updated
+        onView(withId(R.id.textinput_counter))
+                .check(matches(withTypeface(CUSTOM_TYPEFACE)));
+    }
+
+    @Test
+    public void testThemedColorStateListForErrorTextColor() {
+        final Activity activity = mActivityTestRule.getActivity();
+        final int textColor = TestUtils.getThemeAttrColor(activity, R.attr.colorAccent);
+
+        onView(withId(R.id.textinput))
+                .perform(setErrorEnabled(true))
+                .perform(setError(ERROR_MESSAGE_1))
+                .perform(setErrorTextAppearance(R.style.TextAppearanceWithThemedCslTextColor));
+
+        onView(withText(ERROR_MESSAGE_1))
+                .check(matches(withTextColor(textColor)));
+    }
+
+    @Test
+    public void testTextSetViaAttributeCollapsedHint() {
+        onView(withId(R.id.textinput_with_text))
+                .check(isHintExpanded(false));
+    }
+
+    @Test
+    public void testFocusMovesToEditTextWithPasswordEnabled() {
+        // Focus the preceding EditText
+        onView(withId(R.id.textinput_edittext))
+                .perform(click())
+                .check(matches(hasFocus()));
+
+        // Then send a TAB to focus the next view
+        getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_TAB);
+
+        // And check that the EditText is focused
+        onView(withId(R.id.textinput_edittext_pwd))
+                .check(matches(hasFocus()));
     }
 
     static ViewAssertion isHintExpanded(final boolean expanded) {
