@@ -113,25 +113,7 @@ class NotificationCompatApi24 {
 
         @Override
         public void addAction(NotificationCompatBase.Action action) {
-            Notification.Action.Builder actionBuilder = new Notification.Action.Builder(
-                    action.getIcon(), action.getTitle(), action.getActionIntent());
-            if (action.getRemoteInputs() != null) {
-                for (RemoteInput remoteInput : RemoteInputCompatApi20.fromCompat(
-                        action.getRemoteInputs())) {
-                    actionBuilder.addRemoteInput(remoteInput);
-                }
-            }
-            Bundle actionExtras;
-            if (action.getExtras() != null) {
-                actionExtras = new Bundle(action.getExtras());
-            } else {
-                actionExtras = new Bundle();
-            }
-            actionExtras.putBoolean(NotificationCompatJellybean.EXTRA_ALLOW_GENERATED_REPLIES,
-                    action.getAllowGeneratedReplies());
-            actionBuilder.addExtras(actionExtras);
-            actionBuilder.setAllowGeneratedReplies(action.getAllowGeneratedReplies());
-            b.addAction(actionBuilder.build());
+            NotificationCompatApi24.addAction(b, action);
         }
 
         @Override
@@ -160,5 +142,27 @@ class NotificationCompatApi24 {
             style.addMessage(message);
         }
         style.setBuilder(b.getBuilder());
+    }
+
+    public static void addAction(Notification.Builder b, NotificationCompatBase.Action action) {
+        Notification.Action.Builder actionBuilder = new Notification.Action.Builder(
+                action.getIcon(), action.getTitle(), action.getActionIntent());
+        if (action.getRemoteInputs() != null) {
+            for (RemoteInput remoteInput : RemoteInputCompatApi20.fromCompat(
+                    action.getRemoteInputs())) {
+                actionBuilder.addRemoteInput(remoteInput);
+            }
+        }
+        Bundle actionExtras;
+        if (action.getExtras() != null) {
+            actionExtras = new Bundle(action.getExtras());
+        } else {
+            actionExtras = new Bundle();
+        }
+        actionExtras.putBoolean(NotificationCompatJellybean.EXTRA_ALLOW_GENERATED_REPLIES,
+                action.getAllowGeneratedReplies());
+        actionBuilder.addExtras(actionExtras);
+        actionBuilder.setAllowGeneratedReplies(action.getAllowGeneratedReplies());
+        b.addAction(actionBuilder.build());
     }
 }

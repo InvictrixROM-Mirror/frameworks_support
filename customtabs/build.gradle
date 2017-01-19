@@ -29,3 +29,9 @@ android {
         main.resources.srcDir 'java'
     }
 }
+
+supportLibrary {
+    name 'Android Support Custom Tabs'
+    inceptionYear '2015'
+    description 'Android Support Custom Tabs'
+}

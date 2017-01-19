@@ -228,6 +228,8 @@ final class BackStackRecord extends FragmentTransaction implements
     ArrayList<String> mSharedElementTargetNames;
     boolean mAllowOptimization = false;
 
+    ArrayList<Runnable> mCommitRunnables;
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder(128);
@@ -606,6 +608,28 @@ final class BackStackRecord extends FragmentTransaction implements
     }
 
     @Override
+    public FragmentTransaction postOnCommit(Runnable runnable) {
+        if (runnable == null) {
+            throw new IllegalArgumentException("runnable cannot be null");
+        }
+        disallowAddToBackStack();
+        if (mCommitRunnables == null) {
+            mCommitRunnables = new ArrayList<>();
+        }
+        mCommitRunnables.add(runnable);
+        return this;
+    }
+
+    public void runOnCommitRunnables() {
+        if (mCommitRunnables != null) {
+            for (int i = 0, N = mCommitRunnables.size(); i < N; i++) {
+                mCommitRunnables.get(i).run();
+            }
+            mCommitRunnables = null;
+        }
+    }
+
+    @Override
     public int commit() {
         return commitInternal(false);
     }
@@ -640,6 +664,7 @@ final class BackStackRecord extends FragmentTransaction implements
             LogWriter logw = new LogWriter(TAG);
             PrintWriter pw = new PrintWriter(logw);
             dump("  ", null, pw, null);
+            pw.close();
         }
         mCommitted = true;
         if (mAddToBackStack) {
@@ -816,7 +841,7 @@ final class BackStackRecord extends FragmentTransaction implements
                 default:
                     throw new IllegalArgumentException("Unknown cmd: " + op.cmd);
             }
-            if (!mAllowOptimization && op.cmd != OP_ADD && f != null) {
+            if (!mAllowOptimization && op.cmd != OP_REMOVE && f != null) {
                 mManager.moveFragmentToExpectedState(f);
             }
         }
@@ -911,6 +936,39 @@ final class BackStackRecord extends FragmentTransaction implements
                     oldPrimaryNav = op.fragment;
                 }
                 break;
+            }
+        }
+        return oldPrimaryNav;
+    }
+
+    /**
+     * Removes fragments that are added or removed during a pop operation.
+     *
+     * @param added Initialized to the fragments that are in the mManager.mAdded, this
+     *              will be modified to contain the fragments that will be in mAdded
+     *              after the execution ({@link #executeOps()}.
+     * @param oldPrimaryNav The tracked primary navigation fragment as of the beginning of
+     *                      this set of ops
+     * @return the new oldPrimaryNav fragment after this record's ops would be popped
+     */
+    Fragment trackAddedFragmentsInPop(ArrayList<Fragment> added, Fragment oldPrimaryNav) {
+        for (int opNum = 0; opNum < mOps.size(); opNum++) {
+            final Op op = mOps.get(opNum);
+            switch (op.cmd) {
+                case OP_ADD:
+                case OP_ATTACH:
+                    added.remove(op.fragment);
+                    break;
+                case OP_REMOVE:
+                case OP_DETACH:
+                    added.add(op.fragment);
+                    break;
+                case OP_UNSET_PRIMARY_NAV:
+                    oldPrimaryNav = op.fragment;
+                    break;
+                case OP_SET_PRIMARY_NAV:
+                    oldPrimaryNav = null;
+                    break;
             }
         }
         return oldPrimaryNav;

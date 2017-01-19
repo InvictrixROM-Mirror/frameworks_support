@@ -1888,6 +1888,10 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         }
     }
 
+    public boolean isStateSaved() {
+        return mStateSaved;
+    }
+
     /**
      * Adds an action to the queue of pending actions.
      *
@@ -2126,11 +2130,13 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                 if (startIndex != recordNum) {
                     executeOpsTogether(records, isRecordPop, startIndex, recordNum);
                 }
-                // execute all unoptimized together
-                int optimizeEnd;
-                for (optimizeEnd = recordNum + 1; optimizeEnd < numRecords; optimizeEnd++) {
-                    if (records.get(optimizeEnd).mAllowOptimization) {
-                        break;
+                // execute all unoptimized pop operations together or one add operation
+                int optimizeEnd = recordNum + 1;
+                if (isRecordPop.get(recordNum)) {
+                    while (optimizeEnd < numRecords
+                            && isRecordPop.get(optimizeEnd)
+                            && !records.get(optimizeEnd).mAllowOptimization) {
+                        optimizeEnd++;
                     }
                 }
                 executeOpsTogether(records, isRecordPop, recordNum, optimizeEnd);
@@ -2169,6 +2175,8 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             final boolean isPop = isRecordPop.get(recordNum);
             if (!isPop) {
                 oldPrimaryNav = record.expandOps(mTmpAddedFragments, oldPrimaryNav);
+            } else {
+                oldPrimaryNav = record.trackAddedFragmentsInPop(mTmpAddedFragments, oldPrimaryNav);
             }
             final int bumpAmount = isPop ? -1 : 1;
             record.bumpBackStackNesting(bumpAmount);
@@ -2205,6 +2213,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                 freeBackStackIndex(record.mIndex);
                 record.mIndex = -1;
             }
+            record.runOnCommitRunnables();
         }
         if (addToBackStack) {
             reportBackStackChanged();
@@ -2895,6 +2904,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                     LogWriter logw = new LogWriter(TAG);
                     PrintWriter pw = new PrintWriter(logw);
                     bse.dump("  ", pw, false);
+                    pw.close();
                 }
                 mBackStack.add(bse);
                 if (bse.mIndex >= 0) {

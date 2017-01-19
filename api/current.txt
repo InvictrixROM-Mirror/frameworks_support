@@ -2049,6 +2049,7 @@ package android.support.v17.leanback.app {
     method public void setFadingEnabled(boolean);
     method public void setHostCallback(android.support.v17.leanback.media.PlaybackGlueHost.HostCallback);
     method public void setOnItemViewClickedListener(android.support.v17.leanback.widget.BaseOnItemViewClickedListener);
+    method public void setOnItemViewSelectedListener(android.support.v17.leanback.widget.BaseOnItemViewSelectedListener);
     method public final void setOnKeyInterceptListener(android.view.View.OnKeyListener);
     method public void setOnPlaybackItemViewClickedListener(android.support.v17.leanback.widget.BaseOnItemViewClickedListener);
     method public void setPlaybackRow(android.support.v17.leanback.widget.Row);
@@ -2133,6 +2134,7 @@ package android.support.v17.leanback.app {
     method public void setFadingEnabled(boolean);
     method public void setHostCallback(android.support.v17.leanback.media.PlaybackGlueHost.HostCallback);
     method public void setOnItemViewClickedListener(android.support.v17.leanback.widget.BaseOnItemViewClickedListener);
+    method public void setOnItemViewSelectedListener(android.support.v17.leanback.widget.BaseOnItemViewSelectedListener);
     method public final void setOnKeyInterceptListener(android.view.View.OnKeyListener);
     method public void setOnPlaybackItemViewClickedListener(android.support.v17.leanback.widget.BaseOnItemViewClickedListener);
     method public void setPlaybackRow(android.support.v17.leanback.widget.Row);
@@ -4219,6 +4221,7 @@ package android.support.v4.app {
     method public final boolean isInLayout();
     method public final boolean isRemoving();
     method public final boolean isResumed();
+    method public final boolean isStateSaved();
     method public final boolean isVisible();
     method public void onActivityCreated(android.os.Bundle);
     method public void onActivityResult(int, int, android.content.Intent);
@@ -4482,6 +4485,7 @@ package android.support.v4.app {
     method public abstract android.support.v4.app.FragmentTransaction hide(android.support.v4.app.Fragment);
     method public abstract boolean isAddToBackStackAllowed();
     method public abstract boolean isEmpty();
+    method public abstract android.support.v4.app.FragmentTransaction postOnCommit(java.lang.Runnable);
     method public abstract android.support.v4.app.FragmentTransaction remove(android.support.v4.app.Fragment);
     method public abstract android.support.v4.app.FragmentTransaction replace(int, android.support.v4.app.Fragment);
     method public abstract android.support.v4.app.FragmentTransaction replace(int, android.support.v4.app.Fragment, java.lang.String);
@@ -4553,6 +4557,7 @@ package android.support.v4.app {
     method public static android.support.v4.app.NotificationCompat.Action getAction(android.app.Notification, int);
     method public static int getActionCount(android.app.Notification);
     method public static java.lang.String getCategory(android.app.Notification);
+    method public static java.lang.String getChannel(android.app.Notification);
     method public static android.os.Bundle getExtras(android.app.Notification);
     method public static java.lang.String getGroup(android.app.Notification);
     method public static boolean getLocalOnly(android.app.Notification);
@@ -4702,6 +4707,7 @@ package android.support.v4.app {
     method protected static java.lang.CharSequence limitCharSequenceLength(java.lang.CharSequence);
     method public android.support.v4.app.NotificationCompat.Builder setAutoCancel(boolean);
     method public android.support.v4.app.NotificationCompat.Builder setCategory(java.lang.String);
+    method public android.support.v4.app.NotificationCompat.Builder setChannel(java.lang.String);
     method public android.support.v4.app.NotificationCompat.Builder setColor(int);
     method public android.support.v4.app.NotificationCompat.Builder setContent(android.widget.RemoteViews);
     method public android.support.v4.app.NotificationCompat.Builder setContentInfo(java.lang.CharSequence);
