@@ -98,15 +98,19 @@ final class FragmentState implements Parcelable {
         mSavedFragmentState = in.readBundle();
     }
 
-    public Fragment instantiate(FragmentHostCallback host, Fragment parent,
-            FragmentManagerNonConfig childNonConfig) {
+    public Fragment instantiate(FragmentHostCallback host, FragmentContainer container,
+            Fragment parent, FragmentManagerNonConfig childNonConfig) {
         if (mInstance == null) {
             final Context context = host.getContext();
             if (mArguments != null) {
                 mArguments.setClassLoader(context.getClassLoader());
             }
 
-            mInstance = Fragment.instantiate(context, mClassName, mArguments);
+            if (container != null) {
+                mInstance = container.instantiate(context, mClassName, mArguments);
+            } else {
+                mInstance = Fragment.instantiate(context, mClassName, mArguments);
+            }
 
             if (mSavedFragmentState != null) {
                 mSavedFragmentState.setClassLoader(context.getClassLoader());
@@ -615,6 +619,24 @@ public class Fragment implements ComponentCallbacks, OnCreateContextMenuListener
      * are going to call back with {@link #onActivityResult(int, int, Intent)}.
      */
     public void setTargetFragment(Fragment fragment, int requestCode) {
+        // Don't allow a caller to set a target fragment in another FragmentManager,
+        // but there's a snag: people do set target fragments before fragments get added.
+        // We'll have the FragmentManager check that for validity when we move
+        // the fragments to a valid state.
+        final FragmentManager mine = getFragmentManager();
+        final FragmentManager theirs = fragment.getFragmentManager();
+        if (mine != null && theirs != null && mine != theirs) {
+            throw new IllegalArgumentException("Fragment " + fragment
+                    + " must share the same FragmentManager to be set as a target fragment");
+        }
+
+        // Don't let someone create a cycle.
+        for (Fragment check = fragment; check != null; check = check.getTargetFragment()) {
+            if (check == this) {
+                throw new IllegalArgumentException("Setting " + fragment + " as the target of "
+                        + this + " would create a target cycle");
+            }
+        }
         mTarget = fragment;
         mTargetRequestCode = requestCode;
     }
@@ -2186,6 +2208,11 @@ public class Fragment implements ComponentCallbacks, OnCreateContextMenuListener
             @Override
             public boolean onHasView() {
                 return (mView != null);
+            }
+
+            @Override
+            public Fragment instantiate(Context context, String className, Bundle arguments) {
+                return mHost.instantiate(context, className, arguments);
             }
         }, this);
     }

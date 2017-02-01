@@ -1024,6 +1024,351 @@ package android.support.media {
 
 }
 
+package android.support.media.tv {
+
+  public final class Channel {
+    method public static android.support.media.tv.Channel fromCursor(android.database.Cursor);
+    method public int getAppLinkColor();
+    method public java.lang.String getAppLinkIconUri();
+    method public java.lang.String getAppLinkIntentUri();
+    method public java.lang.String getAppLinkPosterArtUri();
+    method public java.lang.String getAppLinkText();
+    method public java.lang.String getChannelLogo();
+    method public java.lang.String getDescription();
+    method public java.lang.String getDisplayName();
+    method public java.lang.String getDisplayNumber();
+    method public long getId();
+    method public java.lang.String getInputId();
+    method public byte[] getInternalProviderDataByteArray();
+    method public java.lang.Long getInternalProviderFlag1();
+    method public java.lang.Long getInternalProviderFlag2();
+    method public java.lang.Long getInternalProviderFlag3();
+    method public java.lang.Long getInternalProviderFlag4();
+    method public java.lang.String getNetworkAffiliation();
+    method public int getOriginalNetworkId();
+    method public java.lang.String getPackageName();
+    method public int getServiceId();
+    method public java.lang.String getServiceType();
+    method public int getTransportStreamId();
+    method public java.lang.String getType();
+    method public java.lang.String getVideoFormat();
+    method public boolean isSearchable();
+    method public android.content.ContentValues toContentValues();
+  }
+
+  public static final class Channel.Builder {
+    ctor public Channel.Builder();
+    ctor public Channel.Builder(android.support.media.tv.Channel);
+    method public android.support.media.tv.Channel build();
+    method public android.support.media.tv.Channel.Builder setAppLinkColor(int);
+    method public android.support.media.tv.Channel.Builder setAppLinkIconUri(java.lang.String);
+    method public android.support.media.tv.Channel.Builder setAppLinkIntent(android.content.Intent);
+    method public android.support.media.tv.Channel.Builder setAppLinkIntentUri(java.lang.String);
+    method public android.support.media.tv.Channel.Builder setAppLinkPosterArtUri(java.lang.String);
+    method public android.support.media.tv.Channel.Builder setAppLinkText(java.lang.String);
+    method public android.support.media.tv.Channel.Builder setChannelLogo(java.lang.String);
+    method public android.support.media.tv.Channel.Builder setDescription(java.lang.String);
+    method public android.support.media.tv.Channel.Builder setDisplayName(java.lang.String);
+    method public android.support.media.tv.Channel.Builder setDisplayNumber(java.lang.String);
+    method public android.support.media.tv.Channel.Builder setInputId(java.lang.String);
+    method public android.support.media.tv.Channel.Builder setInternalProviderData(byte[]);
+    method public android.support.media.tv.Channel.Builder setInternalProviderData(java.lang.String);
+    method public android.support.media.tv.Channel.Builder setInternalProviderFlag1(long);
+    method public android.support.media.tv.Channel.Builder setInternalProviderFlag2(long);
+    method public android.support.media.tv.Channel.Builder setInternalProviderFlag3(long);
+    method public android.support.media.tv.Channel.Builder setInternalProviderFlag4(long);
+    method public android.support.media.tv.Channel.Builder setNetworkAffiliation(java.lang.String);
+    method public android.support.media.tv.Channel.Builder setOriginalNetworkId(int);
+    method public android.support.media.tv.Channel.Builder setPackageName(java.lang.String);
+    method public android.support.media.tv.Channel.Builder setSearchable(boolean);
+    method public android.support.media.tv.Channel.Builder setServiceId(int);
+    method public android.support.media.tv.Channel.Builder setServiceType(java.lang.String);
+    method public android.support.media.tv.Channel.Builder setTransportStreamId(int);
+    method public android.support.media.tv.Channel.Builder setType(java.lang.String);
+    method public android.support.media.tv.Channel.Builder setVideoFormat(java.lang.String);
+  }
+
+  public final class Program implements java.lang.Comparable {
+    method public int compareTo(android.support.media.tv.Program);
+    method public static android.support.media.tv.Program fromCursor(android.database.Cursor);
+    method public java.lang.String[] getAudioLanguages();
+    method public java.lang.String[] getBroadcastGenres();
+    method public java.lang.String[] getCanonicalGenres();
+    method public long getChannelId();
+    method public android.media.tv.TvContentRating[] getContentRatings();
+    method public java.lang.String getDescription();
+    method public long getEndTimeUtcMillis();
+    method public java.lang.String getEpisodeNumber();
+    method public java.lang.String getEpisodeTitle();
+    method public long getId();
+    method public byte[] getInternalProviderDataByteArray();
+    method public java.lang.Long getInternalProviderFlag1();
+    method public java.lang.Long getInternalProviderFlag2();
+    method public java.lang.Long getInternalProviderFlag3();
+    method public java.lang.Long getInternalProviderFlag4();
+    method public java.lang.String getInternalProviderId();
+    method public java.lang.String getLongDescription();
+    method public java.lang.String getPosterArtUri();
+    method public java.lang.String getPreviewAppLinkIntentUri();
+    method public int getPreviewDuration();
+    method public int getPreviewLastPlaybackPosition();
+    method public java.lang.String getPreviewVideoUri();
+    method public int getPreviewWeight();
+    method public java.lang.String getSeasonNumber();
+    method public java.lang.String getSeasonTitle();
+    method public long getStartTimeUtcMillis();
+    method public java.lang.String getThumbnailUri();
+    method public java.lang.String getTitle();
+    method public int getVideoHeight();
+    method public int getVideoWidth();
+    method public boolean isRecordingProhibited();
+    method public boolean isSearchable();
+    method public android.content.ContentValues toContentValues();
+  }
+
+  public static final class Program.Builder {
+    ctor public Program.Builder();
+    ctor public Program.Builder(android.support.media.tv.Program);
+    method public android.support.media.tv.Program build();
+    method public android.support.media.tv.Program.Builder setAudioLanguages(java.lang.String[]);
+    method public android.support.media.tv.Program.Builder setBroadcastGenres(java.lang.String[]);
+    method public android.support.media.tv.Program.Builder setCanonicalGenres(java.lang.String[]);
+    method public android.support.media.tv.Program.Builder setChannelId(long);
+    method public android.support.media.tv.Program.Builder setContentRatings(android.media.tv.TvContentRating[]);
+    method public android.support.media.tv.Program.Builder setDescription(java.lang.String);
+    method public android.support.media.tv.Program.Builder setEndTimeUtcMillis(long);
+    method public android.support.media.tv.Program.Builder setEpisodeNumber(int);
+    method public android.support.media.tv.Program.Builder setEpisodeNumber(java.lang.String, int);
+    method public android.support.media.tv.Program.Builder setEpisodeTitle(java.lang.String);
+    method public android.support.media.tv.Program.Builder setId(long);
+    method public android.support.media.tv.Program.Builder setInternalProviderData(byte[]);
+    method public android.support.media.tv.Program.Builder setInternalProviderFlag1(long);
+    method public android.support.media.tv.Program.Builder setInternalProviderFlag2(long);
+    method public android.support.media.tv.Program.Builder setInternalProviderFlag3(long);
+    method public android.support.media.tv.Program.Builder setInternalProviderFlag4(long);
+    method public android.support.media.tv.Program.Builder setInternalProviderId(java.lang.String);
+    method public android.support.media.tv.Program.Builder setLongDescription(java.lang.String);
+    method public android.support.media.tv.Program.Builder setPosterArtUri(java.lang.String);
+    method public android.support.media.tv.Program.Builder setPreviewDuration(int);
+    method public android.support.media.tv.Program.Builder setPreviewIntentUri(java.lang.String);
+    method public android.support.media.tv.Program.Builder setPreviewLastPlaybackPosition(int);
+    method public android.support.media.tv.Program.Builder setPreviewVideoUri(java.lang.String);
+    method public android.support.media.tv.Program.Builder setPreviewWeight(int);
+    method public android.support.media.tv.Program.Builder setRecordingProhibited(boolean);
+    method public android.support.media.tv.Program.Builder setSearchable(boolean);
+    method public android.support.media.tv.Program.Builder setSeasonNumber(int);
+    method public android.support.media.tv.Program.Builder setSeasonNumber(java.lang.String, int);
+    method public android.support.media.tv.Program.Builder setSeasonTitle(java.lang.String);
+    method public android.support.media.tv.Program.Builder setStartTimeUtcMillis(long);
+    method public android.support.media.tv.Program.Builder setThumbnailUri(java.lang.String);
+    method public android.support.media.tv.Program.Builder setTitle(java.lang.String);
+    method public android.support.media.tv.Program.Builder setVideoHeight(int);
+    method public android.support.media.tv.Program.Builder setVideoWidth(int);
+  }
+
+  public final class TvContractCompat {
+    method public static android.net.Uri buildChannelLogoUri(long);
+    method public static android.net.Uri buildChannelLogoUri(android.net.Uri);
+    method public static android.net.Uri buildChannelUri(long);
+    method public static android.net.Uri buildChannelUriForPassthroughInput(java.lang.String);
+    method public static android.net.Uri buildChannelsUriForInput(java.lang.String);
+    method public static java.lang.String buildInputId(android.content.ComponentName);
+    method public static android.net.Uri buildProgramUri(long);
+    method public static android.net.Uri buildProgramsUriForChannel(long);
+    method public static android.net.Uri buildProgramsUriForChannel(android.net.Uri);
+    method public static android.net.Uri buildProgramsUriForChannel(long, long, long);
+    method public static android.net.Uri buildProgramsUriForChannel(android.net.Uri, long, long);
+    method public static android.net.Uri buildRecordedProgramUri(long);
+    method public static boolean isChannelUri(android.net.Uri);
+    method public static boolean isChannelUriForPassthroughInput(android.net.Uri);
+    method public static boolean isChannelUriForTunerInput(android.net.Uri);
+    method public static boolean isProgramUri(android.net.Uri);
+    field public static final java.lang.String AUTHORITY = "android.media.tv";
+  }
+
+  public static abstract interface TvContractCompat.BaseTvColumns {
+    field public static final java.lang.String COLUMN_PACKAGE_NAME = "package_name";
+  }
+
+  public static final class TvContractCompat.Channels implements android.support.media.tv.TvContractCompat.BaseTvColumns {
+    method public static java.lang.String getVideoResolution(java.lang.String);
+    field public static final java.lang.String COLUMN_APP_LINK_COLOR = "app_link_color";
+    field public static final java.lang.String COLUMN_APP_LINK_ICON_URI = "app_link_icon_uri";
+    field public static final java.lang.String COLUMN_APP_LINK_INTENT_URI = "app_link_intent_uri";
+    field public static final java.lang.String COLUMN_APP_LINK_POSTER_ART_URI = "app_link_poster_art_uri";
+    field public static final java.lang.String COLUMN_APP_LINK_TEXT = "app_link_text";
+    field public static final java.lang.String COLUMN_DESCRIPTION = "description";
+    field public static final java.lang.String COLUMN_DISPLAY_NAME = "display_name";
+    field public static final java.lang.String COLUMN_DISPLAY_NUMBER = "display_number";
+    field public static final java.lang.String COLUMN_INPUT_ID = "input_id";
+    field public static final java.lang.String COLUMN_INTERNAL_PROVIDER_DATA = "internal_provider_data";
+    field public static final java.lang.String COLUMN_INTERNAL_PROVIDER_FLAG1 = "internal_provider_flag1";
+    field public static final java.lang.String COLUMN_INTERNAL_PROVIDER_FLAG2 = "internal_provider_flag2";
+    field public static final java.lang.String COLUMN_INTERNAL_PROVIDER_FLAG3 = "internal_provider_flag3";
+    field public static final java.lang.String COLUMN_INTERNAL_PROVIDER_FLAG4 = "internal_provider_flag4";
+    field public static final java.lang.String COLUMN_NETWORK_AFFILIATION = "network_affiliation";
+    field public static final java.lang.String COLUMN_ORIGINAL_NETWORK_ID = "original_network_id";
+    field public static final java.lang.String COLUMN_SEARCHABLE = "searchable";
+    field public static final java.lang.String COLUMN_SERVICE_ID = "service_id";
+    field public static final java.lang.String COLUMN_SERVICE_TYPE = "service_type";
+    field public static final java.lang.String COLUMN_TRANSPORT_STREAM_ID = "transport_stream_id";
+    field public static final java.lang.String COLUMN_TYPE = "type";
+    field public static final java.lang.String COLUMN_VERSION_NUMBER = "version_number";
+    field public static final java.lang.String COLUMN_VIDEO_FORMAT = "video_format";
+    field public static final java.lang.String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/channel";
+    field public static final java.lang.String CONTENT_TYPE = "vnd.android.cursor.dir/channel";
+    field public static final android.net.Uri CONTENT_URI;
+    field public static final java.lang.String SERVICE_TYPE_AUDIO = "SERVICE_TYPE_AUDIO";
+    field public static final java.lang.String SERVICE_TYPE_AUDIO_VIDEO = "SERVICE_TYPE_AUDIO_VIDEO";
+    field public static final java.lang.String SERVICE_TYPE_OTHER = "SERVICE_TYPE_OTHER";
+    field public static final java.lang.String TYPE_1SEG = "TYPE_1SEG";
+    field public static final java.lang.String TYPE_ATSC_C = "TYPE_ATSC_C";
+    field public static final java.lang.String TYPE_ATSC_M_H = "TYPE_ATSC_M_H";
+    field public static final java.lang.String TYPE_ATSC_T = "TYPE_ATSC_T";
+    field public static final java.lang.String TYPE_CMMB = "TYPE_CMMB";
+    field public static final java.lang.String TYPE_DTMB = "TYPE_DTMB";
+    field public static final java.lang.String TYPE_DVB_C = "TYPE_DVB_C";
+    field public static final java.lang.String TYPE_DVB_C2 = "TYPE_DVB_C2";
+    field public static final java.lang.String TYPE_DVB_H = "TYPE_DVB_H";
+    field public static final java.lang.String TYPE_DVB_S = "TYPE_DVB_S";
+    field public static final java.lang.String TYPE_DVB_S2 = "TYPE_DVB_S2";
+    field public static final java.lang.String TYPE_DVB_SH = "TYPE_DVB_SH";
+    field public static final java.lang.String TYPE_DVB_T = "TYPE_DVB_T";
+    field public static final java.lang.String TYPE_DVB_T2 = "TYPE_DVB_T2";
+    field public static final java.lang.String TYPE_ISDB_C = "TYPE_ISDB_C";
+    field public static final java.lang.String TYPE_ISDB_S = "TYPE_ISDB_S";
+    field public static final java.lang.String TYPE_ISDB_T = "TYPE_ISDB_T";
+    field public static final java.lang.String TYPE_ISDB_TB = "TYPE_ISDB_TB";
+    field public static final java.lang.String TYPE_NTSC = "TYPE_NTSC";
+    field public static final java.lang.String TYPE_OTHER = "TYPE_OTHER";
+    field public static final java.lang.String TYPE_PAL = "TYPE_PAL";
+    field public static final java.lang.String TYPE_PREVIEW = "TYPE_PREVIEW";
+    field public static final java.lang.String TYPE_SECAM = "TYPE_SECAM";
+    field public static final java.lang.String TYPE_S_DMB = "TYPE_S_DMB";
+    field public static final java.lang.String TYPE_T_DMB = "TYPE_T_DMB";
+    field public static final java.lang.String VIDEO_FORMAT_1080I = "VIDEO_FORMAT_1080I";
+    field public static final java.lang.String VIDEO_FORMAT_1080P = "VIDEO_FORMAT_1080P";
+    field public static final java.lang.String VIDEO_FORMAT_2160P = "VIDEO_FORMAT_2160P";
+    field public static final java.lang.String VIDEO_FORMAT_240P = "VIDEO_FORMAT_240P";
+    field public static final java.lang.String VIDEO_FORMAT_360P = "VIDEO_FORMAT_360P";
+    field public static final java.lang.String VIDEO_FORMAT_4320P = "VIDEO_FORMAT_4320P";
+    field public static final java.lang.String VIDEO_FORMAT_480I = "VIDEO_FORMAT_480I";
+    field public static final java.lang.String VIDEO_FORMAT_480P = "VIDEO_FORMAT_480P";
+    field public static final java.lang.String VIDEO_FORMAT_576I = "VIDEO_FORMAT_576I";
+    field public static final java.lang.String VIDEO_FORMAT_576P = "VIDEO_FORMAT_576P";
+    field public static final java.lang.String VIDEO_FORMAT_720P = "VIDEO_FORMAT_720P";
+    field public static final java.lang.String VIDEO_RESOLUTION_ED = "VIDEO_RESOLUTION_ED";
+    field public static final java.lang.String VIDEO_RESOLUTION_FHD = "VIDEO_RESOLUTION_FHD";
+    field public static final java.lang.String VIDEO_RESOLUTION_HD = "VIDEO_RESOLUTION_HD";
+    field public static final java.lang.String VIDEO_RESOLUTION_SD = "VIDEO_RESOLUTION_SD";
+    field public static final java.lang.String VIDEO_RESOLUTION_UHD = "VIDEO_RESOLUTION_UHD";
+  }
+
+  public static final class TvContractCompat.Channels.Logo {
+    field public static final java.lang.String CONTENT_DIRECTORY = "logo";
+  }
+
+  public static final class TvContractCompat.Programs implements android.support.media.tv.TvContractCompat.BaseTvColumns {
+    field public static final java.lang.String COLUMN_AUDIO_LANGUAGE = "audio_language";
+    field public static final java.lang.String COLUMN_BROADCAST_GENRE = "broadcast_genre";
+    field public static final java.lang.String COLUMN_CANONICAL_GENRE = "canonical_genre";
+    field public static final java.lang.String COLUMN_CHANNEL_ID = "channel_id";
+    field public static final java.lang.String COLUMN_CONTENT_RATING = "content_rating";
+    field public static final java.lang.String COLUMN_END_TIME_UTC_MILLIS = "end_time_utc_millis";
+    field public static final java.lang.String COLUMN_EPISODE_DISPLAY_NUMBER = "episode_display_number";
+    field public static final deprecated java.lang.String COLUMN_EPISODE_NUMBER = "episode_number";
+    field public static final java.lang.String COLUMN_EPISODE_TITLE = "episode_title";
+    field public static final java.lang.String COLUMN_INTERNAL_PROVIDER_DATA = "internal_provider_data";
+    field public static final java.lang.String COLUMN_INTERNAL_PROVIDER_FLAG1 = "internal_provider_flag1";
+    field public static final java.lang.String COLUMN_INTERNAL_PROVIDER_FLAG2 = "internal_provider_flag2";
+    field public static final java.lang.String COLUMN_INTERNAL_PROVIDER_FLAG3 = "internal_provider_flag3";
+    field public static final java.lang.String COLUMN_INTERNAL_PROVIDER_FLAG4 = "internal_provider_flag4";
+    field public static final java.lang.String COLUMN_INTERNAL_PROVIDER_ID = "internal_provider_id";
+    field public static final java.lang.String COLUMN_LONG_DESCRIPTION = "long_description";
+    field public static final java.lang.String COLUMN_POSTER_ART_URI = "poster_art_uri";
+    field public static final java.lang.String COLUMN_PREVIEW_DURATION = "preview_duration";
+    field public static final java.lang.String COLUMN_PREVIEW_INTENT_URI = "preview_intent_uri";
+    field public static final java.lang.String COLUMN_PREVIEW_LAST_PLAYBACK_POSITION = "preview_last_playback_position";
+    field public static final java.lang.String COLUMN_PREVIEW_VIDEO_URI = "preview_video_uri";
+    field public static final java.lang.String COLUMN_PREVIEW_WEIGHT = "preview_weight";
+    field public static final java.lang.String COLUMN_RECORDING_PROHIBITED = "recording_prohibited";
+    field public static final java.lang.String COLUMN_SEARCHABLE = "searchable";
+    field public static final java.lang.String COLUMN_SEASON_DISPLAY_NUMBER = "season_display_number";
+    field public static final deprecated java.lang.String COLUMN_SEASON_NUMBER = "season_number";
+    field public static final java.lang.String COLUMN_SEASON_TITLE = "season_title";
+    field public static final java.lang.String COLUMN_SHORT_DESCRIPTION = "short_description";
+    field public static final java.lang.String COLUMN_START_TIME_UTC_MILLIS = "start_time_utc_millis";
+    field public static final java.lang.String COLUMN_THUMBNAIL_URI = "thumbnail_uri";
+    field public static final java.lang.String COLUMN_TITLE = "title";
+    field public static final java.lang.String COLUMN_VERSION_NUMBER = "version_number";
+    field public static final java.lang.String COLUMN_VIDEO_HEIGHT = "video_height";
+    field public static final java.lang.String COLUMN_VIDEO_WIDTH = "video_width";
+    field public static final java.lang.String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/program";
+    field public static final java.lang.String CONTENT_TYPE = "vnd.android.cursor.dir/program";
+    field public static final android.net.Uri CONTENT_URI;
+  }
+
+  public static final class TvContractCompat.Programs.Genres {
+    method public static java.lang.String[] decode(java.lang.String);
+    method public static java.lang.String encode(java.lang.String...);
+    method public static boolean isCanonical(java.lang.String);
+    field public static final java.lang.String ANIMAL_WILDLIFE = "ANIMAL_WILDLIFE";
+    field public static final java.lang.String ARTS = "ARTS";
+    field public static final java.lang.String COMEDY = "COMEDY";
+    field public static final java.lang.String DRAMA = "DRAMA";
+    field public static final java.lang.String EDUCATION = "EDUCATION";
+    field public static final java.lang.String ENTERTAINMENT = "ENTERTAINMENT";
+    field public static final java.lang.String FAMILY_KIDS = "FAMILY_KIDS";
+    field public static final java.lang.String GAMING = "GAMING";
+    field public static final java.lang.String LIFE_STYLE = "LIFE_STYLE";
+    field public static final java.lang.String MOVIES = "MOVIES";
+    field public static final java.lang.String MUSIC = "MUSIC";
+    field public static final java.lang.String NEWS = "NEWS";
+    field public static final java.lang.String PREMIER = "PREMIER";
+    field public static final java.lang.String SHOPPING = "SHOPPING";
+    field public static final java.lang.String SPORTS = "SPORTS";
+    field public static final java.lang.String TECH_SCIENCE = "TECH_SCIENCE";
+    field public static final java.lang.String TRAVEL = "TRAVEL";
+  }
+
+  public static final class TvContractCompat.RecordedPrograms implements android.support.media.tv.TvContractCompat.BaseTvColumns {
+    field public static final java.lang.String COLUMN_AUDIO_LANGUAGE = "audio_language";
+    field public static final java.lang.String COLUMN_BROADCAST_GENRE = "broadcast_genre";
+    field public static final java.lang.String COLUMN_CANONICAL_GENRE = "canonical_genre";
+    field public static final java.lang.String COLUMN_CHANNEL_ID = "channel_id";
+    field public static final java.lang.String COLUMN_CONTENT_RATING = "content_rating";
+    field public static final java.lang.String COLUMN_END_TIME_UTC_MILLIS = "end_time_utc_millis";
+    field public static final java.lang.String COLUMN_EPISODE_DISPLAY_NUMBER = "episode_display_number";
+    field public static final java.lang.String COLUMN_EPISODE_TITLE = "episode_title";
+    field public static final java.lang.String COLUMN_INPUT_ID = "input_id";
+    field public static final java.lang.String COLUMN_INTERNAL_PROVIDER_DATA = "internal_provider_data";
+    field public static final java.lang.String COLUMN_INTERNAL_PROVIDER_FLAG1 = "internal_provider_flag1";
+    field public static final java.lang.String COLUMN_INTERNAL_PROVIDER_FLAG2 = "internal_provider_flag2";
+    field public static final java.lang.String COLUMN_INTERNAL_PROVIDER_FLAG3 = "internal_provider_flag3";
+    field public static final java.lang.String COLUMN_INTERNAL_PROVIDER_FLAG4 = "internal_provider_flag4";
+    field public static final java.lang.String COLUMN_LONG_DESCRIPTION = "long_description";
+    field public static final java.lang.String COLUMN_POSTER_ART_URI = "poster_art_uri";
+    field public static final java.lang.String COLUMN_RECORDING_DATA_BYTES = "recording_data_bytes";
+    field public static final java.lang.String COLUMN_RECORDING_DATA_URI = "recording_data_uri";
+    field public static final java.lang.String COLUMN_RECORDING_DURATION_MILLIS = "recording_duration_millis";
+    field public static final java.lang.String COLUMN_RECORDING_EXPIRE_TIME_UTC_MILLIS = "recording_expire_time_utc_millis";
+    field public static final java.lang.String COLUMN_SEARCHABLE = "searchable";
+    field public static final java.lang.String COLUMN_SEASON_DISPLAY_NUMBER = "season_display_number";
+    field public static final java.lang.String COLUMN_SEASON_TITLE = "season_title";
+    field public static final java.lang.String COLUMN_SHORT_DESCRIPTION = "short_description";
+    field public static final java.lang.String COLUMN_START_TIME_UTC_MILLIS = "start_time_utc_millis";
+    field public static final java.lang.String COLUMN_THUMBNAIL_URI = "thumbnail_uri";
+    field public static final java.lang.String COLUMN_TITLE = "title";
+    field public static final java.lang.String COLUMN_VERSION_NUMBER = "version_number";
+    field public static final java.lang.String COLUMN_VIDEO_HEIGHT = "video_height";
+    field public static final java.lang.String COLUMN_VIDEO_WIDTH = "video_width";
+    field public static final java.lang.String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/recorded_program";
+    field public static final java.lang.String CONTENT_TYPE = "vnd.android.cursor.dir/recorded_program";
+    field public static final android.net.Uri CONTENT_URI;
+  }
+
+}
+
 package android.support.percent {
 
   public class PercentFrameLayout extends android.widget.FrameLayout {
@@ -1126,6 +1471,8 @@ package android.support.transition {
     method public android.support.transition.Transition addListener(android.support.transition.Transition.TransitionListener);
     method public android.support.transition.Transition addTarget(android.view.View);
     method public android.support.transition.Transition addTarget(int);
+    method public android.support.transition.Transition addTarget(java.lang.String);
+    method public android.support.transition.Transition addTarget(java.lang.Class);
     method public abstract void captureEndValues(android.support.transition.TransitionValues);
     method public abstract void captureStartValues(android.support.transition.TransitionValues);
     method public android.support.transition.Transition clone();
@@ -1135,21 +1482,31 @@ package android.support.transition {
     method public android.support.transition.Transition excludeChildren(java.lang.Class, boolean);
     method public android.support.transition.Transition excludeTarget(android.view.View, boolean);
     method public android.support.transition.Transition excludeTarget(int, boolean);
+    method public android.support.transition.Transition excludeTarget(java.lang.String, boolean);
     method public android.support.transition.Transition excludeTarget(java.lang.Class, boolean);
     method public long getDuration();
     method public android.animation.TimeInterpolator getInterpolator();
     method public java.lang.String getName();
     method public long getStartDelay();
     method public java.util.List<java.lang.Integer> getTargetIds();
+    method public java.util.List<java.lang.String> getTargetNames();
+    method public java.util.List<java.lang.Class> getTargetTypes();
     method public java.util.List<android.view.View> getTargets();
     method public java.lang.String[] getTransitionProperties();
     method public android.support.transition.TransitionValues getTransitionValues(android.view.View, boolean);
     method public android.support.transition.Transition removeListener(android.support.transition.Transition.TransitionListener);
     method public android.support.transition.Transition removeTarget(android.view.View);
     method public android.support.transition.Transition removeTarget(int);
+    method public android.support.transition.Transition removeTarget(java.lang.String);
+    method public android.support.transition.Transition removeTarget(java.lang.Class);
     method public android.support.transition.Transition setDuration(long);
     method public android.support.transition.Transition setInterpolator(android.animation.TimeInterpolator);
+    method public void setMatchOrder(int...);
     method public android.support.transition.Transition setStartDelay(long);
+    field public static final int MATCH_ID = 3; // 0x3
+    field public static final int MATCH_INSTANCE = 1; // 0x1
+    field public static final int MATCH_ITEM_ID = 4; // 0x4
+    field public static final int MATCH_NAME = 2; // 0x2
   }
 
   public static abstract interface Transition.TransitionListener {
@@ -1177,6 +1534,8 @@ package android.support.transition {
     method public void captureEndValues(android.support.transition.TransitionValues);
     method public void captureStartValues(android.support.transition.TransitionValues);
     method public int getOrdering();
+    method public android.support.transition.Transition getTransitionAt(int);
+    method public int getTransitionCount();
     method public android.support.transition.TransitionSet removeTransition(android.support.transition.Transition);
     method public android.support.transition.TransitionSet setOrdering(int);
     field public static final int ORDERING_SEQUENTIAL = 1; // 0x1
@@ -1276,6 +1635,7 @@ package android.support.v13.view.inputmethod {
     ctor public EditorInfoCompat();
     method public static java.lang.String[] getContentMimeTypes(android.view.inputmethod.EditorInfo);
     method public static void setContentMimeTypes(android.view.inputmethod.EditorInfo, java.lang.String[]);
+    field public static final int IME_FLAG_FORCE_ASCII = -2147483648; // 0x80000000
     field public static final int IME_FLAG_NO_PERSONALIZED_LEARNING = 16777216; // 0x1000000
   }
 
@@ -1708,6 +2068,7 @@ package android.support.v17.leanback.app {
     method protected java.lang.Object createEntranceTransition();
     method public android.support.v17.leanback.widget.ObjectAdapter getAdapter();
     method public android.support.v17.leanback.widget.BaseOnItemViewClickedListener getOnItemViewClickedListener();
+    method public android.support.v17.leanback.widget.DetailsParallax getParallax();
     method public android.support.v17.leanback.app.RowsFragment getRowsFragment();
     method protected deprecated android.view.View inflateTitle(android.view.LayoutInflater, android.view.ViewGroup, android.os.Bundle);
     method protected void onEntranceTransitionEnd();
@@ -1725,11 +2086,30 @@ package android.support.v17.leanback.app {
     method protected void setupPresenter(android.support.v17.leanback.widget.Presenter);
   }
 
+  public class DetailsFragmentBackgroundController {
+    ctor public DetailsFragmentBackgroundController(android.support.v17.leanback.app.DetailsFragment);
+    method public void enableParallax();
+    method public void enableParallax(android.graphics.drawable.Drawable, android.graphics.drawable.Drawable, android.support.v17.leanback.widget.ParallaxTarget.PropertyValuesHolderTarget);
+    method public final android.app.Fragment findOrCreateVideoFragment();
+    method public final android.graphics.drawable.Drawable getBottomDrawable();
+    method public final android.graphics.Bitmap getCoverBitmap();
+    method public final android.graphics.drawable.Drawable getCoverDrawable();
+    method public final int getParallaxDrawableMaxOffset();
+    method public final int getSolidColor();
+    method public android.support.v17.leanback.media.PlaybackGlueHost onCreateGlueHost();
+    method public android.app.Fragment onCreateVideoFragment();
+    method public final void setCoverBitmap(android.graphics.Bitmap);
+    method public final void setParallaxDrawableMaxOffset(int);
+    method public final void setSolidColor(int);
+    method public void setupVideoPlayback(android.support.v17.leanback.media.PlaybackGlue);
+  }
+
   public class DetailsSupportFragment extends android.support.v17.leanback.app.BrandedSupportFragment {
     ctor public DetailsSupportFragment();
     method protected java.lang.Object createEntranceTransition();
     method public android.support.v17.leanback.widget.ObjectAdapter getAdapter();
     method public android.support.v17.leanback.widget.BaseOnItemViewClickedListener getOnItemViewClickedListener();
+    method public android.support.v17.leanback.widget.DetailsParallax getParallax();
     method public android.support.v17.leanback.app.RowsSupportFragment getRowsSupportFragment();
     method protected deprecated android.view.View inflateTitle(android.view.LayoutInflater, android.view.ViewGroup, android.os.Bundle);
     method protected void onEntranceTransitionEnd();
@@ -1745,6 +2125,24 @@ package android.support.v17.leanback.app {
     method public void setSelectedPosition(int, boolean);
     method protected void setupDetailsOverviewRowPresenter(android.support.v17.leanback.widget.FullWidthDetailsOverviewRowPresenter);
     method protected void setupPresenter(android.support.v17.leanback.widget.Presenter);
+  }
+
+  public class DetailsSupportFragmentBackgroundController {
+    ctor public DetailsSupportFragmentBackgroundController(android.support.v17.leanback.app.DetailsSupportFragment);
+    method public void enableParallax();
+    method public void enableParallax(android.graphics.drawable.Drawable, android.graphics.drawable.Drawable, android.support.v17.leanback.widget.ParallaxTarget.PropertyValuesHolderTarget);
+    method public final android.support.v4.app.Fragment findOrCreateVideoSupportFragment();
+    method public final android.graphics.drawable.Drawable getBottomDrawable();
+    method public final android.graphics.Bitmap getCoverBitmap();
+    method public final android.graphics.drawable.Drawable getCoverDrawable();
+    method public final int getParallaxDrawableMaxOffset();
+    method public final int getSolidColor();
+    method public android.support.v17.leanback.media.PlaybackGlueHost onCreateGlueHost();
+    method public android.support.v4.app.Fragment onCreateVideoSupportFragment();
+    method public final void setCoverBitmap(android.graphics.Bitmap);
+    method public final void setParallaxDrawableMaxOffset(int);
+    method public final void setSolidColor(int);
+    method public void setupVideoPlayback(android.support.v17.leanback.media.PlaybackGlue);
   }
 
   public class ErrorFragment extends android.support.v17.leanback.app.BrandedFragment {
@@ -2301,6 +2699,28 @@ package android.support.v17.leanback.app {
     method public void setSelectedPosition(int);
   }
 
+  public class VideoFragment extends android.support.v17.leanback.app.PlaybackFragment {
+    ctor public VideoFragment();
+    method public android.view.SurfaceView getSurfaceView();
+    method public void setSurfaceHolderCallback(android.view.SurfaceHolder.Callback);
+  }
+
+  public class VideoFragmentGlueHost extends android.support.v17.leanback.app.PlaybackFragmentGlueHost implements android.support.v17.leanback.media.SurfaceHolderGlueHost {
+    ctor public VideoFragmentGlueHost(android.support.v17.leanback.app.VideoFragment);
+    method public void setSurfaceHolderCallback(android.view.SurfaceHolder.Callback);
+  }
+
+  public class VideoSupportFragment extends android.support.v17.leanback.app.PlaybackSupportFragment {
+    ctor public VideoSupportFragment();
+    method public android.view.SurfaceView getSurfaceView();
+    method public void setSurfaceHolderCallback(android.view.SurfaceHolder.Callback);
+  }
+
+  public class VideoSupportFragmentGlueHost extends android.support.v17.leanback.app.PlaybackSupportFragmentGlueHost implements android.support.v17.leanback.media.SurfaceHolderGlueHost {
+    ctor public VideoSupportFragmentGlueHost(android.support.v17.leanback.app.VideoSupportFragment);
+    method public void setSurfaceHolderCallback(android.view.SurfaceHolder.Callback);
+  }
+
 }
 
 package android.support.v17.leanback.database {
@@ -2315,6 +2735,26 @@ package android.support.v17.leanback.database {
 }
 
 package android.support.v17.leanback.graphics {
+
+  public class BoundsRule {
+    ctor public BoundsRule();
+    ctor public BoundsRule(android.support.v17.leanback.graphics.BoundsRule);
+    method public static android.support.v17.leanback.graphics.BoundsRule.ValueRule absoluteValue(int);
+    method public void calculateBounds(android.graphics.Rect, android.graphics.Rect);
+    method public static android.support.v17.leanback.graphics.BoundsRule.ValueRule inheritFromParent(float);
+    method public static android.support.v17.leanback.graphics.BoundsRule.ValueRule inheritFromParentWithOffset(float, int);
+    field public android.support.v17.leanback.graphics.BoundsRule.ValueRule bottom;
+    field public android.support.v17.leanback.graphics.BoundsRule.ValueRule left;
+    field public android.support.v17.leanback.graphics.BoundsRule.ValueRule right;
+    field public android.support.v17.leanback.graphics.BoundsRule.ValueRule top;
+  }
+
+  public static final class BoundsRule.ValueRule {
+    method public int getAbsoluteValue();
+    method public float getFraction();
+    method public void setAbsoluteValue(int);
+    method public void setFraction(float);
+  }
 
   public final class ColorFilterCache {
     method public static android.support.v17.leanback.graphics.ColorFilterCache getColorFilterCache(int);
@@ -2340,6 +2780,54 @@ package android.support.v17.leanback.graphics {
     method public android.graphics.Paint getPaint();
     method public boolean needsDraw();
     method public void setActiveLevel(float);
+  }
+
+  public class CompositeDrawable extends android.graphics.drawable.Drawable implements android.graphics.drawable.Drawable.Callback {
+    ctor public CompositeDrawable();
+    method public void addChildDrawable(android.graphics.drawable.Drawable);
+    method public void draw(android.graphics.Canvas);
+    method public android.support.v17.leanback.graphics.CompositeDrawable.ChildDrawable getChildAt(int);
+    method public int getChildCount();
+    method public android.graphics.drawable.Drawable getDrawable(int);
+    method public int getOpacity();
+    method public void invalidateDrawable(android.graphics.drawable.Drawable);
+    method public void removeChild(int);
+    method public void removeDrawable(android.graphics.drawable.Drawable);
+    method public void scheduleDrawable(android.graphics.drawable.Drawable, java.lang.Runnable, long);
+    method public void setAlpha(int);
+    method public void setChildDrawableAt(int, android.graphics.drawable.Drawable);
+    method public void setColorFilter(android.graphics.ColorFilter);
+    method public void unscheduleDrawable(android.graphics.drawable.Drawable, java.lang.Runnable);
+  }
+
+  public static final class CompositeDrawable.ChildDrawable {
+    ctor public CompositeDrawable.ChildDrawable(android.graphics.drawable.Drawable, android.support.v17.leanback.graphics.CompositeDrawable);
+    method public android.support.v17.leanback.graphics.BoundsRule getBoundsRule();
+    method public android.graphics.drawable.Drawable getDrawable();
+    method public void recomputeBounds();
+    field public static final android.util.Property<android.support.v17.leanback.graphics.CompositeDrawable.ChildDrawable, java.lang.Integer> BOTTOM_ABSOLUTE;
+    field public static final android.util.Property<android.support.v17.leanback.graphics.CompositeDrawable.ChildDrawable, java.lang.Float> BOTTOM_FRACTION;
+    field public static final android.util.Property<android.support.v17.leanback.graphics.CompositeDrawable.ChildDrawable, java.lang.Integer> LEFT_ABSOLUTE;
+    field public static final android.util.Property<android.support.v17.leanback.graphics.CompositeDrawable.ChildDrawable, java.lang.Float> LEFT_FRACTION;
+    field public static final android.util.Property<android.support.v17.leanback.graphics.CompositeDrawable.ChildDrawable, java.lang.Integer> RIGHT_ABSOLUTE;
+    field public static final android.util.Property<android.support.v17.leanback.graphics.CompositeDrawable.ChildDrawable, java.lang.Float> RIGHT_FRACTION;
+    field public static final android.util.Property<android.support.v17.leanback.graphics.CompositeDrawable.ChildDrawable, java.lang.Integer> TOP_ABSOLUTE;
+    field public static final android.util.Property<android.support.v17.leanback.graphics.CompositeDrawable.ChildDrawable, java.lang.Float> TOP_FRACTION;
+  }
+
+  public class FitWidthBitmapDrawable extends android.graphics.drawable.Drawable {
+    ctor public FitWidthBitmapDrawable();
+    method public void draw(android.graphics.Canvas);
+    method public android.graphics.Bitmap getBitmap();
+    method public int getOpacity();
+    method public android.graphics.Rect getSource();
+    method public int getVerticalOffset();
+    method public void setAlpha(int);
+    method public void setBitmap(android.graphics.Bitmap);
+    method public void setColorFilter(android.graphics.ColorFilter);
+    method public void setSource(android.graphics.Rect);
+    method public void setVerticalOffset(int);
+    field public static final android.util.Property<android.support.v17.leanback.graphics.FitWidthBitmapDrawable, java.lang.Integer> PROPERTY_VERTICAL_OFFSET;
   }
 
 }
@@ -2736,6 +3224,12 @@ package android.support.v17.leanback.widget {
   public final class DetailsOverviewRowPresenter.ViewHolder extends android.support.v17.leanback.widget.RowPresenter.ViewHolder {
     ctor public DetailsOverviewRowPresenter.ViewHolder(android.view.View, android.support.v17.leanback.widget.Presenter);
     field public final android.support.v17.leanback.widget.Presenter.ViewHolder mDetailsDescriptionViewHolder;
+  }
+
+  public class DetailsParallax extends android.support.v17.leanback.widget.RecyclerViewParallax {
+    ctor public DetailsParallax();
+    method public android.support.v17.leanback.widget.Parallax.IntProperty getOverviewRowBottom();
+    method public android.support.v17.leanback.widget.Parallax.IntProperty getOverviewRowTop();
   }
 
   public class DividerPresenter extends android.support.v17.leanback.widget.Presenter {
@@ -3358,6 +3852,115 @@ package android.support.v17.leanback.widget {
     method public final boolean isRenderedAsRowView();
   }
 
+  public abstract class Parallax<PropertyT extends android.util.Property> {
+    ctor public Parallax();
+    method public void addEffect(android.support.v17.leanback.widget.ParallaxEffect);
+    method public android.support.v17.leanback.widget.ParallaxEffect addEffect(android.support.v17.leanback.widget.Parallax.IntPropertyMarkerValue...);
+    method public android.support.v17.leanback.widget.ParallaxEffect addEffect(android.support.v17.leanback.widget.Parallax.FloatPropertyMarkerValue...);
+    method public abstract PropertyT addProperty(java.lang.String);
+    method public abstract PropertyT createProperty(java.lang.String, int);
+    method public java.util.List<android.support.v17.leanback.widget.ParallaxEffect> getEffects();
+    method public final java.util.List<PropertyT> getProperties();
+    method public void removeAllEffects();
+    method public void removeEffect(android.support.v17.leanback.widget.ParallaxEffect);
+    method public void updateValues();
+    method public abstract void verifyProperties() throws java.lang.IllegalStateException;
+  }
+
+  public static abstract class Parallax.FloatParallax<FloatPropertyT extends android.support.v17.leanback.widget.Parallax.FloatProperty> extends android.support.v17.leanback.widget.Parallax {
+    ctor public Parallax.FloatParallax();
+    method public final FloatPropertyT addProperty(java.lang.String);
+    method public abstract float getMaxValue();
+    method public final float getPropertyValue(int);
+    method public final void setPropertyValue(int, float);
+    method public final void verifyProperties() throws java.lang.IllegalStateException;
+  }
+
+  public static class Parallax.FloatProperty extends android.util.Property {
+    ctor public Parallax.FloatProperty(java.lang.String, int);
+    method public final android.support.v17.leanback.widget.Parallax.FloatPropertyMarkerValue at(float, float);
+    method public final android.support.v17.leanback.widget.Parallax.FloatPropertyMarkerValue atAbsolute(float);
+    method public final android.support.v17.leanback.widget.Parallax.FloatPropertyMarkerValue atFraction(float);
+    method public final java.lang.Float get(android.support.v17.leanback.widget.Parallax.FloatParallax);
+    method public final int getIndex();
+    method public final void set(android.support.v17.leanback.widget.Parallax.FloatParallax, java.lang.Float);
+    field public static final float UNKNOWN_AFTER = 3.4028235E38f;
+    field public static final float UNKNOWN_BEFORE = -3.4028235E38f;
+  }
+
+  public static class Parallax.FloatPropertyMarkerValue extends android.support.v17.leanback.widget.Parallax.PropertyMarkerValue {
+    ctor public Parallax.FloatPropertyMarkerValue(android.support.v17.leanback.widget.Parallax.FloatProperty, float);
+    ctor public Parallax.FloatPropertyMarkerValue(android.support.v17.leanback.widget.Parallax.FloatProperty, float, float);
+    method public final float getMarkerValue(android.support.v17.leanback.widget.Parallax.FloatParallax);
+  }
+
+  public static abstract class Parallax.IntParallax<IntPropertyT extends android.support.v17.leanback.widget.Parallax.IntProperty> extends android.support.v17.leanback.widget.Parallax {
+    ctor public Parallax.IntParallax();
+    method public final IntPropertyT addProperty(java.lang.String);
+    method public abstract int getMaxValue();
+    method public final int getPropertyValue(int);
+    method public final void setPropertyValue(int, int);
+    method public final void verifyProperties() throws java.lang.IllegalStateException;
+  }
+
+  public static class Parallax.IntProperty extends android.util.Property {
+    ctor public Parallax.IntProperty(java.lang.String, int);
+    method public final android.support.v17.leanback.widget.Parallax.IntPropertyMarkerValue at(int, float);
+    method public final android.support.v17.leanback.widget.Parallax.IntPropertyMarkerValue atAbsolute(int);
+    method public final android.support.v17.leanback.widget.Parallax.IntPropertyMarkerValue atFraction(float);
+    method public final java.lang.Integer get(android.support.v17.leanback.widget.Parallax.IntParallax);
+    method public final int getIndex();
+    method public final void set(android.support.v17.leanback.widget.Parallax.IntParallax, java.lang.Integer);
+    field public static final int UNKNOWN_AFTER = 2147483647; // 0x7fffffff
+    field public static final int UNKNOWN_BEFORE = -2147483648; // 0x80000000
+  }
+
+  public static class Parallax.IntPropertyMarkerValue extends android.support.v17.leanback.widget.Parallax.PropertyMarkerValue {
+    ctor public Parallax.IntPropertyMarkerValue(android.support.v17.leanback.widget.Parallax.IntProperty, int);
+    ctor public Parallax.IntPropertyMarkerValue(android.support.v17.leanback.widget.Parallax.IntProperty, int, float);
+    method public final int getMarkerValue(android.support.v17.leanback.widget.Parallax.IntParallax);
+  }
+
+  public static class Parallax.PropertyMarkerValue<PropertyT> {
+    ctor public Parallax.PropertyMarkerValue(PropertyT);
+    method public PropertyT getProperty();
+  }
+
+  public abstract class ParallaxEffect<ParallaxEffectT extends android.support.v17.leanback.widget.ParallaxEffect, PropertyMarkerValueT extends android.support.v17.leanback.widget.Parallax.PropertyMarkerValue> {
+    ctor public ParallaxEffect();
+    method public final void addTarget(android.support.v17.leanback.widget.ParallaxTarget);
+    method protected abstract float calculateFraction(android.support.v17.leanback.widget.Parallax);
+    method public final java.util.List<PropertyMarkerValueT> getPropertyRanges();
+    method public final java.util.List<android.support.v17.leanback.widget.ParallaxTarget> getTargets();
+    method public final void performMapping(android.support.v17.leanback.widget.Parallax);
+    method public final void removeTarget(android.support.v17.leanback.widget.ParallaxTarget);
+    method public final void setPropertyRanges(PropertyMarkerValueT...);
+    method public final android.support.v17.leanback.widget.ParallaxEffect target(android.support.v17.leanback.widget.ParallaxTarget);
+    method public final android.support.v17.leanback.widget.ParallaxEffect target(java.lang.Object, android.animation.PropertyValuesHolder);
+  }
+
+  public static final class ParallaxEffect.FloatEffect extends android.support.v17.leanback.widget.ParallaxEffect {
+    ctor public ParallaxEffect.FloatEffect();
+    method protected float calculateFraction(android.support.v17.leanback.widget.Parallax);
+  }
+
+  public static final class ParallaxEffect.IntEffect extends android.support.v17.leanback.widget.ParallaxEffect {
+    ctor public ParallaxEffect.IntEffect();
+    method protected float calculateFraction(android.support.v17.leanback.widget.Parallax);
+  }
+
+  public abstract class ParallaxTarget {
+    ctor public ParallaxTarget();
+    method public abstract float getFraction();
+    method public abstract void update(float);
+  }
+
+  public static final class ParallaxTarget.PropertyValuesHolderTarget extends android.support.v17.leanback.widget.ParallaxTarget {
+    ctor public ParallaxTarget.PropertyValuesHolderTarget(java.lang.Object, android.animation.PropertyValuesHolder);
+    method public float getFraction();
+    method public void update(float);
+  }
+
   public class PlaybackControlsRow extends android.support.v17.leanback.widget.Row {
     ctor public PlaybackControlsRow(java.lang.Object);
     ctor public PlaybackControlsRow();
@@ -3545,6 +4148,25 @@ package android.support.v17.leanback.widget {
     method public void select(java.lang.Object);
     method protected void showView(android.view.View, boolean);
     method public void unselect();
+  }
+
+  public class RecyclerViewParallax extends android.support.v17.leanback.widget.Parallax.IntParallax {
+    ctor public RecyclerViewParallax();
+    method public android.support.v17.leanback.widget.RecyclerViewParallax.ChildPositionProperty createProperty(java.lang.String, int);
+    method public int getMaxValue();
+    method public android.support.v7.widget.RecyclerView getRecyclerView();
+    method public void setRecyclerView(android.support.v7.widget.RecyclerView);
+  }
+
+  public static final class RecyclerViewParallax.ChildPositionProperty extends android.support.v17.leanback.widget.Parallax.IntProperty {
+    method public android.support.v17.leanback.widget.RecyclerViewParallax.ChildPositionProperty adapterPosition(int);
+    method public android.support.v17.leanback.widget.RecyclerViewParallax.ChildPositionProperty fraction(float);
+    method public int getAdapterPosition();
+    method public float getFraction();
+    method public int getOffset();
+    method public int getViewId();
+    method public android.support.v17.leanback.widget.RecyclerViewParallax.ChildPositionProperty offset(int);
+    method public android.support.v17.leanback.widget.RecyclerViewParallax.ChildPositionProperty viewId(int);
   }
 
   public class Row {
@@ -4319,6 +4941,7 @@ package android.support.v4.app {
 
   public abstract class FragmentContainer {
     ctor public FragmentContainer();
+    method public android.support.v4.app.Fragment instantiate(android.content.Context, java.lang.String, android.os.Bundle);
     method public abstract android.view.View onFindViewById(int);
     method public abstract boolean onHasView();
   }
@@ -5233,6 +5856,29 @@ package android.support.v4.content.pm {
     field public static final int CONFIG_UI_MODE = 512; // 0x200
   }
 
+  public class ShortcutInfoCompat {
+  }
+
+  public static class ShortcutInfoCompat.Builder {
+    ctor public ShortcutInfoCompat.Builder(android.content.Context, java.lang.String);
+    method public android.support.v4.content.pm.ShortcutInfoCompat build();
+    method public android.support.v4.content.pm.ShortcutInfoCompat.Builder setActivity(android.content.ComponentName);
+    method public android.support.v4.content.pm.ShortcutInfoCompat.Builder setDisabledMessage(java.lang.CharSequence);
+    method public android.support.v4.content.pm.ShortcutInfoCompat.Builder setIcon(android.graphics.Bitmap);
+    method public android.support.v4.content.pm.ShortcutInfoCompat.Builder setIcon(int);
+    method public android.support.v4.content.pm.ShortcutInfoCompat.Builder setIntent(android.content.Intent);
+    method public android.support.v4.content.pm.ShortcutInfoCompat.Builder setIntents(android.content.Intent[]);
+    method public android.support.v4.content.pm.ShortcutInfoCompat.Builder setLongLabel(java.lang.CharSequence);
+    method public android.support.v4.content.pm.ShortcutInfoCompat.Builder setShortLabel(java.lang.CharSequence);
+  }
+
+  public class ShortcutManagerCompat {
+    ctor public ShortcutManagerCompat();
+    method public static android.content.Intent createShortcutResultIntent(android.content.Context, android.support.v4.content.pm.ShortcutInfoCompat);
+    method public static boolean isRequestPinShortcutSupported(android.content.Context);
+    method public static boolean requestPinShortcut(android.content.Context, android.support.v4.content.pm.ShortcutInfoCompat, android.content.IntentSender);
+  }
+
 }
 
 package android.support.v4.content.res {
@@ -5291,6 +5937,10 @@ package android.support.v4.graphics {
     method public static int compositeColors(int, int);
     method public static double distanceEuclidean(double[], double[]);
     method public static int setAlphaComponent(int, int);
+  }
+
+  public final class PaintCompat {
+    method public static boolean hasGlyph(android.graphics.Paint, java.lang.String);
   }
 
 }
@@ -6007,8 +6657,8 @@ package android.support.v4.net {
 
 package android.support.v4.os {
 
-  public final class AsyncTaskCompat {
-    method public static <Params, Progress, Result> android.os.AsyncTask<Params, Progress, Result> executeParallel(android.os.AsyncTask<Params, Progress, Result>, Params...);
+  public final deprecated class AsyncTaskCompat {
+    method public static deprecated <Params, Progress, Result> android.os.AsyncTask<Params, Progress, Result> executeParallel(android.os.AsyncTask<Params, Progress, Result>, Params...);
   }
 
   public class BuildCompat {
@@ -6532,12 +7182,16 @@ package android.support.v4.view {
     method public static boolean expandActionView(android.view.MenuItem);
     method public static android.support.v4.view.ActionProvider getActionProvider(android.view.MenuItem);
     method public static android.view.View getActionView(android.view.MenuItem);
+    method public static java.lang.CharSequence getContentDescription(android.view.MenuItem);
+    method public static java.lang.CharSequence getTooltipText(android.view.MenuItem);
     method public static boolean isActionViewExpanded(android.view.MenuItem);
     method public static android.view.MenuItem setActionProvider(android.view.MenuItem, android.support.v4.view.ActionProvider);
     method public static android.view.MenuItem setActionView(android.view.MenuItem, android.view.View);
     method public static android.view.MenuItem setActionView(android.view.MenuItem, int);
+    method public static void setContentDescription(android.view.MenuItem, java.lang.CharSequence);
     method public static android.view.MenuItem setOnActionExpandListener(android.view.MenuItem, android.support.v4.view.MenuItemCompat.OnActionExpandListener);
     method public static void setShowAsAction(android.view.MenuItem, int);
+    method public static void setTooltipText(android.view.MenuItem, java.lang.CharSequence);
     field public static final int SHOW_AS_ACTION_ALWAYS = 2; // 0x2
     field public static final int SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW = 8; // 0x8
     field public static final int SHOW_AS_ACTION_IF_ROOM = 1; // 0x1
@@ -6766,9 +7420,9 @@ package android.support.v4.view {
     method public abstract void setSupportBackgroundTintMode(android.graphics.PorterDuff.Mode);
   }
 
-  public final class VelocityTrackerCompat {
-    method public static float getXVelocity(android.view.VelocityTracker, int);
-    method public static float getYVelocity(android.view.VelocityTracker, int);
+  public final deprecated class VelocityTrackerCompat {
+    method public static deprecated float getXVelocity(android.view.VelocityTracker, int);
+    method public static deprecated float getYVelocity(android.view.VelocityTracker, int);
   }
 
   public class ViewCompat {
@@ -6776,7 +7430,7 @@ package android.support.v4.view {
     method public static android.support.v4.view.ViewPropertyAnimatorCompat animate(android.view.View);
     method public static boolean canScrollHorizontally(android.view.View, int);
     method public static boolean canScrollVertically(android.view.View, int);
-    method public static int combineMeasuredStates(int, int);
+    method public static deprecated int combineMeasuredStates(int, int);
     method public static android.support.v4.view.WindowInsetsCompat dispatchApplyWindowInsets(android.view.View, android.support.v4.view.WindowInsetsCompat);
     method public static void dispatchFinishTemporaryDetach(android.view.View);
     method public static boolean dispatchNestedFling(android.view.View, float, float, boolean);
@@ -6786,7 +7440,7 @@ package android.support.v4.view {
     method public static void dispatchStartTemporaryDetach(android.view.View);
     method public static int getAccessibilityLiveRegion(android.view.View);
     method public static android.support.v4.view.accessibility.AccessibilityNodeProviderCompat getAccessibilityNodeProvider(android.view.View);
-    method public static float getAlpha(android.view.View);
+    method public static deprecated float getAlpha(android.view.View);
     method public static android.content.res.ColorStateList getBackgroundTintList(android.view.View);
     method public static android.graphics.PorterDuff.Mode getBackgroundTintMode(android.view.View);
     method public static android.graphics.Rect getClipBounds(android.view.View);
@@ -6795,33 +7449,33 @@ package android.support.v4.view {
     method public static boolean getFitsSystemWindows(android.view.View);
     method public static int getImportantForAccessibility(android.view.View);
     method public static int getLabelFor(android.view.View);
-    method public static int getLayerType(android.view.View);
+    method public static deprecated int getLayerType(android.view.View);
     method public static int getLayoutDirection(android.view.View);
-    method public static android.graphics.Matrix getMatrix(android.view.View);
-    method public static int getMeasuredHeightAndState(android.view.View);
-    method public static int getMeasuredState(android.view.View);
-    method public static int getMeasuredWidthAndState(android.view.View);
+    method public static deprecated android.graphics.Matrix getMatrix(android.view.View);
+    method public static deprecated int getMeasuredHeightAndState(android.view.View);
+    method public static deprecated int getMeasuredState(android.view.View);
+    method public static deprecated int getMeasuredWidthAndState(android.view.View);
     method public static int getMinimumHeight(android.view.View);
     method public static int getMinimumWidth(android.view.View);
     method public static deprecated int getOverScrollMode(android.view.View);
     method public static int getPaddingEnd(android.view.View);
     method public static int getPaddingStart(android.view.View);
     method public static android.view.ViewParent getParentForAccessibility(android.view.View);
-    method public static float getPivotX(android.view.View);
-    method public static float getPivotY(android.view.View);
-    method public static float getRotation(android.view.View);
-    method public static float getRotationX(android.view.View);
-    method public static float getRotationY(android.view.View);
-    method public static float getScaleX(android.view.View);
-    method public static float getScaleY(android.view.View);
+    method public static deprecated float getPivotX(android.view.View);
+    method public static deprecated float getPivotY(android.view.View);
+    method public static deprecated float getRotation(android.view.View);
+    method public static deprecated float getRotationX(android.view.View);
+    method public static deprecated float getRotationY(android.view.View);
+    method public static deprecated float getScaleX(android.view.View);
+    method public static deprecated float getScaleY(android.view.View);
     method public static int getScrollIndicators(android.view.View);
     method public static java.lang.String getTransitionName(android.view.View);
-    method public static float getTranslationX(android.view.View);
-    method public static float getTranslationY(android.view.View);
+    method public static deprecated float getTranslationX(android.view.View);
+    method public static deprecated float getTranslationY(android.view.View);
     method public static float getTranslationZ(android.view.View);
     method public static int getWindowSystemUiVisibility(android.view.View);
-    method public static float getX(android.view.View);
-    method public static float getY(android.view.View);
+    method public static deprecated float getX(android.view.View);
+    method public static deprecated float getY(android.view.View);
     method public static float getZ(android.view.View);
     method public static boolean hasAccessibilityDelegate(android.view.View);
     method public static boolean hasNestedScrollingParent(android.view.View);
@@ -6836,7 +7490,7 @@ package android.support.v4.view {
     method public static boolean isNestedScrollingEnabled(android.view.View);
     method public static deprecated boolean isOpaque(android.view.View);
     method public static boolean isPaddingRelative(android.view.View);
-    method public static void jumpDrawablesToCurrentState(android.view.View);
+    method public static deprecated void jumpDrawablesToCurrentState(android.view.View);
     method public static void offsetLeftAndRight(android.view.View, int);
     method public static void offsetTopAndBottom(android.view.View, int);
     method public static android.support.v4.view.WindowInsetsCompat onApplyWindowInsets(android.view.View, android.support.v4.view.WindowInsetsCompat);
@@ -6849,11 +7503,11 @@ package android.support.v4.view {
     method public static void postOnAnimation(android.view.View, java.lang.Runnable);
     method public static void postOnAnimationDelayed(android.view.View, java.lang.Runnable, long);
     method public static void requestApplyInsets(android.view.View);
-    method public static int resolveSizeAndState(int, int, int);
+    method public static deprecated int resolveSizeAndState(int, int, int);
     method public static void setAccessibilityDelegate(android.view.View, android.support.v4.view.AccessibilityDelegateCompat);
     method public static void setAccessibilityLiveRegion(android.view.View, int);
-    method public static void setActivated(android.view.View, boolean);
-    method public static void setAlpha(android.view.View, float);
+    method public static deprecated void setActivated(android.view.View, boolean);
+    method public static deprecated void setAlpha(android.view.View, float);
     method public static void setBackground(android.view.View, android.graphics.drawable.Drawable);
     method public static void setBackgroundTintList(android.view.View, android.content.res.ColorStateList);
     method public static void setBackgroundTintMode(android.view.View, android.graphics.PorterDuff.Mode);
@@ -6865,30 +7519,30 @@ package android.support.v4.view {
     method public static void setImportantForAccessibility(android.view.View, int);
     method public static void setLabelFor(android.view.View, int);
     method public static void setLayerPaint(android.view.View, android.graphics.Paint);
-    method public static void setLayerType(android.view.View, int, android.graphics.Paint);
+    method public static deprecated void setLayerType(android.view.View, int, android.graphics.Paint);
     method public static void setLayoutDirection(android.view.View, int);
     method public static void setNestedScrollingEnabled(android.view.View, boolean);
     method public static void setOnApplyWindowInsetsListener(android.view.View, android.support.v4.view.OnApplyWindowInsetsListener);
     method public static deprecated void setOverScrollMode(android.view.View, int);
     method public static void setPaddingRelative(android.view.View, int, int, int, int);
-    method public static void setPivotX(android.view.View, float);
-    method public static void setPivotY(android.view.View, float);
+    method public static deprecated void setPivotX(android.view.View, float);
+    method public static deprecated void setPivotY(android.view.View, float);
     method public static void setPointerIcon(android.view.View, android.support.v4.view.PointerIconCompat);
-    method public static void setRotation(android.view.View, float);
-    method public static void setRotationX(android.view.View, float);
-    method public static void setRotationY(android.view.View, float);
-    method public static void setSaveFromParentEnabled(android.view.View, boolean);
-    method public static void setScaleX(android.view.View, float);
-    method public static void setScaleY(android.view.View, float);
+    method public static deprecated void setRotation(android.view.View, float);
+    method public static deprecated void setRotationX(android.view.View, float);
+    method public static deprecated void setRotationY(android.view.View, float);
+    method public static deprecated void setSaveFromParentEnabled(android.view.View, boolean);
+    method public static deprecated void setScaleX(android.view.View, float);
+    method public static deprecated void setScaleY(android.view.View, float);
     method public static void setScrollIndicators(android.view.View, int);
     method public static void setScrollIndicators(android.view.View, int, int);
-    method public static void setTooltip(android.view.View, java.lang.CharSequence);
+    method public static void setTooltipText(android.view.View, java.lang.CharSequence);
     method public static void setTransitionName(android.view.View, java.lang.String);
-    method public static void setTranslationX(android.view.View, float);
-    method public static void setTranslationY(android.view.View, float);
+    method public static deprecated void setTranslationX(android.view.View, float);
+    method public static deprecated void setTranslationY(android.view.View, float);
     method public static void setTranslationZ(android.view.View, float);
-    method public static void setX(android.view.View, float);
-    method public static void setY(android.view.View, float);
+    method public static deprecated void setX(android.view.View, float);
+    method public static deprecated void setY(android.view.View, float);
     method public static void setZ(android.view.View, float);
     method public static boolean startNestedScroll(android.view.View, int);
     method public static void stopNestedScroll(android.view.View);
@@ -6906,10 +7560,10 @@ package android.support.v4.view {
     field public static final int LAYOUT_DIRECTION_LOCALE = 3; // 0x3
     field public static final int LAYOUT_DIRECTION_LTR = 0; // 0x0
     field public static final int LAYOUT_DIRECTION_RTL = 1; // 0x1
-    field public static final int MEASURED_HEIGHT_STATE_SHIFT = 16; // 0x10
-    field public static final int MEASURED_SIZE_MASK = 16777215; // 0xffffff
-    field public static final int MEASURED_STATE_MASK = -16777216; // 0xff000000
-    field public static final int MEASURED_STATE_TOO_SMALL = 16777216; // 0x1000000
+    field public static final deprecated int MEASURED_HEIGHT_STATE_SHIFT = 16; // 0x10
+    field public static final deprecated int MEASURED_SIZE_MASK = 16777215; // 0xffffff
+    field public static final deprecated int MEASURED_STATE_MASK = -16777216; // 0xff000000
+    field public static final deprecated int MEASURED_STATE_TOO_SMALL = 16777216; // 0x1000000
     field public static final deprecated int OVER_SCROLL_ALWAYS = 0; // 0x0
     field public static final deprecated int OVER_SCROLL_IF_CONTENT_SCROLLS = 1; // 0x1
     field public static final deprecated int OVER_SCROLL_NEVER = 2; // 0x2
@@ -10502,6 +11156,10 @@ package android.support.v7.widget {
   public class RecyclerViewAccessibilityDelegate extends android.support.v4.view.AccessibilityDelegateCompat {
     ctor public RecyclerViewAccessibilityDelegate(android.support.v7.widget.RecyclerView);
     method public android.support.v4.view.AccessibilityDelegateCompat getItemDelegate();
+  }
+
+  public static class RecyclerViewAccessibilityDelegate.ItemDelegate extends android.support.v4.view.AccessibilityDelegateCompat {
+    ctor public RecyclerViewAccessibilityDelegate.ItemDelegate(android.support.v7.widget.RecyclerViewAccessibilityDelegate);
   }
 
   public class SearchView extends android.support.v7.widget.LinearLayoutCompat implements android.support.v7.view.CollapsibleActionView {

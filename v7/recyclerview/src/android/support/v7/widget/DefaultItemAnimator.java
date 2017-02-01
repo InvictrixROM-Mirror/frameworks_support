@@ -86,14 +86,14 @@ public class DefaultItemAnimator extends SimpleItemAnimator {
 
         @Override
         public String toString() {
-            return "ChangeInfo{" +
-                    "oldHolder=" + oldHolder +
-                    ", newHolder=" + newHolder +
-                    ", fromX=" + fromX +
-                    ", fromY=" + fromY +
-                    ", toX=" + toX +
-                    ", toY=" + toY +
-                    '}';
+            return "ChangeInfo{"
+                    + "oldHolder=" + oldHolder
+                    + ", newHolder=" + newHolder
+                    + ", fromX=" + fromX
+                    + ", fromY=" + fromY
+                    + ", toX=" + toX
+                    + ", toY=" + toY
+                    + '}';
         }
     }
 
@@ -374,10 +374,10 @@ public class DefaultItemAnimator extends SimpleItemAnimator {
             }).start();
         }
         if (newView != null) {
-            final ViewPropertyAnimator newViewAnimation = view.animate();
+            final ViewPropertyAnimator newViewAnimation = newView.animate();
             mChangeAnimations.add(changeInfo.newHolder);
-            newViewAnimation.translationX(0).translationY(0).setDuration(getChangeDuration()).
-                    alpha(1).setListener(new AnimatorListenerAdapter() {
+            newViewAnimation.translationX(0).translationY(0).setDuration(getChangeDuration())
+                    .alpha(1).setListener(new AnimatorListenerAdapter() {
                         @Override
                         public void onAnimationStart(Animator animator) {
                             dispatchChangeStarting(changeInfo.newHolder, false);
@@ -528,17 +528,17 @@ public class DefaultItemAnimator extends SimpleItemAnimator {
 
     @Override
     public boolean isRunning() {
-        return (!mPendingAdditions.isEmpty() ||
-                !mPendingChanges.isEmpty() ||
-                !mPendingMoves.isEmpty() ||
-                !mPendingRemovals.isEmpty() ||
-                !mMoveAnimations.isEmpty() ||
-                !mRemoveAnimations.isEmpty() ||
-                !mAddAnimations.isEmpty() ||
-                !mChangeAnimations.isEmpty() ||
-                !mMovesList.isEmpty() ||
-                !mAdditionsList.isEmpty() ||
-                !mChangesList.isEmpty());
+        return (!mPendingAdditions.isEmpty()
+                || !mPendingChanges.isEmpty()
+                || !mPendingMoves.isEmpty()
+                || !mPendingRemovals.isEmpty()
+                || !mMoveAnimations.isEmpty()
+                || !mRemoveAnimations.isEmpty()
+                || !mAddAnimations.isEmpty()
+                || !mChangeAnimations.isEmpty()
+                || !mMovesList.isEmpty()
+                || !mAdditionsList.isEmpty()
+                || !mChangesList.isEmpty());
     }
 
     /**

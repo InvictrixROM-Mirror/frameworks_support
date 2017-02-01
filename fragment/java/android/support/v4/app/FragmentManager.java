@@ -657,11 +657,11 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                     mView.post(new Runnable() {
                         @Override
                         public void run() {
-                            ViewCompat.setLayerType(mView, ViewCompat.LAYER_TYPE_NONE, null);
+                            mView.setLayerType(View.LAYER_TYPE_NONE, null);
                         }
                     });
                 } else {
-                    ViewCompat.setLayerType(mView, ViewCompat.LAYER_TYPE_NONE, null);
+                    mView.setLayerType(View.LAYER_TYPE_NONE, null);
                 }
             }
             if (mOriginalListener != null) {
@@ -743,7 +743,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
 
     static boolean shouldRunOnHWLayer(View v, Animation anim) {
         return Build.VERSION.SDK_INT >= 19
-                && ViewCompat.getLayerType(v) == ViewCompat.LAYER_TYPE_NONE
+                && v.getLayerType() == View.LAYER_TYPE_NONE
                 && ViewCompat.hasOverlappingRendering(v)
                 && modifiesAlpha(anim);
     }
@@ -1190,7 +1190,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             // If there's already a listener set on the animation, we need wrap the new listener
             // around the existing listener, so that they will both get animation listener
             // callbacks.
-            ViewCompat.setLayerType(v, ViewCompat.LAYER_TYPE_HARDWARE, null);
+            v.setLayerType(View.LAYER_TYPE_HARDWARE, null);
             anim.setAnimationListener(new AnimateOnHWLayerIfNeededListener(v, anim,
                     originalListener));
         }
@@ -1254,10 +1254,25 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                                 }
                             }
                         }
+
                         f.mHost = mHost;
                         f.mParentFragment = mParent;
                         f.mFragmentManager = mParent != null
                                 ? mParent.mChildFragmentManager : mHost.getFragmentManagerImpl();
+
+                        // If we have a target fragment, push it along to at least CREATED
+                        // so that this one can rely on it as an initialized dependency.
+                        if (f.mTarget != null) {
+                            if (!mActive.contains(f.mTarget)) {
+                                throw new IllegalStateException("Fragment " + f
+                                        + " declared target fragment " + f.mTarget
+                                        + " that does not belong to this FragmentManager!");
+                            }
+                            if (f.mTarget.mState < Fragment.CREATED) {
+                                moveToState(f.mTarget, Fragment.CREATED, 0, 0, true);
+                            }
+                        }
+
                         dispatchOnFragmentPreAttached(f, mHost.getContext(), false);
                         f.mCalled = false;
                         f.onAttach(mHost.getContext());
@@ -1319,11 +1334,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                                     f.mSavedFragmentState), container, f.mSavedFragmentState);
                             if (f.mView != null) {
                                 f.mInnerView = f.mView;
-                                if (Build.VERSION.SDK_INT >= 11) {
-                                    ViewCompat.setSaveFromParentEnabled(f.mView, false);
-                                } else {
-                                    f.mView = NoSaveStateFrameLayout.wrap(f.mView);
-                                }
+                                f.mView.setSaveFromParentEnabled(false);
                                 if (container != null) {
                                     container.addView(f.mView);
                                 }
@@ -1498,11 +1509,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                     f.mSavedFragmentState), null, f.mSavedFragmentState);
             if (f.mView != null) {
                 f.mInnerView = f.mView;
-                if (Build.VERSION.SDK_INT >= 11) {
-                    ViewCompat.setSaveFromParentEnabled(f.mView, false);
-                } else {
-                    f.mView = NoSaveStateFrameLayout.wrap(f.mView);
-                }
+                f.mView.setSaveFromParentEnabled(false);
                 if (f.mHidden) f.mView.setVisibility(View.GONE);
                 f.onViewCreated(f.mView, f.mSavedFragmentState);
                 dispatchOnFragmentViewCreated(f, f.mView, f.mSavedFragmentState, false);
@@ -2838,7 +2845,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                 if (childNonConfigs != null && i < childNonConfigs.size()) {
                     childNonConfig = childNonConfigs.get(i);
                 }
-                Fragment f = fs.instantiate(mHost, mParent, childNonConfig);
+                Fragment f = fs.instantiate(mHost, mContainer, mParent, childNonConfig);
                 if (DEBUG) Log.v(TAG, "restoreAllState: active #" + i + ": " + f);
                 mActive.add(f);
                 // Now that the fragment is instantiated (or came from being
@@ -3468,7 +3475,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                 + Integer.toHexString(id) + " fname=" + fname
                 + " existing=" + fragment);
         if (fragment == null) {
-            fragment = Fragment.instantiate(context, fname);
+            fragment = mContainer.instantiate(context, fname, null);
             fragment.mFromLayout = true;
             fragment.mFragmentId = id != 0 ? id : containerId;
             fragment.mContainerId = containerId;

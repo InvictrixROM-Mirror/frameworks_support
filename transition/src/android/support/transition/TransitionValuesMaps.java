@@ -25,10 +25,12 @@ import android.view.View;
 @RequiresApi(14)
 class TransitionValuesMaps {
 
-    ArrayMap<View, TransitionValues> mViewValues = new ArrayMap<>();
+    final ArrayMap<View, TransitionValues> mViewValues = new ArrayMap<>();
 
-    SparseArray<TransitionValues> mIdValues = new SparseArray<>();
+    final SparseArray<View> mIdValues = new SparseArray<>();
 
-    LongSparseArray<TransitionValues> mItemIdValues = new LongSparseArray<>();
+    final LongSparseArray<View> mItemIdValues = new LongSparseArray<>();
+
+    final ArrayMap<String, View> mNameValues = new ArrayMap<>();
 
 }
