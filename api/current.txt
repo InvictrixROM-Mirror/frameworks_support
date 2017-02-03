@@ -354,11 +354,18 @@ package android.support.design.widget {
     method public android.content.res.ColorStateList getItemTextColor();
     method public int getMaxItemCount();
     method public android.view.Menu getMenu();
+    method public int getSelectedItemId();
     method public void inflateMenu(int);
     method public void setItemBackgroundResource(int);
     method public void setItemIconTintList(android.content.res.ColorStateList);
     method public void setItemTextColor(android.content.res.ColorStateList);
+    method public void setOnNavigationItemReselectedListener(android.support.design.widget.BottomNavigationView.OnNavigationItemReselectedListener);
     method public void setOnNavigationItemSelectedListener(android.support.design.widget.BottomNavigationView.OnNavigationItemSelectedListener);
+    method public void setSelectedItemId(int);
+  }
+
+  public static abstract interface BottomNavigationView.OnNavigationItemReselectedListener {
+    method public abstract void onNavigationItemReselected(android.view.MenuItem);
   }
 
   public static abstract interface BottomNavigationView.OnNavigationItemSelectedListener {
@@ -1020,6 +1027,35 @@ package android.support.media {
     field public static final java.lang.String TAG_Y_RESOLUTION = "YResolution";
     field public static final int WHITEBALANCE_AUTO = 0; // 0x0
     field public static final int WHITEBALANCE_MANUAL = 1; // 0x1
+  }
+
+}
+
+package android.support.media.instantvideo.preload {
+
+  public class InstantVideoPreloadManager {
+    method public void clearCache();
+    method public static synchronized android.support.media.instantvideo.preload.InstantVideoPreloadManager getInstance(android.content.Context);
+    method public void preload(android.net.Uri);
+    method public void setMaxCacheSize(int);
+    method public void setMaxPreloadVideoCount(int);
+  }
+
+}
+
+package android.support.media.instantvideo.widget {
+
+  public class InstantVideoView extends android.widget.FrameLayout {
+    ctor public InstantVideoView(android.content.Context);
+    ctor public InstantVideoView(android.content.Context, android.util.AttributeSet);
+    ctor public InstantVideoView(android.content.Context, android.util.AttributeSet, int);
+    ctor public InstantVideoView(android.content.Context, android.util.AttributeSet, int, int);
+    method public int getCurrentPosition();
+    method public void seekTo(int);
+    method public void setImageDrawable(android.graphics.drawable.Drawable);
+    method public void setVideoUri(android.net.Uri);
+    method public void start();
+    method public void stop();
   }
 
 }
@@ -5206,6 +5242,7 @@ package android.support.v4.app {
     field public static final int DEFAULT_LIGHTS = 4; // 0x4
     field public static final int DEFAULT_SOUND = 1; // 0x1
     field public static final int DEFAULT_VIBRATE = 2; // 0x2
+    field public static final java.lang.String EXTRA_AUDIO_CONTENTS_URI = "android.audioContents";
     field public static final java.lang.String EXTRA_BACKGROUND_IMAGE_URI = "android.backgroundImageUri";
     field public static final java.lang.String EXTRA_BIG_TEXT = "android.bigText";
     field public static final java.lang.String EXTRA_COMPACT_ACTIONS = "android.compactActions";
@@ -5257,6 +5294,7 @@ package android.support.v4.app {
     ctor public NotificationCompat.Action(int, java.lang.CharSequence, android.app.PendingIntent);
     method public android.app.PendingIntent getActionIntent();
     method public boolean getAllowGeneratedReplies();
+    method public android.support.v4.app.RemoteInput[] getDataOnlyRemoteInputs();
     method public android.os.Bundle getExtras();
     method public int getIcon();
     method public android.support.v4.app.RemoteInput[] getRemoteInputs();
@@ -5544,13 +5582,17 @@ package android.support.v4.app {
   }
 
   public final class RemoteInput extends android.support.v4.app.RemoteInputCompatBase.RemoteInput {
+    method public static void addDataResultToIntent(android.support.v4.app.RemoteInput, android.content.Intent, java.util.Map<java.lang.String, android.net.Uri>);
     method public static void addResultsToIntent(android.support.v4.app.RemoteInput[], android.content.Intent, android.os.Bundle);
     method public boolean getAllowFreeFormInput();
+    method public java.util.Set<java.lang.String> getAllowedDataTypes();
     method public java.lang.CharSequence[] getChoices();
+    method public static java.util.Map<java.lang.String, android.net.Uri> getDataResultsFromIntent(android.content.Intent, java.lang.String);
     method public android.os.Bundle getExtras();
     method public java.lang.CharSequence getLabel();
     method public java.lang.String getResultKey();
     method public static android.os.Bundle getResultsFromIntent(android.content.Intent);
+    method public boolean isDataOnly();
     field public static final java.lang.String EXTRA_RESULTS_DATA = "android.remoteinput.resultsData";
     field public static final java.lang.String RESULTS_CLIP_LABEL = "android.remoteinput.results";
   }
@@ -5560,6 +5602,7 @@ package android.support.v4.app {
     method public android.support.v4.app.RemoteInput.Builder addExtras(android.os.Bundle);
     method public android.support.v4.app.RemoteInput build();
     method public android.os.Bundle getExtras();
+    method public android.support.v4.app.RemoteInput.Builder setAllowDataType(java.lang.String, boolean);
     method public android.support.v4.app.RemoteInput.Builder setAllowFreeFormInput(boolean);
     method public android.support.v4.app.RemoteInput.Builder setChoices(java.lang.CharSequence[]);
     method public android.support.v4.app.RemoteInput.Builder setLabel(java.lang.CharSequence);
@@ -5571,6 +5614,7 @@ package android.support.v4.app {
   public static abstract class RemoteInputCompatBase.RemoteInput {
     ctor public RemoteInputCompatBase.RemoteInput();
     method protected abstract boolean getAllowFreeFormInput();
+    method protected abstract java.util.Set<java.lang.String> getAllowedDataTypes();
     method protected abstract java.lang.CharSequence[] getChoices();
     method protected abstract android.os.Bundle getExtras();
     method protected abstract java.lang.CharSequence getLabel();
