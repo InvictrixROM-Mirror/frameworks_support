@@ -20,11 +20,17 @@ import static android.support.annotation.RestrictTo.Scope.LIBRARY_GROUP;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.RestrictTo;
 import android.support.media.tv.TvContractCompat.Channels;
+import android.support.media.tv.TvContractCompat.Channels.ServiceType;
+import android.support.media.tv.TvContractCompat.Channels.Type;
+import android.support.media.tv.TvContractCompat.Channels.VideoFormat;
 import android.support.v4.os.BuildCompat;
 import android.text.TextUtils;
+
+import java.net.URISyntaxException;
 
 /**
  * A convenience class to create and insert channel entries into the database.
@@ -55,9 +61,9 @@ public final class Channel {
     private final int mServiceId;
     private final String mAppLinkText;
     private final int mAppLinkColor;
-    private final String mAppLinkIconUri;
-    private final String mAppLinkPosterArtUri;
-    private final String mAppLinkIntentUri;
+    private final Uri mAppLinkIconUri;
+    private final Uri mAppLinkPosterArtUri;
+    private final Uri mAppLinkIntentUri;
     private final byte[] mInternalProviderData;
     private final String mNetworkAffiliation;
     private final int mSearchable;
@@ -121,7 +127,7 @@ public final class Channel {
     /**
      * @return The value of {@link Channels#COLUMN_TYPE} for the channel.
      */
-    public String getType() {
+    public @Type String getType() {
         return mType;
     }
 
@@ -149,7 +155,7 @@ public final class Channel {
     /**
      * @return The value of {@link Channels#COLUMN_VIDEO_FORMAT} for the channel.
      */
-    public String getVideoFormat() {
+    public @VideoFormat String getVideoFormat() {
         return mVideoFormat;
     }
 
@@ -191,23 +197,31 @@ public final class Channel {
     /**
      * @return The value of {@link Channels#COLUMN_APP_LINK_ICON_URI} for the channel.
      */
-    public String getAppLinkIconUri() {
+    public Uri getAppLinkIconUri() {
         return mAppLinkIconUri;
     }
 
     /**
      * @return The value of {@link Channels#COLUMN_APP_LINK_POSTER_ART_URI} for the channel.
      */
-    public String getAppLinkPosterArtUri() {
+    public Uri getAppLinkPosterArtUri() {
         return mAppLinkPosterArtUri;
     }
 
     /**
      * @return The value of {@link Channels#COLUMN_APP_LINK_INTENT_URI} for the channel.
      */
-    public String getAppLinkIntentUri() {
+    public Uri getAppLinkIntentUri() {
         return mAppLinkIntentUri;
     }
+
+    /**
+     * @return The value of {@link Channels#COLUMN_APP_LINK_INTENT_URI} for the program.
+     */
+    public Intent getAppLinkIntent() throws URISyntaxException {
+        return Intent.parseUri(mAppLinkIntentUri.toString(), Intent.URI_INTENT_SCHEME);
+    }
+
 
     /**
      * @return The value of {@link Channels.Logo} for the channel.
@@ -243,7 +257,7 @@ public final class Channel {
      * <p>Returns {@link Channels#SERVICE_TYPE_AUDIO}, {@link Channels#SERVICE_TYPE_AUDIO_VIDEO}, or
      * {@link Channels#SERVICE_TYPE_OTHER}.
      */
-    public String getServiceType() {
+    public @ServiceType String getServiceType() {
         return mServiceType;
     }
 
@@ -364,19 +378,19 @@ public final class Channel {
             } else {
                 values.putNull(Channels.COLUMN_APP_LINK_TEXT);
             }
-            if (!TextUtils.isEmpty(mAppLinkIconUri)) {
-                values.put(Channels.COLUMN_APP_LINK_ICON_URI, mAppLinkIconUri);
+            if (mAppLinkIconUri != null) {
+                values.put(Channels.COLUMN_APP_LINK_ICON_URI, mAppLinkIconUri.toString());
             } else {
                 values.putNull(Channels.COLUMN_APP_LINK_ICON_URI);
             }
-            if (!TextUtils.isEmpty(mAppLinkPosterArtUri)) {
+            if (mAppLinkPosterArtUri != null) {
                 values.put(Channels.COLUMN_APP_LINK_POSTER_ART_URI,
-                        mAppLinkPosterArtUri);
+                        mAppLinkPosterArtUri.toString());
             } else {
                 values.putNull(Channels.COLUMN_APP_LINK_POSTER_ART_URI);
             }
-            if (!TextUtils.isEmpty(mAppLinkIntentUri)) {
-                values.put(Channels.COLUMN_APP_LINK_INTENT_URI, mAppLinkIntentUri);
+            if (mAppLinkIntentUri != null) {
+                values.put(Channels.COLUMN_APP_LINK_INTENT_URI, mAppLinkIntentUri.toString());
             } else {
                 values.putNull(Channels.COLUMN_APP_LINK_INTENT_URI);
             }
@@ -474,15 +488,15 @@ public final class Channel {
             }
             if ((index = cursor.getColumnIndex(Channels.COLUMN_APP_LINK_ICON_URI)) >= 0
                     && !cursor.isNull(index)) {
-                builder.setAppLinkIconUri(cursor.getString(index));
+                builder.setAppLinkIconUri(Uri.parse(cursor.getString(index)));
             }
             if ((index = cursor.getColumnIndex(Channels.COLUMN_APP_LINK_INTENT_URI)) >= 0
                     && !cursor.isNull(index)) {
-                builder.setAppLinkIntentUri(cursor.getString(index));
+                builder.setAppLinkIntentUri(Uri.parse(cursor.getString(index)));
             }
             if ((index = cursor.getColumnIndex(Channels.COLUMN_APP_LINK_POSTER_ART_URI)) >= 0
                     && !cursor.isNull(index)) {
-                builder.setAppLinkPosterArtUri(cursor.getString(index));
+                builder.setAppLinkPosterArtUri(Uri.parse(cursor.getString(index)));
             }
             if ((index = cursor.getColumnIndex(Channels.COLUMN_APP_LINK_TEXT)) >= 0
                     && !cursor.isNull(index)) {
@@ -573,9 +587,9 @@ public final class Channel {
         private int mServiceId;
         private String mAppLinkText;
         private int mAppLinkColor;
-        private String mAppLinkIconUri;
-        private String mAppLinkPosterArtUri;
-        private String mAppLinkIntentUri;
+        private Uri mAppLinkIconUri;
+        private Uri mAppLinkPosterArtUri;
+        private Uri mAppLinkIntentUri;
         private byte[] mInternalProviderData;
         private String mNetworkAffiliation;
         private int mSearchable;
@@ -657,7 +671,7 @@ public final class Channel {
          * @param type The value of {@link Channels#COLUMN_TYPE} for the channel.
          * @return This Builder object to allow for chaining of calls to builder methods.
          */
-        public Builder setType(String type) {
+        public Builder setType(@Type String type) {
             mType = type;
             return this;
         }
@@ -713,7 +727,7 @@ public final class Channel {
          * @param videoFormat The value of {@link Channels#COLUMN_VIDEO_FORMAT} for the channel.
          * @return This Builder object to allow for chaining of calls to builder methods.
          */
-        public Builder setVideoFormat(String videoFormat) {
+        public Builder setVideoFormat(@VideoFormat String videoFormat) {
             mVideoFormat = videoFormat;
             return this;
         }
@@ -806,7 +820,7 @@ public final class Channel {
          *                       channel.
          * @return This Builder object to allow for chaining of calls to builder methods.
          */
-        public Builder setAppLinkIconUri(String appLinkIconUri) {
+        public Builder setAppLinkIconUri(Uri appLinkIconUri) {
             mAppLinkIconUri = appLinkIconUri;
             return this;
         }
@@ -818,7 +832,7 @@ public final class Channel {
          *                            for the channel.
          * @return This Builder object to allow for chaining of calls to builder methods.
          */
-        public Builder setAppLinkPosterArtUri(String appLinkPosterArtUri) {
+        public Builder setAppLinkPosterArtUri(Uri appLinkPosterArtUri) {
             mAppLinkPosterArtUri = appLinkPosterArtUri;
             return this;
         }
@@ -830,7 +844,7 @@ public final class Channel {
          * @return This Builder object to allow for chaining of calls to builder methods.
          */
         public Builder setAppLinkIntent(Intent appLinkIntent) {
-            return setAppLinkIntentUri(appLinkIntent.toUri(Intent.URI_INTENT_SCHEME));
+            return setAppLinkIntentUri(Uri.parse(appLinkIntent.toUri(Intent.URI_INTENT_SCHEME)));
         }
 
         /**
@@ -842,7 +856,7 @@ public final class Channel {
          *                         {@link Channels#COLUMN_APP_LINK_INTENT_URI}.
          * @return This Builder object to allow for chaining of calls to builder methods.
          */
-        public Builder setAppLinkIntentUri(String appLinkIntentUri) {
+        public Builder setAppLinkIntentUri(Uri appLinkIntentUri) {
             mAppLinkIntentUri = appLinkIntentUri;
             return this;
         }
@@ -878,7 +892,7 @@ public final class Channel {
          * @param serviceType The value of {@link Channels#COLUMN_SERVICE_TYPE} for the channel.
          * @return This Builder object to allow for chaining of calls to builder methods.
          */
-        public Builder setServiceType(String serviceType) {
+        public Builder setServiceType(@ServiceType String serviceType) {
             mServiceType = serviceType;
             return this;
         }

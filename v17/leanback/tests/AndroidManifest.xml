@@ -33,12 +33,16 @@
         <activity android:name="android.support.v17.leanback.widget.GridActivity"
                   android:exported="true" />
 
+        <activity android:name="android.support.v17.leanback.widget.DatePickerActivity"
+                  android:theme="@style/Theme.Leanback"
+                  android:exported="true" />
+
         <activity
                 android:name="android.support.v17.leanback.app.wizard.GuidedStepAttributesTestActivity"
                 android:theme="@style/Theme.Leanback.GuidedStep"
                 android:exported="true" />
 
-        <activity android:name="android.support.v17.leanback.app.RowsFragmentTestActivity"
+        <activity android:name="android.support.v17.leanback.app.SingleFragmentTestActivity"
             android:theme="@style/Theme.Leanback"
             android:exported="true" />
 
@@ -50,7 +54,7 @@
                   android:theme="@style/Theme.Leanback"
                   android:exported="true" />
 
-        <activity android:name="android.support.v17.leanback.app.RowsSupportFragmentTestActivity"
+        <activity android:name="android.support.v17.leanback.app.SingleSupportFragmentTestActivity"
             android:theme="@style/Theme.Leanback"
             android:exported="true" />
 

@@ -54,7 +54,7 @@ dependencies {
 ext.supportVersion = "26.0.0-SNAPSHOT"
 
 // This number gets incremented for each public release.
-ext.extraVersion = 41
+ext.extraVersion = 43
 
 // Enforce the use of prebuilt dependencies in all sub-projects. This is
 // required for the doclava dependency.
@@ -499,6 +499,7 @@ subprojects {
                         from v.testedVariant.javaCompile.destinationDir
                         exclude "**/R.class"
                         exclude "**/R\$*.class"
+                        exclude "**/BuildConfig.class"
                         destinationDir file(project.distDir)
                         archiveName "${project.archivesBaseName}-${v.baseName}-allclasses.jar"
                     }
@@ -519,6 +520,7 @@ subprojects {
                         destinationDir file(project.distDir)
                         archiveName "jacocoant-" + version  + ".jar"
                     }
+                    jarifyTask.dependsOn v.getJavaCompiler()
                     v.assemble.dependsOn jarifyTask, collectJacocoAntPackages
                 }
             }
