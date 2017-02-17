@@ -114,7 +114,7 @@ public class ViewBoundsCheckTest {
     }
 
     @Test
-    public void preferredFromStart() {
+    public void firstFullyVisibleChildFromStart() {
         setUpViews(mParentBound1, mChildrenBound1);
         @ViewBoundsCheck.ViewBounds int preferredBoundsFlag = ViewBoundsCheck.FLAG_CVS_GT_PVS
                 | ViewBoundsCheck.FLAG_CVS_EQ_PVS | ViewBoundsCheck.FLAG_CVE_LT_PVE
@@ -129,7 +129,7 @@ public class ViewBoundsCheckTest {
     }
 
     @Test
-    public void preferredFromEnd() {
+    public void firstFullyVisibleChildFromEnd() {
         setUpViews(mParentBound1, mChildrenBound1);
         @ViewBoundsCheck.ViewBounds int preferredBoundsFlag = ViewBoundsCheck.FLAG_CVS_GT_PVS
                 | ViewBoundsCheck.FLAG_CVS_EQ_PVS | ViewBoundsCheck.FLAG_CVE_LT_PVE
@@ -144,11 +144,13 @@ public class ViewBoundsCheckTest {
     }
 
     @Test
-    public void acceptableFromStart() {
+    public void firstPartiallyOrFullyVisibleChildFromStartWithViewBoundsNotAligned() {
         setUpViews(mParentBound1, mChildrenBound1);
-        @ViewBoundsCheck.ViewBounds int preferredBoundsFlag = 0;
-        @ViewBoundsCheck.ViewBounds int acceptableBoundsFlag = (ViewBoundsCheck.FLAG_CVS_LT_PVS
-                | ViewBoundsCheck.FLAG_CVE_LT_PVE | ViewBoundsCheck.FLAG_CVE_GT_PVS);
+        // These set of flags are used in LinearLayoutManager#findOneVisibleChild
+        @ViewBoundsCheck.ViewBounds int preferredBoundsFlag = (ViewBoundsCheck.FLAG_CVS_LT_PVE
+                | ViewBoundsCheck.FLAG_CVE_GT_PVS);
+        @ViewBoundsCheck.ViewBounds int acceptableBoundsFlag = (ViewBoundsCheck.FLAG_CVS_LT_PVE
+                | ViewBoundsCheck.FLAG_CVE_GT_PVS);
         View view = mBoundCheck.findOneViewWithinBoundFlags(0, mChildren.length,
                 preferredBoundsFlag, acceptableBoundsFlag);
         assertEquals("The first partially visible child from start should be returned", 1,
@@ -158,11 +160,29 @@ public class ViewBoundsCheckTest {
     }
 
     @Test
-    public void acceptableFromEnd() {
+    public void firstPartiallyOrFullyVisibleChildFromStartWithViewBoundsAligned() {
+        setUpViews(mParentBound2, mChildrenBound2);
+        // These set of flags are used in LinearLayoutManager#findOneVisibleChild
+        @ViewBoundsCheck.ViewBounds int preferredBoundsFlag = (ViewBoundsCheck.FLAG_CVS_LT_PVE
+                | ViewBoundsCheck.FLAG_CVE_GT_PVS);
+        @ViewBoundsCheck.ViewBounds int acceptableBoundsFlag = (ViewBoundsCheck.FLAG_CVS_LT_PVE
+                | ViewBoundsCheck.FLAG_CVE_GT_PVS);
+        View view = mBoundCheck.findOneViewWithinBoundFlags(0, mChildren.length,
+                preferredBoundsFlag, acceptableBoundsFlag);
+        assertEquals("The first partially visible child from start should be returned", 1,
+                view.getLeft());
+        assertEquals("The first partially visible child from start should be returned", 3,
+                view.getRight());
+    }
+
+    @Test
+    public void firstPartiallyOrFullyVisibleChildFromEndWithViewBoundsNotAligned() {
         setUpViews(mParentBound1, mChildrenBound1);
-        @ViewBoundsCheck.ViewBounds int preferredBoundsFlag = 0;
-        @ViewBoundsCheck.ViewBounds int acceptableBoundsFlag = (ViewBoundsCheck.FLAG_CVE_GT_PVE
-                | ViewBoundsCheck.FLAG_CVS_GT_PVS | ViewBoundsCheck.FLAG_CVS_LT_PVE);
+        // These set of flags are used in LinearLayoutManager#findOneVisibleChild
+        @ViewBoundsCheck.ViewBounds int preferredBoundsFlag = (ViewBoundsCheck.FLAG_CVS_LT_PVE
+                | ViewBoundsCheck.FLAG_CVE_GT_PVS);
+        @ViewBoundsCheck.ViewBounds int acceptableBoundsFlag = (ViewBoundsCheck.FLAG_CVS_LT_PVE
+                | ViewBoundsCheck.FLAG_CVE_GT_PVS);
         View view = mBoundCheck.findOneViewWithinBoundFlags(mChildren.length - 1, -1,
                 preferredBoundsFlag, acceptableBoundsFlag);
         assertEquals("The first partially visible child from end should be returned", 7,
@@ -172,7 +192,23 @@ public class ViewBoundsCheckTest {
     }
 
     @Test
-    public void noPreferredFoundAcceptableReturnedFromStart() {
+    public void firstPartiallyOrFullyVisibleChildFromEndWithViewBoundsAligned() {
+        setUpViews(mParentBound2, mChildrenBound2);
+        // These set of flags are used in LinearLayoutManager#findOneVisibleChild
+        @ViewBoundsCheck.ViewBounds int preferredBoundsFlag = (ViewBoundsCheck.FLAG_CVS_LT_PVE
+                | ViewBoundsCheck.FLAG_CVE_GT_PVS);
+        @ViewBoundsCheck.ViewBounds int acceptableBoundsFlag = (ViewBoundsCheck.FLAG_CVS_LT_PVE
+                | ViewBoundsCheck.FLAG_CVE_GT_PVS);
+        View view = mBoundCheck.findOneViewWithinBoundFlags(mChildren.length - 1, -1,
+                preferredBoundsFlag, acceptableBoundsFlag);
+        assertEquals("The first partially visible child from end should be returned", 5,
+                view.getLeft());
+        assertEquals("The first partially visible child from end should be returned", 7,
+                view.getRight());
+    }
+
+    @Test
+    public void lastFullyInvisibleChildFromStart() {
         setUpViews(mParentBound2, mChildrenBound2);
         @ViewBoundsCheck.ViewBounds int  preferredBoundsFlag = (ViewBoundsCheck.FLAG_CVS_LT_PVS
                 | ViewBoundsCheck.FLAG_CVE_LT_PVE | ViewBoundsCheck.FLAG_CVE_GT_PVS);
@@ -187,7 +223,7 @@ public class ViewBoundsCheckTest {
     }
 
     @Test
-    public void noPreferredFoundAcceptableReturnedFromEnd() {
+    public void lastFullyInvisibleChildFromEnd() {
         setUpViews(mParentBound2, mChildrenBound2);
         @ViewBoundsCheck.ViewBounds int preferredBoundsFlag = (ViewBoundsCheck.FLAG_CVE_GT_PVE
                 | ViewBoundsCheck.FLAG_CVS_GT_PVS | ViewBoundsCheck.FLAG_CVS_LT_PVE);

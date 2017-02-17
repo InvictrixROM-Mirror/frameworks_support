@@ -904,7 +904,8 @@ package android.support.media {
     method public java.lang.String getAttribute(java.lang.String);
     method public double getAttributeDouble(java.lang.String, double);
     method public int getAttributeInt(java.lang.String, int);
-    method public boolean getLatLong(float[]);
+    method public deprecated boolean getLatLong(float[]);
+    method public double[] getLatLong();
     method public byte[] getThumbnail();
     method public android.graphics.Bitmap getThumbnailBitmap();
     method public byte[] getThumbnailBytes();
@@ -913,6 +914,7 @@ package android.support.media {
     method public boolean isThumbnailCompressed();
     method public void saveAttributes() throws java.io.IOException;
     method public void setAttribute(java.lang.String, java.lang.String);
+    method public void setLatLong(double, double);
     field public static final int ORIENTATION_FLIP_HORIZONTAL = 2; // 0x2
     field public static final int ORIENTATION_FLIP_VERTICAL = 4; // 0x4
     field public static final int ORIENTATION_NORMAL = 1; // 0x1
@@ -3091,6 +3093,7 @@ package android.support.v17.leanback.media {
 
   public static abstract class PlaybackGlueHost.HostCallback {
     ctor public PlaybackGlueHost.HostCallback();
+    method public void onHostDestroy();
     method public void onHostPause();
     method public void onHostResume();
     method public void onHostStart();
@@ -4746,6 +4749,18 @@ package android.support.v17.leanback.widget.picker {
     method public void setStaticLabels(java.lang.CharSequence[]);
   }
 
+  public class TimePicker extends android.support.v17.leanback.widget.picker.Picker {
+    ctor public TimePicker(android.content.Context, android.util.AttributeSet);
+    ctor public TimePicker(android.content.Context, android.util.AttributeSet, int);
+    method public int getHour();
+    method public int getMinute();
+    method public boolean is24Hour();
+    method public boolean isPm();
+    method public void setHour(int);
+    method public void setIs24Hour(boolean);
+    method public void setMinute(int);
+  }
+
 }
 
 package android.support.v17.preference {
@@ -5089,7 +5104,7 @@ package android.support.v4.app {
     method public void startActivityFromFragment(android.support.v4.app.Fragment, android.content.Intent, int, android.os.Bundle);
     method public void startIntentSenderFromFragment(android.support.v4.app.Fragment, android.content.IntentSender, int, android.content.Intent, int, int, int, android.os.Bundle) throws android.content.IntentSender.SendIntentException;
     method public void supportFinishAfterTransition();
-    method public void supportInvalidateOptionsMenu();
+    method public deprecated void supportInvalidateOptionsMenu();
     method public void supportPostponeEnterTransition();
     method public void supportStartPostponedEnterTransition();
     method public final void validateRequestPermissionsRequestCode(int);
@@ -5908,17 +5923,17 @@ package android.support.v4.content {
   }
 
   public final class IntentCompat {
-    method public static android.content.Intent makeMainActivity(android.content.ComponentName);
+    method public static deprecated android.content.Intent makeMainActivity(android.content.ComponentName);
     method public static android.content.Intent makeMainSelectorActivity(java.lang.String, java.lang.String);
-    method public static android.content.Intent makeRestartActivityTask(android.content.ComponentName);
-    field public static final java.lang.String ACTION_EXTERNAL_APPLICATIONS_AVAILABLE = "android.intent.action.EXTERNAL_APPLICATIONS_AVAILABLE";
-    field public static final java.lang.String ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE = "android.intent.action.EXTERNAL_APPLICATIONS_UNAVAILABLE";
+    method public static deprecated android.content.Intent makeRestartActivityTask(android.content.ComponentName);
+    field public static final deprecated java.lang.String ACTION_EXTERNAL_APPLICATIONS_AVAILABLE = "android.intent.action.EXTERNAL_APPLICATIONS_AVAILABLE";
+    field public static final deprecated java.lang.String ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE = "android.intent.action.EXTERNAL_APPLICATIONS_UNAVAILABLE";
     field public static final java.lang.String CATEGORY_LEANBACK_LAUNCHER = "android.intent.category.LEANBACK_LAUNCHER";
-    field public static final java.lang.String EXTRA_CHANGED_PACKAGE_LIST = "android.intent.extra.changed_package_list";
-    field public static final java.lang.String EXTRA_CHANGED_UID_LIST = "android.intent.extra.changed_uid_list";
+    field public static final deprecated java.lang.String EXTRA_CHANGED_PACKAGE_LIST = "android.intent.extra.changed_package_list";
+    field public static final deprecated java.lang.String EXTRA_CHANGED_UID_LIST = "android.intent.extra.changed_uid_list";
     field public static final java.lang.String EXTRA_HTML_TEXT = "android.intent.extra.HTML_TEXT";
-    field public static final int FLAG_ACTIVITY_CLEAR_TASK = 32768; // 0x8000
-    field public static final int FLAG_ACTIVITY_TASK_ON_HOME = 16384; // 0x4000
+    field public static final deprecated int FLAG_ACTIVITY_CLEAR_TASK = 32768; // 0x8000
+    field public static final deprecated int FLAG_ACTIVITY_TASK_ON_HOME = 16384; // 0x4000
   }
 
   public class Loader<D> {
@@ -5981,8 +5996,8 @@ package android.support.v4.content {
     method public static java.lang.String[] matchesMany(java.lang.String[], java.lang.String);
   }
 
-  public final class ParallelExecutorCompat {
-    method public static java.util.concurrent.Executor getParallelExecutor();
+  public final deprecated class ParallelExecutorCompat {
+    method public static deprecated java.util.concurrent.Executor getParallelExecutor();
   }
 
   public final class PermissionChecker {
@@ -7319,25 +7334,26 @@ package android.support.v4.view {
     field public static final int SOURCE_UNKNOWN = 0; // 0x0
   }
 
-  public final class KeyEventCompat {
+  public final deprecated class KeyEventCompat {
     method public static deprecated boolean dispatch(android.view.KeyEvent, android.view.KeyEvent.Callback, java.lang.Object, java.lang.Object);
     method public static deprecated java.lang.Object getKeyDispatcherState(android.view.View);
-    method public static boolean hasModifiers(android.view.KeyEvent, int);
-    method public static boolean hasNoModifiers(android.view.KeyEvent);
-    method public static boolean isCtrlPressed(android.view.KeyEvent);
+    method public static deprecated boolean hasModifiers(android.view.KeyEvent, int);
+    method public static deprecated boolean hasNoModifiers(android.view.KeyEvent);
+    method public static deprecated boolean isCtrlPressed(android.view.KeyEvent);
     method public static deprecated boolean isTracking(android.view.KeyEvent);
-    method public static boolean metaStateHasModifiers(int, int);
-    method public static boolean metaStateHasNoModifiers(int);
-    method public static int normalizeMetaState(int);
+    method public static deprecated boolean metaStateHasModifiers(int, int);
+    method public static deprecated boolean metaStateHasNoModifiers(int);
+    method public static deprecated int normalizeMetaState(int);
     method public static deprecated void startTracking(android.view.KeyEvent);
   }
 
   public final class LayoutInflaterCompat {
-    method public static android.support.v4.view.LayoutInflaterFactory getFactory(android.view.LayoutInflater);
-    method public static void setFactory(android.view.LayoutInflater, android.support.v4.view.LayoutInflaterFactory);
+    method public static deprecated android.support.v4.view.LayoutInflaterFactory getFactory(android.view.LayoutInflater);
+    method public static deprecated void setFactory(android.view.LayoutInflater, android.support.v4.view.LayoutInflaterFactory);
+    method public static void setFactory2(android.view.LayoutInflater, android.view.LayoutInflater.Factory2);
   }
 
-  public abstract interface LayoutInflaterFactory {
+  public abstract deprecated interface LayoutInflaterFactory {
     method public abstract android.view.View onCreateView(android.view.View, java.lang.String, android.content.Context, android.util.AttributeSet);
   }
 
@@ -8621,26 +8637,26 @@ package android.support.v4.widget {
     method public void startScroll(int, int, int, int, int);
   }
 
-  public final class SearchViewCompat {
-    method public static java.lang.CharSequence getQuery(android.view.View);
-    method public static boolean isIconified(android.view.View);
-    method public static boolean isQueryRefinementEnabled(android.view.View);
-    method public static boolean isSubmitButtonEnabled(android.view.View);
-    method public static android.view.View newSearchView(android.content.Context);
-    method public static void setIconified(android.view.View, boolean);
-    method public static void setImeOptions(android.view.View, int);
-    method public static void setInputType(android.view.View, int);
-    method public static void setMaxWidth(android.view.View, int);
-    method public static void setOnCloseListener(android.view.View, android.support.v4.widget.SearchViewCompat.OnCloseListener);
-    method public static void setOnQueryTextListener(android.view.View, android.support.v4.widget.SearchViewCompat.OnQueryTextListener);
-    method public static void setQuery(android.view.View, java.lang.CharSequence, boolean);
-    method public static void setQueryHint(android.view.View, java.lang.CharSequence);
-    method public static void setQueryRefinementEnabled(android.view.View, boolean);
-    method public static void setSearchableInfo(android.view.View, android.content.ComponentName);
-    method public static void setSubmitButtonEnabled(android.view.View, boolean);
+  public final deprecated class SearchViewCompat {
+    method public static deprecated java.lang.CharSequence getQuery(android.view.View);
+    method public static deprecated boolean isIconified(android.view.View);
+    method public static deprecated boolean isQueryRefinementEnabled(android.view.View);
+    method public static deprecated boolean isSubmitButtonEnabled(android.view.View);
+    method public static deprecated android.view.View newSearchView(android.content.Context);
+    method public static deprecated void setIconified(android.view.View, boolean);
+    method public static deprecated void setImeOptions(android.view.View, int);
+    method public static deprecated void setInputType(android.view.View, int);
+    method public static deprecated void setMaxWidth(android.view.View, int);
+    method public static deprecated void setOnCloseListener(android.view.View, android.support.v4.widget.SearchViewCompat.OnCloseListener);
+    method public static deprecated void setOnQueryTextListener(android.view.View, android.support.v4.widget.SearchViewCompat.OnQueryTextListener);
+    method public static deprecated void setQuery(android.view.View, java.lang.CharSequence, boolean);
+    method public static deprecated void setQueryHint(android.view.View, java.lang.CharSequence);
+    method public static deprecated void setQueryRefinementEnabled(android.view.View, boolean);
+    method public static deprecated void setSearchableInfo(android.view.View, android.content.ComponentName);
+    method public static deprecated void setSubmitButtonEnabled(android.view.View, boolean);
   }
 
-  public static abstract interface SearchViewCompat.OnCloseListener {
+  public static abstract deprecated interface SearchViewCompat.OnCloseListener {
     method public abstract boolean onClose();
   }
 
@@ -8649,7 +8665,7 @@ package android.support.v4.widget {
     method public boolean onClose();
   }
 
-  public static abstract interface SearchViewCompat.OnQueryTextListener {
+  public static abstract deprecated interface SearchViewCompat.OnQueryTextListener {
     method public abstract boolean onQueryTextChange(java.lang.String);
     method public abstract boolean onQueryTextSubmit(java.lang.String);
   }

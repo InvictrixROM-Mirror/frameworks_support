@@ -1900,6 +1900,10 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements
         return child == null ? NO_POSITION : getPosition(child);
     }
 
+    // Returns the first child that is visible in the provided index range, i.e. either partially or
+    // fully visible depending on the arguments provided. Completely invisible children are not
+    // acceptable by this method, but could be returned
+    // using #findOnePartiallyOrCompletelyInvisibleChild
     View findOneVisibleChild(int fromIndex, int toIndex, boolean completelyVisible,
             boolean acceptPartiallyVisible) {
         ensureLayoutState();
@@ -1909,13 +1913,12 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements
             preferredBoundsFlag = (ViewBoundsCheck.FLAG_CVS_GT_PVS | ViewBoundsCheck.FLAG_CVS_EQ_PVS
                     | ViewBoundsCheck.FLAG_CVE_LT_PVE | ViewBoundsCheck.FLAG_CVE_EQ_PVE);
         } else {
-            preferredBoundsFlag = (ViewBoundsCheck.FLAG_CVS_LT_PVE | ViewBoundsCheck.FLAG_CVS_EQ_PVE
-                    | ViewBoundsCheck.FLAG_CVE_GT_PVS | ViewBoundsCheck.FLAG_CVE_EQ_PVS);
+            preferredBoundsFlag = (ViewBoundsCheck.FLAG_CVS_LT_PVE
+                    | ViewBoundsCheck.FLAG_CVE_GT_PVS);
         }
         if (acceptPartiallyVisible) {
             acceptableBoundsFlag = (ViewBoundsCheck.FLAG_CVS_LT_PVE
-                    | ViewBoundsCheck.FLAG_CVS_EQ_PVE | ViewBoundsCheck.FLAG_CVE_GT_PVS
-                    | ViewBoundsCheck.FLAG_CVE_EQ_PVS);
+                    | ViewBoundsCheck.FLAG_CVE_GT_PVS);
         }
         return (mOrientation == HORIZONTAL) ? mHorizontalBoundCheck
                 .findOneViewWithinBoundFlags(fromIndex, toIndex, preferredBoundsFlag,

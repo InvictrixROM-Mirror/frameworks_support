@@ -197,6 +197,11 @@ public class Picker extends FrameLayout {
             // Width is dynamic, so has fixed size is false.
             columnView.setHasFixedSize(false);
             columnView.setFocusable(isActivated());
+            // Setting cache size to zero in order to rebind item views when picker widget becomes
+            // activated. Rebinding is necessary to update the alphas when the columns are expanded
+            // as a result of the picker getting activated, otherwise the cached views with the
+            // wrong alphas could be laid out.
+            columnView.setItemViewCacheSize(0);
             mColumnViews.add(columnView);
 
             // add view to root
@@ -550,9 +555,6 @@ public class Picker extends FrameLayout {
 
     @Override
     public void setActivated(boolean activated) {
-        if (activated && !isFocusable()) {
-            throw new IllegalStateException("Cannot activate an unfocusable Picker widget.");
-        }
         if (activated == isActivated()) {
             super.setActivated(activated);
             return;
