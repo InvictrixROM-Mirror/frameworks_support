@@ -20,6 +20,7 @@ package android.support.v7.widget;
 import static android.support.annotation.RestrictTo.Scope.LIBRARY_GROUP;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.database.Observable;
 import android.graphics.Canvas;
@@ -27,6 +28,8 @@ import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.StateListDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcel;
@@ -68,6 +71,7 @@ import android.view.ViewParent;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.animation.Interpolator;
+import android.widget.EdgeEffect;
 import android.widget.OverScroller;
 
 import java.lang.annotation.Retention;
@@ -354,6 +358,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
     private OnItemTouchListener mActiveOnItemTouchListener;
     boolean mIsAttached;
     boolean mHasFixedSize;
+    boolean mEnableFastScroller;
     @VisibleForTesting boolean mFirstLayoutComplete;
 
     // Counting lock to control whether we should ignore requestLayout calls from children or not.
@@ -403,7 +408,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
      */
     private int mDispatchScrollCounter = 0;
 
-    private EdgeEffectCompat mLeftGlow, mTopGlow, mRightGlow, mBottomGlow;
+    private EdgeEffect mLeftGlow, mTopGlow, mRightGlow, mBottomGlow;
 
     ItemAnimator mItemAnimator = new DefaultItemAnimator();
 
@@ -592,6 +597,19 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
                     R.styleable.RecyclerView_android_descendantFocusability, -1);
             if (descendantFocusability == -1) {
                 setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
+            }
+            mEnableFastScroller = a.getBoolean(R.styleable.RecyclerView_fastScrollEnabled, false);
+            if (mEnableFastScroller) {
+                StateListDrawable verticalThumbDrawable = (StateListDrawable) a
+                        .getDrawable(R.styleable.RecyclerView_fastScrollVerticalThumbDrawable);
+                Drawable verticalTrackDrawable = a
+                        .getDrawable(R.styleable.RecyclerView_fastScrollVerticalTrackDrawable);
+                StateListDrawable horizontalThumbDrawable = (StateListDrawable) a
+                        .getDrawable(R.styleable.RecyclerView_fastScrollHorizontalThumbDrawable);
+                Drawable horizontalTrackDrawable = a
+                        .getDrawable(R.styleable.RecyclerView_fastScrollHorizontalTrackDrawable);
+                initFastScroller(verticalThumbDrawable, verticalTrackDrawable,
+                        horizontalThumbDrawable, horizontalTrackDrawable);
             }
             a.recycle();
             createLayoutManager(context, layoutManagerName, attrs, defStyle, defStyleRes);
@@ -1434,6 +1452,20 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
     }
 
     /**
+     * Returns an {@link ItemDecoration} previously added to this RecyclerView.
+     *
+     * @param index The index position of the desired ItemDecoration.
+     * @return the ItemDecoration at index position, or null if invalid index.
+     */
+    public ItemDecoration getItemDecorationAt(int index) {
+        if (index < 0 || index > mItemDecorations.size()) {
+            return null;
+        }
+
+        return mItemDecorations.get(index);
+    }
+
+    /**
      * Remove an {@link ItemDecoration} from this RecyclerView.
      *
      * <p>The given decoration will no longer impact the measurement and drawing of
@@ -2105,26 +2137,22 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
         boolean invalidate = false;
         if (overscrollX < 0) {
             ensureLeftGlow();
-            if (mLeftGlow.onPull(-overscrollX / getWidth(), 1f - y  / getHeight())) {
-                invalidate = true;
-            }
+            EdgeEffectCompat.onPull(mLeftGlow, -overscrollX / getWidth(), 1f - y  / getHeight());
+            invalidate = true;
         } else if (overscrollX > 0) {
             ensureRightGlow();
-            if (mRightGlow.onPull(overscrollX / getWidth(), y / getHeight())) {
-                invalidate = true;
-            }
+            EdgeEffectCompat.onPull(mRightGlow, overscrollX / getWidth(), y / getHeight());
+            invalidate = true;
         }
 
         if (overscrollY < 0) {
             ensureTopGlow();
-            if (mTopGlow.onPull(-overscrollY / getHeight(), x / getWidth())) {
-                invalidate = true;
-            }
+            EdgeEffectCompat.onPull(mTopGlow, -overscrollY / getHeight(), x / getWidth());
+            invalidate = true;
         } else if (overscrollY > 0) {
             ensureBottomGlow();
-            if (mBottomGlow.onPull(overscrollY / getHeight(), 1f - x / getWidth())) {
-                invalidate = true;
-            }
+            EdgeEffectCompat.onPull(mBottomGlow, overscrollY / getHeight(), 1f - x / getWidth());
+            invalidate = true;
         }
 
         if (invalidate || overscrollX != 0 || overscrollY != 0) {
@@ -2134,10 +2162,22 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
 
     private void releaseGlows() {
         boolean needsInvalidate = false;
-        if (mLeftGlow != null) needsInvalidate = mLeftGlow.onRelease();
-        if (mTopGlow != null) needsInvalidate |= mTopGlow.onRelease();
-        if (mRightGlow != null) needsInvalidate |= mRightGlow.onRelease();
-        if (mBottomGlow != null) needsInvalidate |= mBottomGlow.onRelease();
+        if (mLeftGlow != null) {
+            mLeftGlow.onRelease();
+            needsInvalidate = mLeftGlow.isFinished();
+        }
+        if (mTopGlow != null) {
+            mTopGlow.onRelease();
+            needsInvalidate |= mTopGlow.isFinished();
+        }
+        if (mRightGlow != null) {
+            mRightGlow.onRelease();
+            needsInvalidate |= mRightGlow.isFinished();
+        }
+        if (mBottomGlow != null) {
+            mBottomGlow.onRelease();
+            needsInvalidate |= mBottomGlow.isFinished();
+        }
         if (needsInvalidate) {
             ViewCompat.postInvalidateOnAnimation(this);
         }
@@ -2146,16 +2186,20 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
     void considerReleasingGlowsOnScroll(int dx, int dy) {
         boolean needsInvalidate = false;
         if (mLeftGlow != null && !mLeftGlow.isFinished() && dx > 0) {
-            needsInvalidate = mLeftGlow.onRelease();
+            mLeftGlow.onRelease();
+            needsInvalidate = mLeftGlow.isFinished();
         }
         if (mRightGlow != null && !mRightGlow.isFinished() && dx < 0) {
-            needsInvalidate |= mRightGlow.onRelease();
+            mRightGlow.onRelease();
+            needsInvalidate |= mRightGlow.isFinished();
         }
         if (mTopGlow != null && !mTopGlow.isFinished() && dy > 0) {
-            needsInvalidate |= mTopGlow.onRelease();
+            mTopGlow.onRelease();
+            needsInvalidate |= mTopGlow.isFinished();
         }
         if (mBottomGlow != null && !mBottomGlow.isFinished() && dy < 0) {
-            needsInvalidate |= mBottomGlow.onRelease();
+            mBottomGlow.onRelease();
+            needsInvalidate |= mBottomGlow.isFinished();
         }
         if (needsInvalidate) {
             ViewCompat.postInvalidateOnAnimation(this);
@@ -2188,7 +2232,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
         if (mLeftGlow != null) {
             return;
         }
-        mLeftGlow = new EdgeEffectCompat(getContext());
+        mLeftGlow = new EdgeEffect(getContext());
         if (mClipToPadding) {
             mLeftGlow.setSize(getMeasuredHeight() - getPaddingTop() - getPaddingBottom(),
                     getMeasuredWidth() - getPaddingLeft() - getPaddingRight());
@@ -2201,7 +2245,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
         if (mRightGlow != null) {
             return;
         }
-        mRightGlow = new EdgeEffectCompat(getContext());
+        mRightGlow = new EdgeEffect(getContext());
         if (mClipToPadding) {
             mRightGlow.setSize(getMeasuredHeight() - getPaddingTop() - getPaddingBottom(),
                     getMeasuredWidth() - getPaddingLeft() - getPaddingRight());
@@ -2214,7 +2258,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
         if (mTopGlow != null) {
             return;
         }
-        mTopGlow = new EdgeEffectCompat(getContext());
+        mTopGlow = new EdgeEffect(getContext());
         if (mClipToPadding) {
             mTopGlow.setSize(getMeasuredWidth() - getPaddingLeft() - getPaddingRight(),
                     getMeasuredHeight() - getPaddingTop() - getPaddingBottom());
@@ -2228,7 +2272,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
         if (mBottomGlow != null) {
             return;
         }
-        mBottomGlow = new EdgeEffectCompat(getContext());
+        mBottomGlow = new EdgeEffect(getContext());
         if (mClipToPadding) {
             mBottomGlow.setSize(getMeasuredWidth() - getPaddingLeft() - getPaddingRight(),
                     getMeasuredHeight() - getPaddingTop() - getPaddingBottom());
@@ -2334,11 +2378,17 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             }
         }
         if (result != null && !result.hasFocusable()) {
+            if (getFocusedChild() == null) {
+                // Scrolling to this unfocusable view is not meaningful since there is no currently
+                // focused view which RV needs to keep visible.
+                return super.focusSearch(focused, direction);
+            }
             // If the next view returned by onFocusSearchFailed in layout manager has no focusable
             // views, we still scroll to that view in order to make it visible on the screen.
             // If it's focusable, framework already calls RV's requestChildFocus which handles
             // bringing this newly focused item onto the screen.
             requestChildOnScreen(result, null);
+            return focused;
         }
         return isPreferredNextFocus(focused, result, direction)
                 ? result : super.focusSearch(focused, direction);
@@ -9208,11 +9258,14 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
          * @param parent The parent RecyclerView.
          * @param dx The scrolling in x-axis direction to be performed.
          * @param dy The scrolling in y-axis direction to be performed.
-         * @return Whether after the given scrolling, the currently focused item in still visible
-         * (within RV's bounds).
+         * @return {@code false} if the focused child is not at least partially visible after
+         *         scrolling or no focused child exists, {@code true} otherwise.
          */
         private boolean isFocusedChildVisibleAfterScrolling(RecyclerView parent, int dx, int dy) {
             final View focusedChild = parent.getFocusedChild();
+            if (focusedChild == null) {
+                return false;
+            }
             final int parentLeft = getPaddingLeft();
             final int parentTop = getPaddingTop();
             final int parentRight = getWidth() - getPaddingRight();
@@ -9600,13 +9653,11 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
          */
         public void onInitializeAccessibilityNodeInfo(Recycler recycler, State state,
                 AccessibilityNodeInfoCompat info) {
-            if (ViewCompat.canScrollVertically(mRecyclerView, -1)
-                    || ViewCompat.canScrollHorizontally(mRecyclerView, -1)) {
+            if (mRecyclerView.canScrollVertically(-1) || mRecyclerView.canScrollHorizontally(-1)) {
                 info.addAction(AccessibilityNodeInfoCompat.ACTION_SCROLL_BACKWARD);
                 info.setScrollable(true);
             }
-            if (ViewCompat.canScrollVertically(mRecyclerView, 1)
-                    || ViewCompat.canScrollHorizontally(mRecyclerView, 1)) {
+            if (mRecyclerView.canScrollVertically(1) || mRecyclerView.canScrollHorizontally(1)) {
                 info.addAction(AccessibilityNodeInfoCompat.ACTION_SCROLL_FORWARD);
                 info.setScrollable(true);
             }
@@ -9642,10 +9693,10 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             if (mRecyclerView == null || record == null) {
                 return;
             }
-            record.setScrollable(ViewCompat.canScrollVertically(mRecyclerView, 1)
-                    || ViewCompat.canScrollVertically(mRecyclerView, -1)
-                    || ViewCompat.canScrollHorizontally(mRecyclerView, -1)
-                    || ViewCompat.canScrollHorizontally(mRecyclerView, 1));
+            record.setScrollable(mRecyclerView.canScrollVertically(1)
+                    || mRecyclerView.canScrollVertically(-1)
+                    || mRecyclerView.canScrollHorizontally(-1)
+                    || mRecyclerView.canScrollHorizontally(1));
 
             if (mRecyclerView.mAdapter != null) {
                 record.setItemCount(mRecyclerView.mAdapter.getItemCount());
@@ -9795,18 +9846,18 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             int vScroll = 0, hScroll = 0;
             switch (action) {
                 case AccessibilityNodeInfoCompat.ACTION_SCROLL_BACKWARD:
-                    if (ViewCompat.canScrollVertically(mRecyclerView, -1)) {
+                    if (mRecyclerView.canScrollVertically(-1)) {
                         vScroll = -(getHeight() - getPaddingTop() - getPaddingBottom());
                     }
-                    if (ViewCompat.canScrollHorizontally(mRecyclerView, -1)) {
+                    if (mRecyclerView.canScrollHorizontally(-1)) {
                         hScroll = -(getWidth() - getPaddingLeft() - getPaddingRight());
                     }
                     break;
                 case AccessibilityNodeInfoCompat.ACTION_SCROLL_FORWARD:
-                    if (ViewCompat.canScrollVertically(mRecyclerView, 1)) {
+                    if (mRecyclerView.canScrollVertically(1)) {
                         vScroll = getHeight() - getPaddingTop() - getPaddingBottom();
                     }
-                    if (ViewCompat.canScrollHorizontally(mRecyclerView, 1)) {
+                    if (mRecyclerView.canScrollHorizontally(1)) {
                         hScroll = getWidth() - getPaddingLeft() - getPaddingRight();
                     }
                     break;
@@ -10710,6 +10761,24 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             return RecyclerView.NO_POSITION;
         }
         return mAdapterHelper.applyPendingUpdatesToPosition(viewHolder.mPosition);
+    }
+
+    @VisibleForTesting
+    void initFastScroller(StateListDrawable verticalThumbDrawable,
+            Drawable verticalTrackDrawable, StateListDrawable horizontalThumbDrawable,
+            Drawable horizontalTrackDrawable) {
+        if (verticalThumbDrawable == null || verticalTrackDrawable == null
+                || horizontalThumbDrawable == null || horizontalTrackDrawable == null) {
+            throw new IllegalArgumentException(
+                "Trying to set fast scroller without both required drawables.");
+        }
+
+        Resources resources = getContext().getResources();
+        new FastScroller(this, verticalThumbDrawable, verticalTrackDrawable,
+                horizontalThumbDrawable, horizontalTrackDrawable,
+                resources.getDimensionPixelSize(R.dimen.fastscroll_default_thickness),
+                resources.getDimensionPixelSize(R.dimen.fastscroll_minimum_range),
+                resources.getDimensionPixelOffset(R.dimen.fastscroll_margin));
     }
 
     // NestedScrollingChild

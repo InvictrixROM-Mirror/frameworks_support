@@ -2018,7 +2018,12 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             mTmpRecords = new ArrayList<>();
             mTmpIsPop = new ArrayList<>();
         }
-        executePostponedTransaction(null, null);
+        mExecutingActions = true;
+        try {
+            executePostponedTransaction(null, null);
+        } finally {
+            mExecutingActions = false;
+        }
     }
 
     public void execSingleAction(OpGenerator action, boolean allowStateLoss) {
@@ -2943,26 +2948,36 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
 
     public void dispatchCreate() {
         mStateSaved = false;
+        mExecutingActions = true;
         moveToState(Fragment.CREATED, false);
+        mExecutingActions = false;
     }
 
     public void dispatchActivityCreated() {
         mStateSaved = false;
+        mExecutingActions = true;
         moveToState(Fragment.ACTIVITY_CREATED, false);
+        mExecutingActions = false;
     }
 
     public void dispatchStart() {
         mStateSaved = false;
+        mExecutingActions = true;
         moveToState(Fragment.STARTED, false);
+        mExecutingActions = false;
     }
 
     public void dispatchResume() {
         mStateSaved = false;
+        mExecutingActions = true;
         moveToState(Fragment.RESUMED, false);
+        mExecutingActions = false;
     }
 
     public void dispatchPause() {
+        mExecutingActions = true;
         moveToState(Fragment.STARTED, false);
+        mExecutingActions = false;
     }
 
     public void dispatchStop() {
@@ -2971,21 +2986,29 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         // them.
         mStateSaved = true;
 
+        mExecutingActions = true;
         moveToState(Fragment.STOPPED, false);
+        mExecutingActions = false;
     }
 
     public void dispatchReallyStop() {
+        mExecutingActions = true;
         moveToState(Fragment.ACTIVITY_CREATED, false);
+        mExecutingActions = false;
     }
 
     public void dispatchDestroyView() {
+        mExecutingActions = true;
         moveToState(Fragment.CREATED, false);
+        mExecutingActions = false;
     }
 
     public void dispatchDestroy() {
         mDestroyed = true;
         execPendingActions();
+        mExecutingActions = true;
         moveToState(Fragment.INITIALIZING, false);
+        mExecutingActions = false;
         mHost = null;
         mContainer = null;
         mParent = null;

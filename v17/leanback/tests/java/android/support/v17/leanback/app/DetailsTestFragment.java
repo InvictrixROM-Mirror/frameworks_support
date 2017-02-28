@@ -15,36 +15,28 @@
  */
 package android.support.v17.leanback.app;
 
-import android.animation.PropertyValuesHolder;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v17.leanback.graphics.FitWidthBitmapDrawable;
 import android.support.v17.leanback.test.R;
 import android.support.v17.leanback.widget.AbstractDetailsDescriptionPresenter;
 import android.support.v17.leanback.widget.Action;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.ClassPresenterSelector;
 import android.support.v17.leanback.widget.DetailsOverviewRow;
-import android.support.v17.leanback.widget.DetailsParallaxDrawable;
 import android.support.v17.leanback.widget.FullWidthDetailsOverviewRowPresenter;
-import android.support.v17.leanback.widget.FullWidthDetailsOverviewSharedElementHelper;
 import android.support.v17.leanback.widget.HeaderItem;
 import android.support.v17.leanback.widget.ImageCardView;
 import android.support.v17.leanback.widget.ListRow;
 import android.support.v17.leanback.widget.ListRowPresenter;
-import android.support.v17.leanback.widget.ParallaxTarget;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.SparseArrayObjectAdapter;
 import android.view.ViewGroup;
 
+/**
+ * Base class provides overview row and some related rows.
+ */
 public class DetailsTestFragment extends android.support.v17.leanback.app.DetailsFragment {
-    private static final String ITEM = "item";
-    public static final String VERTICAL_OFFSET = "details_fragment";
-
     private static final int NUM_ROWS = 3;
     private ArrayObjectAdapter mRowsAdapter;
     private PhotoItem mPhotoItem;
@@ -70,45 +62,22 @@ public class DetailsTestFragment extends android.support.v17.leanback.app.Detail
         }
     };
 
-    private static final int ACTION_PLAY = 1;
     private static final int ACTION_RENT = 2;
     private static final int ACTION_BUY = 3;
 
-    private static final long TIME_TO_LOAD_OVERVIEW_ROW_MS = 1000;
-    private static final long TIME_TO_LOAD_RELATED_ROWS_MS = 2000;
+    protected long mTimeToLoadOverviewRow = 1000;
+    protected long mTimeToLoadRelatedRow = 2000;
 
-    private Action mActionPlay;
     private Action mActionRent;
     private Action mActionBuy;
 
-    private FullWidthDetailsOverviewSharedElementHelper mHelper;
-    private DetailsParallaxDrawable mParallaxDrawable;
-    private int mMinVerticalOffset;
+    protected int mMinVerticalOffset = -100;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTitle("Leanback Sample App");
 
-        if (getArguments() != null) {
-            mMinVerticalOffset = getArguments().getInt(VERTICAL_OFFSET, -100);
-        }
-        Drawable coverDrawable = new FitWidthBitmapDrawable();
-        mParallaxDrawable = new DetailsParallaxDrawable(
-                getActivity(),
-                getParallax(),
-                coverDrawable,
-                new ParallaxTarget.PropertyValuesHolderTarget(
-                        coverDrawable,
-                        PropertyValuesHolder.ofInt("verticalOffset", 0, mMinVerticalOffset)
-                )
-        );
-
-        BackgroundManager backgroundManager = BackgroundManager.getInstance(getActivity());
-        backgroundManager.attach(getActivity().getWindow());
-        backgroundManager.setDrawable(mParallaxDrawable);
-
-        mActionPlay = new Action(ACTION_PLAY, "Play");
         mActionRent = new Action(ACTION_RENT, "Rent", "$3.99",
                 getResources().getDrawable(R.drawable.ic_action_a));
         mActionBuy = new Action(ACTION_BUY, "Buy $9.99");
@@ -130,12 +99,6 @@ public class DetailsTestFragment extends android.support.v17.leanback.app.Detail
         mRowsAdapter = new ArrayObjectAdapter(ps);
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putParcelable(ITEM, mPhotoItem);
-    }
-
     public void setItem(PhotoItem photoItem) {
         mPhotoItem = photoItem;
         mRowsAdapter.clear();
@@ -154,7 +117,7 @@ public class DetailsTestFragment extends android.support.v17.leanback.app.Detail
                 mRowsAdapter.add(0, dor);
                 setSelectedPosition(0, true);
             }
-        }, TIME_TO_LOAD_OVERVIEW_ROW_MS);
+        }, mTimeToLoadOverviewRow);
 
 
         new Handler().postDelayed(new Runnable() {
@@ -172,20 +135,9 @@ public class DetailsTestFragment extends android.support.v17.leanback.app.Detail
                     mRowsAdapter.add(new ListRow(header, listRowAdapter));
                 }
             }
-        }, TIME_TO_LOAD_RELATED_ROWS_MS);
+        }, mTimeToLoadRelatedRow);
 
         setAdapter(mRowsAdapter);
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        Bitmap bitmap = BitmapFactory.decodeResource(getActivity().getResources(),
-                R.drawable.spiderman);
-        ((FitWidthBitmapDrawable) mParallaxDrawable.getCoverDrawable()).setBitmap(bitmap);
-    }
-
-    DetailsParallaxDrawable getParallaxDrawable() {
-        return mParallaxDrawable;
-    }
 }

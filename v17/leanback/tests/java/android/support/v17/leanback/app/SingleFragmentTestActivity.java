@@ -29,13 +29,22 @@ public class SingleFragmentTestActivity extends Activity {
      */
     public static final String EXTRA_FRAGMENT_NAME = "fragmentName";
 
+    public static final String EXTRA_ACTIVITY_LAYOUT = "activityLayout";
+
+    public static final String EXTRA_UI_VISIBILITY = "uiVisibility";
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
 
-        setContentView(R.layout.rows);
-        if (savedInstanceState == null) {
+        final int uiOptions = intent.getIntExtra(EXTRA_UI_VISIBILITY, 0);
+        if (uiOptions != 0) {
+            getWindow().getDecorView().setSystemUiVisibility(uiOptions);
+        }
+
+        setContentView(intent.getIntExtra(EXTRA_ACTIVITY_LAYOUT, R.layout.single_fragment));
+        if (savedInstanceState == null && findViewById(R.id.main_frame) != null) {
             try {
                 Fragment fragment = (Fragment) Class.forName(
                         intent.getStringExtra(EXTRA_FRAGMENT_NAME)).newInstance();

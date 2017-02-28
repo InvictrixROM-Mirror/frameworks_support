@@ -28,8 +28,10 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.RemoteException;
 import android.os.ResultReceiver;
+import android.support.annotation.VisibleForTesting;
 import android.support.v4.app.BundleCompat;
 import android.support.v4.app.SupportActivity;
+import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.RatingCompat;
 import android.support.v4.media.VolumeProviderCompat;
@@ -62,6 +64,19 @@ public final class MediaControllerCompat {
 
     static final String COMMAND_GET_EXTRA_BINDER =
             "android.support.v4.media.session.command.GET_EXTRA_BINDER";
+    static final String COMMAND_ADD_QUEUE_ITEM =
+            "android.support.v4.media.session.command.ADD_QUEUE_ITEM";
+    static final String COMMAND_ADD_QUEUE_ITEM_AT =
+            "android.support.v4.media.session.command.ADD_QUEUE_ITEM_AT";
+    static final String COMMAND_REMOVE_QUEUE_ITEM =
+            "android.support.v4.media.session.command.REMOVE_QUEUE_ITEM";
+    static final String COMMAND_REMOVE_QUEUE_ITEM_AT =
+            "android.support.v4.media.session.command.REMOVE_QUEUE_ITEM_AT";
+
+    static final String COMMAND_ARGUMENT_MEDIA_DESCRIPTION =
+            "android.support.v4.media.session.command.ARGUMENT_MEDIA_DESCRIPTION";
+    static final String COMMAND_ARGUMENT_INDEX =
+            "android.support.v4.media.session.command.ARGUMENT_INDEX";
 
     private static class MediaControllerExtraData extends SupportActivity.ExtraData {
         private final MediaControllerCompat mMediaController;
@@ -238,6 +253,62 @@ public final class MediaControllerCompat {
      */
     public List<MediaSessionCompat.QueueItem> getQueue() {
         return mImpl.getQueue();
+    }
+
+    /**
+     * Add a queue item from the given {@code description} at the end of the play queue
+     * of this session. Not all sessions may support this.
+     *
+     * @param description The {@link MediaDescriptionCompat} for creating the
+     *            {@link MediaSessionCompat.QueueItem} to be inserted.
+     * @throws UnsupportedOperationException If this session doesn't support this.
+     * @see MediaSessionCompat#FLAG_HANDLES_QUEUE_COMMANDS
+     */
+    public void addQueueItem(MediaDescriptionCompat description) {
+        mImpl.addQueueItem(description);
+    }
+
+    /**
+     * Add a queue item from the given {@code description} at the specified position
+     * in the play queue of this session. Shifts the queue item currently at that position
+     * (if any) and any subsequent queue items to the right (adds one to their indices).
+     * Not all sessions may support this.
+     *
+     * @param description The {@link MediaDescriptionCompat} for creating the
+     *            {@link MediaSessionCompat.QueueItem} to be inserted.
+     * @param index The index at which the created {@link MediaSessionCompat.QueueItem}
+     *            is to be inserted.
+     * @throws UnsupportedOperationException If this session doesn't support this.
+     * @see MediaSessionCompat#FLAG_HANDLES_QUEUE_COMMANDS
+     */
+    public void addQueueItem(MediaDescriptionCompat description, int index) {
+        mImpl.addQueueItem(description, index);
+    }
+
+    /**
+     * Remove the first occurrence of the specified {@link MediaSessionCompat.QueueItem}
+     * with the given {@link MediaDescriptionCompat description} in the play queue of the
+     * associated session. Not all sessions may support this.
+     *
+     * @param description The {@link MediaDescriptionCompat} for denoting the
+     *            {@link MediaSessionCompat.QueueItem} to be removed.
+     * @throws UnsupportedOperationException If this session doesn't support this.
+     * @see MediaSessionCompat#FLAG_HANDLES_QUEUE_COMMANDS
+     */
+    public void removeQueueItem(MediaDescriptionCompat description) {
+        mImpl.removeQueueItem(description);
+    }
+
+    /**
+     * Remove an queue item at the specified position in the play queue
+     * of this session. Not all sessions may support this.
+     *
+     * @param index The index of the element to be removed.
+     * @throws UnsupportedOperationException If this session doesn't support this.
+     * @see MediaSessionCompat#FLAG_HANDLES_QUEUE_COMMANDS
+     */
+    public void removeQueueItemAt(int index) {
+        mImpl.removeQueueItemAt(index);
     }
 
     /**
@@ -427,6 +498,15 @@ public final class MediaControllerCompat {
         return mImpl.getPackageName();
     }
 
+    @VisibleForTesting
+    boolean isExtraBinderReady() {
+        if (mImpl instanceof MediaControllerImplApi21) {
+            return ((MediaControllerImplApi21) mImpl).mExtraBinder != null;
+        } else {
+            return false;
+        }
+    }
+
     /**
      * Gets the underlying framework
      * {@link android.media.session.MediaController} object.
@@ -586,7 +666,7 @@ public final class MediaControllerCompat {
 
             @Override
             public void onPlaybackStateChanged(Object stateObj) {
-                if (mHasExtraCallback && android.os.Build.VERSION.SDK_INT < 22) {
+                if (mHasExtraCallback) {
                     // Ignore. ExtraCallback will handle this.
                 } else {
                     Callback.this.onPlaybackStateChanged(
@@ -1051,6 +1131,10 @@ public final class MediaControllerCompat {
         MediaMetadataCompat getMetadata();
 
         List<MediaSessionCompat.QueueItem> getQueue();
+        void addQueueItem(MediaDescriptionCompat description);
+        void addQueueItem(MediaDescriptionCompat description, int index);
+        void removeQueueItem(MediaDescriptionCompat description);
+        void removeQueueItemAt(int index);
         CharSequence getQueueTitle();
         Bundle getExtras();
         int getRatingType();
@@ -1159,6 +1243,62 @@ public final class MediaControllerCompat {
                 Log.e(TAG, "Dead object in getQueue. " + e);
             }
             return null;
+        }
+
+        @Override
+        public void addQueueItem(MediaDescriptionCompat description) {
+            try {
+                long flags = mBinder.getFlags();
+                if ((flags & MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS) == 0) {
+                    throw new UnsupportedOperationException(
+                            "This session doesn't support queue management operations");
+                }
+                mBinder.addQueueItem(description);
+            } catch (RemoteException e) {
+                Log.e(TAG, "Dead object in addQueueItem. " + e);
+            }
+        }
+
+        @Override
+        public void addQueueItem(MediaDescriptionCompat description, int index) {
+            try {
+                long flags = mBinder.getFlags();
+                if ((flags & MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS) == 0) {
+                    throw new UnsupportedOperationException(
+                            "This session doesn't support queue management operations");
+                }
+                mBinder.addQueueItemAt(description, index);
+            } catch (RemoteException e) {
+                Log.e(TAG, "Dead object in addQueueItemAt. " + e);
+            }
+        }
+
+        @Override
+        public void removeQueueItem(MediaDescriptionCompat description) {
+            try {
+                long flags = mBinder.getFlags();
+                if ((flags & MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS) == 0) {
+                    throw new UnsupportedOperationException(
+                            "This session doesn't support queue management operations");
+                }
+                mBinder.removeQueueItem(description);
+            } catch (RemoteException e) {
+                Log.e(TAG, "Dead object in removeQueueItem. " + e);
+            }
+        }
+
+        @Override
+        public void removeQueueItemAt(int index) {
+            try {
+                long flags = mBinder.getFlags();
+                if ((flags & MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS) == 0) {
+                    throw new UnsupportedOperationException(
+                            "This session doesn't support queue management operations");
+                }
+                mBinder.removeQueueItemAt(index);
+            } catch (RemoteException e) {
+                Log.e(TAG, "Dead object in removeQueueItemAt. " + e);
+            }
         }
 
         @Override
@@ -1488,14 +1628,12 @@ public final class MediaControllerCompat {
         // after API 21.
         private IMediaSession mExtraBinder;
         private HashMap<Callback, ExtraCallback> mCallbackMap = new HashMap<>();
-        private List<Callback> mPendingCallbacks;
+        private List<Callback> mPendingCallbacks = new ArrayList<>();
 
         public MediaControllerImplApi21(Context context, MediaSessionCompat session) {
             mControllerObj = MediaControllerCompatApi21.fromToken(context,
                     session.getSessionToken().getToken());
-            if (android.os.Build.VERSION.SDK_INT < 26) {
-                requestExtraBinder();
-            }
+            requestExtraBinder();
         }
 
         public MediaControllerImplApi21(Context context, MediaSessionCompat.Token sessionToken)
@@ -1503,9 +1641,7 @@ public final class MediaControllerCompat {
             mControllerObj = MediaControllerCompatApi21.fromToken(context,
                     sessionToken.getToken());
             if (mControllerObj == null) throw new RemoteException();
-            if (android.os.Build.VERSION.SDK_INT < 26) {
-                requestExtraBinder();
-            }
+            requestExtraBinder();
         }
 
         @Override
@@ -1522,12 +1658,11 @@ public final class MediaControllerCompat {
                 } catch (RemoteException e) {
                     Log.e(TAG, "Dead object in registerCallback. " + e);
                 }
-            } else if (android.os.Build.VERSION.SDK_INT < 26) {
-                if (mPendingCallbacks == null) {
-                    mPendingCallbacks = new ArrayList<>();
-                }
+            } else {
                 callback.setHandler(handler);
-                mPendingCallbacks.add(callback);
+                synchronized (mPendingCallbacks) {
+                    mPendingCallbacks.add(callback);
+                }
             }
         }
 
@@ -1543,11 +1678,10 @@ public final class MediaControllerCompat {
                 } catch (RemoteException e) {
                     Log.e(TAG, "Dead object in unregisterCallback. " + e);
                 }
-            } else if (android.os.Build.VERSION.SDK_INT < 26) {
-                if (mPendingCallbacks == null) {
-                    mPendingCallbacks = new ArrayList<>();
+            } else {
+                synchronized (mPendingCallbacks) {
+                    mPendingCallbacks.remove(callback);
                 }
-                mPendingCallbacks.remove(callback);
             }
         }
 
@@ -1564,7 +1698,7 @@ public final class MediaControllerCompat {
 
         @Override
         public PlaybackStateCompat getPlaybackState() {
-            if (android.os.Build.VERSION.SDK_INT < 22 && mExtraBinder != null) {
+            if (mExtraBinder != null) {
                 try {
                     return mExtraBinder.getPlaybackState();
                 } catch (RemoteException e) {
@@ -1586,6 +1720,35 @@ public final class MediaControllerCompat {
             List<Object> queueObjs = MediaControllerCompatApi21.getQueue(mControllerObj);
             return queueObjs != null ? MediaSessionCompat.QueueItem.fromQueueItemList(queueObjs)
                     : null;
+        }
+
+        @Override
+        public void addQueueItem(MediaDescriptionCompat description) {
+            Bundle params = new Bundle();
+            params.putParcelable(COMMAND_ARGUMENT_MEDIA_DESCRIPTION, description);
+            sendCommand(COMMAND_ADD_QUEUE_ITEM, params, null);
+        }
+
+        @Override
+        public void addQueueItem(MediaDescriptionCompat description, int index) {
+            Bundle params = new Bundle();
+            params.putParcelable(COMMAND_ARGUMENT_MEDIA_DESCRIPTION, description);
+            params.putInt(COMMAND_ARGUMENT_INDEX, index);
+            sendCommand(COMMAND_ADD_QUEUE_ITEM_AT, params, null);
+        }
+
+        @Override
+        public void removeQueueItem(MediaDescriptionCompat description) {
+            Bundle params = new Bundle();
+            params.putParcelable(COMMAND_ARGUMENT_MEDIA_DESCRIPTION, description);
+            sendCommand(COMMAND_REMOVE_QUEUE_ITEM, params, null);
+        }
+
+        @Override
+        public void removeQueueItemAt(int index) {
+            Bundle params = new Bundle();
+            params.putInt(COMMAND_ARGUMENT_INDEX, index);
+            sendCommand(COMMAND_REMOVE_QUEUE_ITEM_AT, params, null);
         }
 
         @Override
@@ -1687,21 +1850,23 @@ public final class MediaControllerCompat {
         }
 
         private void processPendingCallbacks() {
-            if (mPendingCallbacks == null || mExtraBinder == null) {
+            if (mExtraBinder == null) {
                 return;
             }
-            for (Callback callback : mPendingCallbacks) {
-                ExtraCallback extraCallback = new ExtraCallback(callback);
-                mCallbackMap.put(callback, extraCallback);
-                callback.mHasExtraCallback = true;
-                try {
-                    mExtraBinder.registerCallbackListener(extraCallback);
-                } catch (RemoteException e) {
-                    Log.e(TAG, "Dead object in registerCallback. " + e);
-                    break;
+            synchronized (mPendingCallbacks) {
+                for (Callback callback : mPendingCallbacks) {
+                    ExtraCallback extraCallback = new ExtraCallback(callback);
+                    mCallbackMap.put(callback, extraCallback);
+                    callback.mHasExtraCallback = true;
+                    try {
+                        mExtraBinder.registerCallbackListener(extraCallback);
+                    } catch (RemoteException e) {
+                        Log.e(TAG, "Dead object in registerCallback. " + e);
+                        break;
+                    }
                 }
+                mPendingCallbacks.clear();
             }
-            mPendingCallbacks = null;
         }
 
         private static class ExtraBinderRequestResultReceiver extends ResultReceiver {

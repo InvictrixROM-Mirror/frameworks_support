@@ -26,6 +26,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.animation.Interpolator;
+import android.widget.OverScroller;
 
 import java.util.Arrays;
 
@@ -128,7 +129,7 @@ public class ViewDragHelper {
     private int mEdgeSize;
     private int mTrackingEdges;
 
-    private ScrollerCompat mScroller;
+    private OverScroller mScroller;
 
     private final Callback mCallback;
 
@@ -389,7 +390,7 @@ public class ViewDragHelper {
         mTouchSlop = vc.getScaledTouchSlop();
         mMaxVelocity = vc.getScaledMaximumFlingVelocity();
         mMinVelocity = vc.getScaledMinimumFlingVelocity();
-        mScroller = ScrollerCompat.create(context, sInterpolator);
+        mScroller = new OverScroller(context, sInterpolator);
     }
 
     /**
@@ -937,8 +938,7 @@ public class ViewDragHelper {
             }
         }
 
-        return checkV && (ViewCompat.canScrollHorizontally(v, -dx)
-                || ViewCompat.canScrollVertically(v, -dy));
+        return checkV && (v.canScrollHorizontally(-dx) || v.canScrollVertically(-dy));
     }
 
     /**

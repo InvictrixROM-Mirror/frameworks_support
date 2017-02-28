@@ -1202,7 +1202,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements
             LayoutPrefetchRegistry layoutPrefetchRegistry) {
         final int pos = layoutState.mCurrentPosition;
         if (pos >= 0 && pos < state.getItemCount()) {
-            layoutPrefetchRegistry.addPosition(pos, layoutState.mScrollingOffset);
+            layoutPrefetchRegistry.addPosition(pos, Math.max(0, layoutState.mScrollingOffset));
         }
     }
 
@@ -1607,7 +1607,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements
         if (params.isItemRemoved() || params.isItemChanged()) {
             result.mIgnoreConsumed = true;
         }
-        result.mFocusable = view.isFocusable();
+        result.mFocusable = view.hasFocusable();
     }
 
     @Override
@@ -1992,7 +1992,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements
         } else {
             nextFocus = getChildClosestToEnd();
         }
-        if (nextFocus.isFocusable()) {
+        if (nextFocus.hasFocusable()) {
             if (nextCandidate == null) {
                 return null;
             }

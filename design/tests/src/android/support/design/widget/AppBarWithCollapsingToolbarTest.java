@@ -24,14 +24,18 @@ import static org.junit.Assert.assertThat;
 import android.os.Build;
 import android.os.SystemClock;
 import android.support.design.test.R;
+import android.support.test.filters.FlakyTest;
 import android.support.test.filters.LargeTest;
 import android.support.test.filters.SdkSuppress;
+import android.support.test.filters.Suppress;
 import android.widget.ImageView;
 
 import org.junit.Test;
 
 @LargeTest
 public class AppBarWithCollapsingToolbarTest extends AppBarLayoutBaseTest {
+    @Suppress
+    @FlakyTest(bugId = 30701044)
     @Test
     public void testPinnedToolbar() throws Throwable {
         configureContent(R.layout.design_appbar_toolbar_collapse_pin,
@@ -137,6 +141,8 @@ public class AppBarWithCollapsingToolbarTest extends AppBarLayoutBaseTest {
         assertScrimAlpha(0);
     }
 
+    @Suppress
+    @FlakyTest(bugId = 30701044)
     @Test
     public void testScrollingToolbar() throws Throwable {
         configureContent(R.layout.design_appbar_toolbar_collapse_scroll,
@@ -247,6 +253,8 @@ public class AppBarWithCollapsingToolbarTest extends AppBarLayoutBaseTest {
         assertScrimAlpha(0);
     }
 
+    @Suppress
+    @FlakyTest(bugId = 30701044)
     @Test
     public void testScrollingToolbarEnterAlways() throws Throwable {
         configureContent(R.layout.design_appbar_toolbar_collapse_scroll_enteralways,
@@ -352,6 +360,8 @@ public class AppBarWithCollapsingToolbarTest extends AppBarLayoutBaseTest {
         assertScrimAlpha(0);
     }
 
+    @Suppress
+    @FlakyTest(bugId = 30701044)
     @Test
     public void testPinnedToolbarAndAnchoredFab() throws Throwable {
         configureContent(R.layout.design_appbar_toolbar_collapse_pin_with_fab,
@@ -418,6 +428,8 @@ public class AppBarWithCollapsingToolbarTest extends AppBarLayoutBaseTest {
         }
     }
 
+    @Suppress
+    @FlakyTest(bugId = 30701044)
     @Test
     public void testPinnedToolbarAndParallaxImage() throws Throwable {
         configureContent(R.layout.design_appbar_toolbar_collapse_with_image,
@@ -521,6 +533,8 @@ public class AppBarWithCollapsingToolbarTest extends AppBarLayoutBaseTest {
      * inherits from) has an issue with measuring children with margins when run on earlier
      * versions of the platform.
      */
+    @Suppress
+    @FlakyTest(bugId = 30701044)
     @Test
     @SdkSuppress(minSdkVersion = 11)
     public void testPinnedToolbarWithMargins() throws Throwable {

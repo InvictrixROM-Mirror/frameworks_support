@@ -1,3 +1,6 @@
+// CHECKSTYLE:OFF Generated code
+/* This file is auto-generated from SingleFragmentTestActivity.java.  DO NOT MODIFY. */
+
 /*
  * Copyright (C) 2016 The Android Open Source Project
  *
@@ -15,26 +18,36 @@
  */
 package android.support.v17.leanback.app;
 
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v17.leanback.test.R;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 
-public class SingleSupportFragmentTestActivity extends android.support.v4.app.FragmentActivity {
+public class SingleSupportFragmentTestActivity extends FragmentActivity {
 
     /**
      * Fragment that will be added to activity
      */
     public static final String EXTRA_FRAGMENT_NAME = "fragmentName";
 
+    public static final String EXTRA_ACTIVITY_LAYOUT = "activityLayout";
+
+    public static final String EXTRA_UI_VISIBILITY = "uiVisibility";
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
 
-        setContentView(R.layout.rows);
-        if (savedInstanceState == null) {
+        final int uiOptions = intent.getIntExtra(EXTRA_UI_VISIBILITY, 0);
+        if (uiOptions != 0) {
+            getWindow().getDecorView().setSystemUiVisibility(uiOptions);
+        }
+
+        setContentView(intent.getIntExtra(EXTRA_ACTIVITY_LAYOUT, R.layout.single_fragment));
+        if (savedInstanceState == null && findViewById(R.id.main_frame) != null) {
             try {
                 Fragment fragment = (Fragment) Class.forName(
                         intent.getStringExtra(EXTRA_FRAGMENT_NAME)).newInstance();
