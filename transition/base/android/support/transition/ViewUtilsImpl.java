@@ -27,4 +27,8 @@ interface ViewUtilsImpl {
 
     WindowIdImpl getWindowId(@NonNull View view);
 
+    void setTransitionAlpha(@NonNull View view, float alpha);
+
+    float getTransitionAlpha(@NonNull View view);
+
 }

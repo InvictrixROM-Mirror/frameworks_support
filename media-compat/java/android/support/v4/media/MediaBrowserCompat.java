@@ -38,10 +38,12 @@ import static android.support.v4.media.MediaBrowserProtocol.DATA_SEARCH_EXTRAS;
 import static android.support.v4.media.MediaBrowserProtocol.DATA_SEARCH_QUERY;
 import static android.support.v4.media.MediaBrowserProtocol.EXTRA_CLIENT_VERSION;
 import static android.support.v4.media.MediaBrowserProtocol.EXTRA_MESSENGER_BINDER;
+import static android.support.v4.media.MediaBrowserProtocol.EXTRA_SESSION_BINDER;
 import static android.support.v4.media.MediaBrowserProtocol.SERVICE_MSG_ON_CONNECT;
 import static android.support.v4.media.MediaBrowserProtocol.SERVICE_MSG_ON_CONNECT_FAILED;
 import static android.support.v4.media.MediaBrowserProtocol.SERVICE_MSG_ON_LOAD_CHILDREN;
 
+import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -59,8 +61,10 @@ import android.os.RemoteException;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.annotation.RestrictTo;
 import android.support.v4.app.BundleCompat;
+import android.support.v4.media.session.IMediaSession;
 import android.support.v4.media.session.MediaControllerCompat.TransportControls;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.os.BuildCompat;
@@ -122,11 +126,13 @@ public final class MediaBrowserCompat {
      * @see MediaBrowserServiceCompat.BrowserRoot#EXTRA_OFFLINE
      * @see MediaBrowserServiceCompat.BrowserRoot#EXTRA_SUGGESTED
      */
+    @SuppressLint("NewApi")
     public MediaBrowserCompat(Context context, ComponentName serviceComponent,
             ConnectionCallback callback, Bundle rootHints) {
         // To workaround an issue of {@link #unsubscribe(String, SubscriptionCallback)} on API 24
         // and 25 devices, use the support library version of implementation on those devices.
-        if (Build.VERSION.SDK_INT >= 26 || BuildCompat.isAtLeastO()) {
+        if (BuildCompat.isAtLeastO()) {
+            //noinspection AndroidLintNewApi
             mImpl = new MediaBrowserImplApi24(context, serviceComponent, callback, rootHints);
         } else if (Build.VERSION.SDK_INT >= 23) {
             mImpl = new MediaBrowserImplApi23(context, serviceComponent, callback, rootHints);
@@ -336,6 +342,7 @@ public final class MediaBrowserCompat {
      * @param extras The bundle of service-specific arguments to send to the media browser service.
      *            The contents of this bundle may affect the search result.
      * @param callback The callback to receive the search result. Must be non-null.
+     * @throws IllegalStateException if the browser is not connected to the media browser service.
      */
     public void search(@NonNull final String query, final Bundle extras,
             @NonNull SearchCallback callback) {
@@ -600,8 +607,10 @@ public final class MediaBrowserCompat {
         private final IBinder mToken;
         WeakReference<Subscription> mSubscriptionRef;
 
+        @SuppressLint("NewApi")
         public SubscriptionCallback() {
-            if (Build.VERSION.SDK_INT >= 26 || BuildCompat.isAtLeastO()) {
+            if (BuildCompat.isAtLeastO()) {
+                //noinspection AndroidLintNewApi
                 mSubscriptionCallbackObj =
                         MediaBrowserCompatApi24.createSubscriptionCallback(new StubApi24());
                 mToken = null;
@@ -665,7 +674,7 @@ public final class MediaBrowserCompat {
         }
 
         private void setSubscription(Subscription subscription) {
-            mSubscriptionRef = new WeakReference(subscription);
+            mSubscriptionRef = new WeakReference<>(subscription);
         }
 
         private class StubApi21 implements MediaBrowserCompatApi21.SubscriptionCallback {
@@ -800,6 +809,18 @@ public final class MediaBrowserCompat {
      * Callback for receiving the result of {@link #search}.
      */
     public abstract static class SearchCallback {
+        final Object mSearchCallbackObj;
+
+        @SuppressLint("NewApi")
+        public SearchCallback() {
+            if (BuildCompat.isAtLeastO()) {
+                //noinspection AndroidLintNewApi
+                mSearchCallbackObj = MediaBrowserCompatApi26.createSearchCallback(new StubApi26());
+            } else {
+                mSearchCallbackObj = null;
+            }
+        }
+
         /**
          * Called when the {@link #search} finished successfully.
          *
@@ -819,6 +840,23 @@ public final class MediaBrowserCompat {
          * @param extras The bundle of service-specific arguments sent to the connected service.
          */
         public void onError(@NonNull String query, Bundle extras) {
+        }
+
+        private class StubApi26 implements MediaBrowserCompatApi26.SearchCallback {
+            StubApi26() {
+            }
+
+            @Override
+            public void onSearchResult(@NonNull String query, Bundle extras,
+                    @NonNull List<?> items) {
+                SearchCallback.this.onSearchResult(
+                        query, extras, MediaItem.fromMediaItemList(items));
+            }
+
+            @Override
+            public void onError(@NonNull String query, Bundle extras) {
+                SearchCallback.this.onError(query, extras);
+            }
         }
     }
 
@@ -1117,7 +1155,7 @@ public final class MediaBrowserCompat {
             try {
                 mServiceBinderWrapper.getMediaItem(mediaId, receiver, mCallbacksMessenger);
             } catch (RemoteException e) {
-                Log.i(TAG, "Remote error getting media item.");
+                Log.i(TAG, "Remote error getting media item: " + mediaId);
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -1131,14 +1169,8 @@ public final class MediaBrowserCompat {
         public void search(@NonNull final String query, final Bundle extras,
                 @NonNull final SearchCallback callback) {
             if (!isConnected()) {
-                Log.i(TAG, "Not connected, unable to search.");
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        callback.onError(query, extras);
-                    }
-                });
-                return;
+                throw new IllegalStateException("search() called while not connected"
+                        + " (state=" + getStateLabel(mState) + ")");
             }
 
             ResultReceiver receiver = new SearchResultReceiver(query, extras, callback, mHandler);
@@ -1422,6 +1454,7 @@ public final class MediaBrowserCompat {
         }
     }
 
+    @RequiresApi(21)
     static class MediaBrowserImplApi21 implements MediaBrowserImpl, MediaBrowserServiceCallbackImpl,
             ConnectionCallback.ConnectionCallbackInternal {
         protected final Object mBrowserObj;
@@ -1431,6 +1464,7 @@ public final class MediaBrowserCompat {
 
         protected ServiceBinderWrapper mServiceBinderWrapper;
         protected Messenger mCallbacksMessenger;
+        private MediaSessionCompat.Token mMediaSessionToken;
 
         public MediaBrowserImplApi21(Context context, ComponentName serviceComponent,
                 ConnectionCallback callback, Bundle rootHints) {
@@ -1492,8 +1526,11 @@ public final class MediaBrowserCompat {
         @NonNull
         @Override
         public MediaSessionCompat.Token getSessionToken() {
-            return MediaSessionCompat.Token.fromToken(
-                    MediaBrowserCompatApi21.getSessionToken(mBrowserObj));
+            if (mMediaSessionToken == null) {
+                mMediaSessionToken = MediaSessionCompat.Token.fromToken(
+                        MediaBrowserCompatApi21.getSessionToken(mBrowserObj));
+            }
+            return mMediaSessionToken;
         }
 
         @Override
@@ -1626,14 +1663,7 @@ public final class MediaBrowserCompat {
         public void search(@NonNull final String query, final Bundle extras,
                 @NonNull final SearchCallback callback) {
             if (!isConnected()) {
-                Log.i(TAG, "Not connected, unable to search.");
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        callback.onError(query, extras);
-                    }
-                });
-                return;
+                throw new IllegalStateException("search() called while not connected");
             }
             if (mServiceBinderWrapper == null) {
                 Log.i(TAG, "The connected service doesn't support search.");
@@ -1678,12 +1708,19 @@ public final class MediaBrowserCompat {
                     Log.i(TAG, "Remote error registering client messenger." );
                 }
             }
+            IMediaSession sessionToken = (IMediaSession) BundleCompat.getBinder(
+                    extras, EXTRA_SESSION_BINDER);
+            if (sessionToken != null) {
+                mMediaSessionToken = MediaSessionCompat.Token.fromToken(
+                        MediaBrowserCompatApi21.getSessionToken(mBrowserObj), sessionToken);
+            }
         }
 
         @Override
         public void onConnectionSuspended() {
             mServiceBinderWrapper = null;
             mCallbacksMessenger = null;
+            mMediaSessionToken = null;
             mHandler.setCallbacksMessenger(null);
         }
 
@@ -1738,6 +1775,7 @@ public final class MediaBrowserCompat {
         }
     }
 
+    @RequiresApi(23)
     static class MediaBrowserImplApi23 extends MediaBrowserImplApi21 {
         public MediaBrowserImplApi23(Context context, ComponentName serviceComponent,
                 ConnectionCallback callback, Bundle rootHints) {
@@ -1755,6 +1793,7 @@ public final class MediaBrowserCompat {
     }
 
     // TODO: Rename to MediaBrowserImplApi26 once O is released
+    @RequiresApi(26)
     static class MediaBrowserImplApi24 extends MediaBrowserImplApi23 {
         public MediaBrowserImplApi24(Context context, ComponentName serviceComponent,
                 ConnectionCallback callback, Bundle rootHints) {
@@ -1782,6 +1821,12 @@ public final class MediaBrowserCompat {
                         callback.mSubscriptionCallbackObj);
             }
         }
+
+        @Override
+        public void search(@NonNull final String query, final Bundle extras,
+                @NonNull final SearchCallback callback) {
+            MediaBrowserCompatApi26.search(mBrowserObj, query, extras, callback.mSearchCallbackObj);
+        }
     }
 
     private static class Subscription {
@@ -1789,8 +1834,8 @@ public final class MediaBrowserCompat {
         private final List<Bundle> mOptionsList;
 
         public Subscription() {
-            mCallbacks = new ArrayList();
-            mOptionsList = new ArrayList();
+            mCallbacks = new ArrayList<>();
+            mOptionsList = new ArrayList<>();
         }
 
         public boolean isEmpty() {

@@ -19,24 +19,21 @@ package android.support.wearable.view.util;
 import static android.support.test.espresso.matcher.ViewMatchers.assertThat;
 
 import android.support.test.espresso.NoMatchingViewException;
-
 import android.support.test.espresso.ViewAssertion;
 import android.support.test.espresso.util.HumanReadables;
-
-import android.util.Log;
+import android.support.wearable.view.WearableRecyclerView;
 import android.view.View;
 
+import org.hamcrest.Description;
 import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 
 public class MoreViewAssertions {
-
-    public static final String TAG = "bilt";
 
     public static ViewAssertion left(final Matcher<Integer> matcher) {
         return new ViewAssertion() {
             @Override
             public void check(View view, NoMatchingViewException noViewException) {
-                Log.d(TAG, "l: " + view.getPaddingLeft());
                 assertThat("View left: " + HumanReadables.describe(view), view.getLeft(), matcher);
             }
         };
@@ -46,7 +43,6 @@ public class MoreViewAssertions {
         return new ViewAssertion() {
             @Override
             public void check(View view, NoMatchingViewException noViewException) {
-                Log.d(TAG, "t: " + view.getPaddingTop());
                 assertThat("View top: " + HumanReadables.describe(view), ((double) view.getTop()),
                         matcher);
             }
@@ -57,7 +53,6 @@ public class MoreViewAssertions {
         return new ViewAssertion() {
             @Override
             public void check(View view, NoMatchingViewException noViewException) {
-                Log.d(TAG, "t: " + view.getPaddingTop());
                 assertThat("View top: " + HumanReadables.describe(view), view.getTop(), matcher);
             }
         };
@@ -67,7 +62,6 @@ public class MoreViewAssertions {
         return new ViewAssertion() {
             @Override
             public void check(View view, NoMatchingViewException noViewException) {
-                Log.d(TAG, "r: " + view.getPaddingRight());
                 assertThat("View right: " + HumanReadables.describe(view), view.getRight(),
                         matcher);
             }
@@ -78,7 +72,6 @@ public class MoreViewAssertions {
         return new ViewAssertion() {
             @Override
             public void check(View view, NoMatchingViewException noViewException) {
-                Log.d(TAG, "b: " + view.getBottom());
                 assertThat("View bottom: " + HumanReadables.describe(view), view.getBottom(),
                         matcher);
             }
@@ -89,7 +82,6 @@ public class MoreViewAssertions {
         return new ViewAssertion() {
             @Override
             public void check(View view, NoMatchingViewException noViewException) {
-                Log.d(TAG, "b: " + view.getBottom());
                 assertThat("View bottom: " + HumanReadables.describe(view), ((double) view
                         .getBottom()), matcher);
             }
@@ -167,6 +159,48 @@ public class MoreViewAssertions {
                 view.getLocationInWindow(screenXy);
                 assertThat("View screenBottom: " + HumanReadables.describe(view),
                         screenXy[1] + view.getHeight(), matcher);
+            }
+        };
+    }
+
+    public static Matcher<View> withTranslationX(final int xTranslation) {
+        return new TypeSafeMatcher<View>() {
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("with x translation == " + xTranslation);
+            }
+
+            @Override
+            public boolean matchesSafely(View view) {
+                return view.getTranslationX() == xTranslation;
+            }
+        };
+    }
+
+    public static Matcher<WearableRecyclerView> withPositiveVerticalScrollOffset() {
+        return new TypeSafeMatcher<WearableRecyclerView>() {
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("with positive y scroll offset");
+            }
+
+            @Override
+            public boolean matchesSafely(WearableRecyclerView view) {
+                return view.computeVerticalScrollOffset() > 0;
+            }
+        };
+    }
+
+    public static Matcher<WearableRecyclerView> withNoVerticalScrollOffset() {
+        return new TypeSafeMatcher<WearableRecyclerView>() {
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("with no y scroll offset");
+            }
+
+            @Override
+            public boolean matchesSafely(WearableRecyclerView view) {
+                return view.computeVerticalScrollOffset() == 0;
             }
         };
     }

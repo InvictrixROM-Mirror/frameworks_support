@@ -1,0 +1,41 @@
+apply plugin: android.support.SupportLibraryPlugin
+apply plugin: 'org.anarres.jarjar'
+archivesBaseName = 'support-emoji'
+
+dependencies {
+    compile project(':support-compat')
+
+    compile jarjar.repackage {
+        from files('third_party/flatbuffers/flatbuffers-java-1.6.0.jar')
+        destinationName 'flatbuffers-java-1.6.0-repacked.jar'
+        classRename 'com.google.flatbuffers.**', 'com.google.flatbuffers.emojicompat.@1'
+    }
+
+    androidTestCompile (libs.test_runner) {
+        exclude module: 'support-annotations'
+    }
+    androidTestCompile (libs.espresso_core) {
+        exclude module: 'support-annotations'
+    }
+    androidTestCompile libs.mockito_core
+    androidTestCompile libs.dexmaker
+    androidTestCompile libs.dexmaker_mockito
+}
+
+android {
+    compileSdkVersion project.ext.currentSdk
+
+    defaultConfig {
+        minSdkVersion 19
+    }
+
+    sourceSets {
+        main.java.srcDir 'src'
+    }
+}
+
+supportLibrary {
+    name 'Android Emoji Compat'
+    inceptionYear '2017'
+    description 'Core library to enable emoji compatibility in Kitkat and newer devices to avoid the empty emoji characters.'
+}

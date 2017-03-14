@@ -31,9 +31,36 @@ import android.support.v4.os.BuildCompat;
 import android.text.TextUtils;
 
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 
 /**
- * A convenience class to create and insert channel entries into the database.
+ * A convenience class to access {@link TvContractCompat.Channels} entries in the system content
+ * provider.
+ *
+ * <p>This class makes it easy to insert or retrieve a channel from the system content provider,
+ * which is defined in {@link TvContractCompat}.
+ *
+ * <p>Usage example when inserting a channel:
+ * <pre>
+ * Channel channel = new Channel.Builder()
+ *         .setDisplayName("Channel Name")
+ *         .setDescription("Channel description")
+ *         .setType(Channels.TYPE_PREVIEW)
+ *         // Set more attributes...
+ *         .build();
+ * Uri channelUri = getContentResolver().insert(Channels.CONTENT_URI, channel.toContentValues());
+ * </pre>
+ *
+ * <p>Usage example when retrieving a channel:
+ * <pre>
+ * Channel channel;
+ * try (Cursor cursor = resolver.query(channelUri, null, null, null, null)) {
+ *     if (cursor != null && cursor.getCount() != 0) {
+ *         cursor.moveToNext();
+ *         channel = Channel.fromCursor(cursor);
+ *     }
+ * }
+ * </pre>
  */
 public final class Channel {
     /**
@@ -54,7 +81,6 @@ public final class Channel {
     private final String mDisplayNumber;
     private final String mDisplayName;
     private final String mDescription;
-    private final String mChannelLogo;
     private final String mVideoFormat;
     private final int mOriginalNetworkId;
     private final int mTransportStreamId;
@@ -91,7 +117,6 @@ public final class Channel {
         mAppLinkIconUri = builder.mAppLinkIconUri;
         mAppLinkPosterArtUri = builder.mAppLinkPosterArtUri;
         mAppLinkIntentUri = builder.mAppLinkIntentUri;
-        mChannelLogo = builder.mChannelLogo;
         mInternalProviderData = builder.mInternalProviderData;
         mNetworkAffiliation = builder.mNetworkAffiliation;
         mSearchable = builder.mSearchable;
@@ -224,13 +249,6 @@ public final class Channel {
 
 
     /**
-     * @return The value of {@link Channels.Logo} for the channel.
-     */
-    public String getChannelLogo() {
-        return mChannelLogo;
-    }
-
-    /**
      * @return The value of {@link Channels#COLUMN_NETWORK_AFFILIATION} for the channel.
      */
     public String getNetworkAffiliation() {
@@ -309,7 +327,6 @@ public final class Channel {
                 + ", displayNumber=" + mDisplayNumber
                 + ", displayName=" + mDisplayName
                 + ", description=" + mDescription
-                + ", channelLogo=" + mChannelLogo
                 + ", videoFormat=" + mVideoFormat
                 + ", appLinkText=" + mAppLinkText + "}";
     }
@@ -580,7 +597,6 @@ public final class Channel {
         private String mDisplayNumber;
         private String mDisplayName;
         private String mDescription;
-        private String mChannelLogo;
         private String mVideoFormat;
         private int mOriginalNetworkId = INVALID_INTEGER_VALUE;
         private int mTransportStreamId;
@@ -620,7 +636,6 @@ public final class Channel {
             mAppLinkIconUri = other.mAppLinkIconUri;
             mAppLinkPosterArtUri = other.mAppLinkPosterArtUri;
             mAppLinkIntentUri = other.mAppLinkIntentUri;
-            mChannelLogo = other.mChannelLogo;
             mInternalProviderData = other.mInternalProviderData;
             mNetworkAffiliation = other.mNetworkAffiliation;
             mSearchable = other.mSearchable;
@@ -648,8 +663,10 @@ public final class Channel {
          *
          * @param packageName The value of {@link Channels#COLUMN_PACKAGE_NAME} for the channel.
          * @return This Builder object to allow for chaining of calls to builder methods.
+         * @hide
          */
-        public Builder setPackageName(String packageName) {
+        @RestrictTo(LIBRARY_GROUP)
+        Builder setPackageName(String packageName) {
             mPackageName = packageName;
             return this;
         }
@@ -706,18 +723,6 @@ public final class Channel {
          */
         public Builder setDescription(String description) {
             mDescription = description;
-            return this;
-        }
-
-        /**
-         * Sets the logo of the channel.
-         *
-         * @param channelLogo The Uri corresponding to the logo for the channel.
-         * @return This Builder object to allow for chaining of calls to builder methods.
-         * @see Channels.Logo
-         */
-        public Builder setChannelLogo(String channelLogo) {
-            mChannelLogo = channelLogo;
             return this;
         }
 
@@ -787,7 +792,7 @@ public final class Channel {
          * @return This Builder object to allow for chaining of calls to builder methods.
          */
         public Builder setInternalProviderData(String internalProviderData) {
-            mInternalProviderData = internalProviderData.getBytes();
+            mInternalProviderData = internalProviderData.getBytes(Charset.defaultCharset());
             return this;
         }
 

@@ -25,11 +25,11 @@ import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.os.Parcelable;
 import android.support.annotation.RestrictTo;
-import android.support.v4.view.ViewCompat;
 import android.support.v7.appcompat.R;
 import android.support.v7.widget.ActionMenuView;
 import android.support.v7.widget.AppCompatTextView;
 import android.support.v7.widget.ForwardingListener;
+import android.support.v7.widget.TooltipCompat;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -86,6 +86,7 @@ public class ActionMenuItemView extends AppCompatTextView
         setSaveEnabled(false);
     }
 
+    @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
 
@@ -112,10 +113,12 @@ public class ActionMenuItemView extends AppCompatTextView
         super.setPadding(l, t, r, b);
     }
 
+    @Override
     public MenuItemImpl getItemData() {
         return mItemData;
     }
 
+    @Override
     public void initialize(MenuItemImpl itemData, int menuType) {
         mItemData = itemData;
 
@@ -156,14 +159,17 @@ public class ActionMenuItemView extends AppCompatTextView
         mPopupCallback = popupCallback;
     }
 
+    @Override
     public boolean prefersCondensedTitle() {
         return true;
     }
 
+    @Override
     public void setCheckable(boolean checkable) {
         // TODO Support checkable action items
     }
 
+    @Override
     public void setChecked(boolean checked) {
         // TODO Support checkable action items
     }
@@ -196,12 +202,13 @@ public class ActionMenuItemView extends AppCompatTextView
         final CharSequence tooltipText = mItemData.getTooltipText();
         if (TextUtils.isEmpty(tooltipText)) {
             // Use the uncondensed title for tooltip, but only if the title is not shown already.
-            ViewCompat.setTooltipText(this, visible ? null : mItemData.getTitle());
+            TooltipCompat.setTooltipText(this, visible ? null : mItemData.getTitle());
         } else {
-            ViewCompat.setTooltipText(this, tooltipText);
+            TooltipCompat.setTooltipText(this, tooltipText);
         }
     }
 
+    @Override
     public void setIcon(Drawable icon) {
         mIcon = icon;
         if (icon != null) {
@@ -228,24 +235,29 @@ public class ActionMenuItemView extends AppCompatTextView
         return !TextUtils.isEmpty(getText());
     }
 
+    @Override
     public void setShortcut(boolean showShortcut, char shortcutKey) {
         // Action buttons don't show text for shortcut keys.
     }
 
+    @Override
     public void setTitle(CharSequence title) {
         mTitle = title;
 
         updateTextButtonVisibility();
     }
 
+    @Override
     public boolean showsIcon() {
         return true;
     }
 
+    @Override
     public boolean needsDividerBefore() {
         return hasText() && mItemData.getIcon() == null;
     }
 
+    @Override
     public boolean needsDividerAfter() {
         return hasText();
     }

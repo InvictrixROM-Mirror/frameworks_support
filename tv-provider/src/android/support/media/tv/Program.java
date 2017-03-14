@@ -43,7 +43,34 @@ import java.util.Date;
 import java.util.Objects;
 
 /**
- * A convenience class to create and insert program information into the database.
+ * A convenience class to access {@link TvContractCompat.Programs} entries in the system content
+ * provider.
+ *
+ * <p>This class makes it easy to insert or retrieve a program from the system content provider,
+ * which is defined in {@link TvContractCompat}.
+ *
+ * <p>Usage example when inserting a program:
+ * <pre>
+ * Program program = new Program.Builder()
+ *         .setChannelId(channel.getId())
+ *         .setTitle("Program Title")
+ *         .setDescription("Program Description")
+ *         .setPosterArtUri(Uri.parse("http://example.com/poster_art.png"))
+ *         // Set more attributes...
+ *         .build();
+ * Uri programUri = getContentResolver().insert(Programs.CONTENT_URI, program.toContentValues());
+ * </pre>
+ *
+ * <p>Usage example when retrieving a program:
+ * <pre>
+ * Program program;
+ * try (Cursor cursor = resolver.query(programUri, null, null, null, null)) {
+ *     if (cursor != null && cursor.getCount() != 0) {
+ *         cursor.moveToNext();
+ *         program = Program.fromCursor(cursor);
+ *     }
+ * }
+ * </pre>
  */
 public final class Program implements Comparable<Program> {
     /**
@@ -546,16 +573,16 @@ public final class Program implements Comparable<Program> {
                 && Arrays.equals(mContentRatings, program.mContentRatings)
                 && Arrays.equals(mAudioLanguages, program.mAudioLanguages)
                 && (Build.VERSION.SDK_INT < Build.VERSION_CODES.M
-                        || Objects.equals(mSearchable, program.mSearchable)
+                        || (Objects.equals(mSearchable, program.mSearchable)
                         && Objects.equals(mInternalProviderFlag1, program.mInternalProviderFlag1)
                         && Objects.equals(mInternalProviderFlag2, program.mInternalProviderFlag2)
                         && Objects.equals(mInternalProviderFlag3, program.mInternalProviderFlag3)
-                        && Objects.equals(mInternalProviderFlag4, program.mInternalProviderFlag4))
+                        && Objects.equals(mInternalProviderFlag4, program.mInternalProviderFlag4)))
                 && (Build.VERSION.SDK_INT < Build.VERSION_CODES.N
-                        || Objects.equals(mSeasonTitle, program.mSeasonTitle)
-                        && Objects.equals(mRecordingProhibited, program.mRecordingProhibited))
+                        || (Objects.equals(mSeasonTitle, program.mSeasonTitle)
+                        && Objects.equals(mRecordingProhibited, program.mRecordingProhibited)))
                 && (!BuildCompat.isAtLeastO()
-                        || Objects.equals(mInternalProviderId, program.mInternalProviderId)
+                        || (Objects.equals(mInternalProviderId, program.mInternalProviderId)
                         && Objects.equals(mPreviewVideoUri, program.mPreviewVideoUri)
                         && Objects.equals(mLastPlaybackPositionMillis,
                                 program.mLastPlaybackPositionMillis)
@@ -579,7 +606,7 @@ public final class Program implements Comparable<Program> {
                         && Objects.equals(mInteractionCount, program.mInteractionCount)
                         && Objects.equals(mAuthor, program.mAuthor)
                         && Objects.equals(mReviewRatingStyle, program.mReviewRatingStyle)
-                        && Objects.equals(mReviewRating, program.mReviewRating));
+                        && Objects.equals(mReviewRating, program.mReviewRating)));
     }
 
     /**
@@ -1492,7 +1519,7 @@ public final class Program implements Comparable<Program> {
         }
 
         /**
-         * Sets the available audio languages for this program as a comma-separated String.
+         * Sets the available audio languages for this program as an array of strings.
          *
          * @param audioLanguages An array of audio languages, in ISO 639-1 or 639-2/T codes, that
          *                       apply to this program which will be stored in a database.

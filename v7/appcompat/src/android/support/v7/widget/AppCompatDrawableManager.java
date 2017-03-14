@@ -47,10 +47,10 @@ import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.util.ArrayMap;
 import android.support.v4.util.LongSparseArray;
 import android.support.v4.util.LruCache;
+import android.support.v4.util.SparseArrayCompat;
 import android.support.v7.appcompat.R;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.util.SparseArray;
 import android.util.TypedValue;
 import android.util.Xml;
 
@@ -173,9 +173,9 @@ public final class AppCompatDrawableManager {
             R.drawable.abc_btn_radio_material
     };
 
-    private WeakHashMap<Context, SparseArray<ColorStateList>> mTintLists;
+    private WeakHashMap<Context, SparseArrayCompat<ColorStateList>> mTintLists;
     private ArrayMap<String, InflateDelegate> mDelegates;
-    private SparseArray<String> mKnownDrawableIdTags;
+    private SparseArrayCompat<String> mKnownDrawableIdTags;
 
     private final Object mDrawableCacheLock = new Object();
     private final WeakHashMap<Context, LongSparseArray<WeakReference<Drawable.ConstantState>>>
@@ -320,7 +320,7 @@ public final class AppCompatDrawableManager {
                 }
             } else {
                 // Create an id cache as we'll need one later
-                mKnownDrawableIdTags = new SparseArray<>();
+                mKnownDrawableIdTags = new SparseArrayCompat<>();
             }
 
             if (mTypedValue == null) {
@@ -422,7 +422,7 @@ public final class AppCompatDrawableManager {
                     cache = new LongSparseArray<>();
                     mDrawableCaches.put(context, cache);
                 }
-                cache.put(key, new WeakReference<ConstantState>(cs));
+                cache.put(key, new WeakReference<>(cs));
             }
             return true;
         }
@@ -532,7 +532,7 @@ public final class AppCompatDrawableManager {
             } else if (resId == R.drawable.abc_switch_track_mtrl_alpha) {
                 tint = getColorStateList(context, R.color.abc_tint_switch_track);
             } else if (resId == R.drawable.abc_switch_thumb_material) {
-                tint = getColorStateList(context, R.color.abc_tint_switch_thumb);
+                tint = createSwitchThumbColorStateList(context);
             } else if (resId == R.drawable.abc_btn_default_mtrl_shape) {
                 tint = createDefaultButtonColorStateList(context);
             } else if (resId == R.drawable.abc_btn_borderless_material) {
@@ -561,7 +561,7 @@ public final class AppCompatDrawableManager {
 
     private ColorStateList getTintListFromCache(@NonNull Context context, @DrawableRes int resId) {
         if (mTintLists != null) {
-            final SparseArray<ColorStateList> tints = mTintLists.get(context);
+            final SparseArrayCompat<ColorStateList> tints = mTintLists.get(context);
             return tints != null ? tints.get(resId) : null;
         }
         return null;
@@ -572,9 +572,9 @@ public final class AppCompatDrawableManager {
         if (mTintLists == null) {
             mTintLists = new WeakHashMap<>();
         }
-        SparseArray<ColorStateList> themeTints = mTintLists.get(context);
+        SparseArrayCompat<ColorStateList> themeTints = mTintLists.get(context);
         if (themeTints == null) {
-            themeTints = new SparseArray<>();
+            themeTints = new SparseArrayCompat<>();
             mTintLists.put(context, themeTints);
         }
         themeTints.append(resId, tintList);
@@ -621,6 +621,52 @@ public final class AppCompatDrawableManager {
         states[i] = ThemeUtils.EMPTY_STATE_SET;
         colors[i] = baseColor;
         i++;
+
+        return new ColorStateList(states, colors);
+    }
+
+    private ColorStateList createSwitchThumbColorStateList(Context context) {
+        final int[][] states = new int[3][];
+        final int[] colors = new int[3];
+        int i = 0;
+
+        final ColorStateList thumbColor = getThemeAttrColorStateList(context,
+                R.attr.colorSwitchThumbNormal);
+
+        if (thumbColor != null && thumbColor.isStateful()) {
+            // If colorSwitchThumbNormal is a valid ColorStateList, extract the default and
+            // disabled colors from it
+
+            // Disabled state
+            states[i] = ThemeUtils.DISABLED_STATE_SET;
+            colors[i] = thumbColor.getColorForState(states[i], 0);
+            i++;
+
+            states[i] = ThemeUtils.CHECKED_STATE_SET;
+            colors[i] = getThemeAttrColor(context, R.attr.colorControlActivated);
+            i++;
+
+            // Default enabled state
+            states[i] = ThemeUtils.EMPTY_STATE_SET;
+            colors[i] = thumbColor.getDefaultColor();
+            i++;
+        } else {
+            // Else we'll use an approximation using the default disabled alpha
+
+            // Disabled state
+            states[i] = ThemeUtils.DISABLED_STATE_SET;
+            colors[i] = getDisabledThemeAttrColor(context, R.attr.colorSwitchThumbNormal);
+            i++;
+
+            states[i] = ThemeUtils.CHECKED_STATE_SET;
+            colors[i] = getThemeAttrColor(context, R.attr.colorControlActivated);
+            i++;
+
+            // Default enabled state
+            states[i] = ThemeUtils.EMPTY_STATE_SET;
+            colors[i] = getThemeAttrColor(context, R.attr.colorSwitchThumbNormal);
+            i++;
+        }
 
         return new ColorStateList(states, colors);
     }

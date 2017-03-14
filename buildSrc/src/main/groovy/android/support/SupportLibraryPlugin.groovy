@@ -21,6 +21,8 @@ import com.android.build.gradle.api.AndroidSourceSet
 import com.android.build.gradle.api.LibraryVariant
 import com.android.builder.core.BuilderConstants
 import com.google.common.collect.ImmutableMap
+import net.ltgt.gradle.errorprone.ErrorProneBasePlugin
+import net.ltgt.gradle.errorprone.ErrorProneToolChain
 import org.gradle.api.Action
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
@@ -43,32 +45,64 @@ class SupportLibraryPlugin implements Plugin<Project> {
                 project.getExtensions().create("supportLibrary", SupportLibraryExtension);
 
         project.apply(ImmutableMap.of("plugin", "com.android.library"));
+        project.apply(ImmutableMap.of("plugin", ErrorProneBasePlugin.class));
+
         LibraryExtension library =
                 project.getExtensions().findByType(LibraryExtension.class);
 
-        library.setCompileSdkVersion(project.ext.currentSdk)
+        library.compileSdkVersion project.ext.currentSdk
 
-        // Main sourceSet related options
+        // We use a non-standard manifest path.
         AndroidSourceSet mainSet = library.getSourceSets().findByName("main");
-        mainSet.getManifest().srcFile("AndroidManifest.xml");
+        mainSet.manifest.srcFile 'AndroidManifest.xml'
 
-        // Update the version meta-data in each Manifest
-        library.getDefaultConfig().addManifestPlaceholders(
-                ["support-version": project.rootProject.ext.supportVersion])
+        library.defaultConfig {
+            // Update the version meta-data in each Manifest.
+            addManifestPlaceholders(["support-version": project.rootProject.ext.supportVersion])
 
-        // Set test related options
-        library.getDefaultConfig().setTestInstrumentationRunner(INSTRUMENTATION_RUNNER);
-
-        library.sourceSets.androidTest {
-            root "tests"
-            java.srcDir "tests/src"
-            res.srcDir "tests/res"
-            manifest.srcFile "tests/AndroidManifest.xml"
+            // Set test related options.
+            testInstrumentationRunner INSTRUMENTATION_RUNNER
         }
 
-        // Set compile options
-        library.getCompileOptions().setSourceCompatibility(JavaVersion.VERSION_1_7);
-        library.getCompileOptions().setTargetCompatibility(JavaVersion.VERSION_1_7);
+        // We use a non-standard test directory structure.
+        library.sourceSets.androidTest {
+            root 'tests'
+            java.srcDir 'tests/src'
+            res.srcDir 'tests/res'
+            manifest.srcFile 'tests/AndroidManifest.xml'
+        }
+
+        // Always lint check NewApi as fatal.
+        library.lintOptions {
+            abortOnError true
+            ignoreWarnings true
+
+            // Write output directly to the console (and nowhere else).
+            textOutput 'stderr'
+            textReport true
+            htmlReport false
+            xmlReport false
+
+            // Format output for convenience.
+            explainIssues true
+            noLines false
+            quiet true
+
+            // Always fail on NewApi.
+            error 'NewApi'
+        }
+
+        if (project.rootProject.ext.usingFullSdk) {
+            // Library projects don't run lint by default, so set up dependency.
+            project.tasks.release.dependsOn project.tasks.lint
+        }
+
+        // Java 8 is only fully supported on API 24+ and not all Java 8 features are binary
+        // compatible with API < 24, so use Java 7 for both source AND target.
+        library.compileOptions {
+            sourceCompatibility JavaVersion.VERSION_1_7
+            targetCompatibility JavaVersion.VERSION_1_7
+        }
 
         // Create sources jar for release builds
         library.getLibraryVariants().all(new Action<LibraryVariant>() {
@@ -85,7 +119,7 @@ class SupportLibraryPlugin implements Plugin<Project> {
             }
         });
 
-        // Set uploadArchives options
+        // Set uploadArchives options.
         Upload uploadTask = (Upload) project.getTasks().getByName("uploadArchives");
         project.afterEvaluate {
             uploadTask.repositories {
@@ -123,5 +157,29 @@ class SupportLibraryPlugin implements Plugin<Project> {
                 }
             });
         }
+
+        final ErrorProneToolChain toolChain = ErrorProneToolChain.create(project);
+        library.getBuildTypes().create("errorProne")
+        library.getLibraryVariants().all(new Action<LibraryVariant>() {
+            @Override
+            void execute(LibraryVariant libraryVariant) {
+                if (libraryVariant.getBuildType().getName().equals("errorProne")) {
+                    libraryVariant.getJavaCompile().setToolChain(toolChain);
+
+                    // TODO(aurimas): remove this once all these warnings are fixed.
+                    libraryVariant.getJavaCompile().options.compilerArgs += [
+                            '-Xep:EqualsHashCode:OFF',
+                            '-Xep:MissingCasesInEnumSwitch:WARN',
+                            '-Xep:TypeParameterUnusedInFormals:WARN',
+                            '-Xep:MissingOverride:WARN',
+                            '-Xep:ArrayToString:WARN',
+                            '-Xep:MislabeledAndroidString:WARN',
+                            '-Xep:SelfEquals:WARN',
+                            '-Xep:RectIntersectReturnValueIgnored:WARN',
+                            '-Xep:FallThrough:WARN'
+                    ]
+                }
+            }
+        })
     }
 }

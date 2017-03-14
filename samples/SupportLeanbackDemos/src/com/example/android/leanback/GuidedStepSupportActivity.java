@@ -379,8 +379,10 @@ public class GuidedStepSupportActivity extends FragmentActivity {
             mExpandPaymentListInOnCreateView = true;
         }
 
+        @Override
         public GuidedActionsStylist onCreateActionsStylist() {
             return new GuidedActionsStylist() {
+                @Override
                 protected void setupImeOptions(GuidedActionsStylist.ViewHolder vh,
                         GuidedAction action) {
                     if (action.getId() == PASSWORD) {
@@ -406,8 +408,8 @@ public class GuidedStepSupportActivity extends FragmentActivity {
 
         @Override
         public void onCreateActions(List<GuidedAction> actions, Bundle savedInstanceState) {
-            addEditableAction(getContext(), actions, FIRST_NAME, "Pat", "Your first name");
-            addEditableAction(getContext(), actions, LAST_NAME, "Smith", "Your last name");
+            addEditableAction(getActivity(), actions, FIRST_NAME, "Pat", "Your first name");
+            addEditableAction(getActivity(), actions, LAST_NAME, "Smith", "Your last name");
             List<GuidedAction> subActions = new ArrayList<GuidedAction>();
             updatePaymentAction(addAction(actions, PAYMENT, "Select Payment", "", subActions));
             addEditableDescriptionAction(actions, PASSWORD, "Password", "", "",

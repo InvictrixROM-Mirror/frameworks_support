@@ -16,6 +16,7 @@ package android.support.v17.leanback.widget;
 import static android.support.v7.widget.RecyclerView.HORIZONTAL;
 import static android.support.v7.widget.RecyclerView.NO_ID;
 import static android.support.v7.widget.RecyclerView.NO_POSITION;
+import static android.support.v7.widget.RecyclerView.SCROLL_STATE_IDLE;
 import static android.support.v7.widget.RecyclerView.VERTICAL;
 
 import android.content.Context;
@@ -208,6 +209,10 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
                 super.onStop();
                 return;
             }
+            if (mFocusPosition != getTargetPosition()) {
+                // This should not happen since we cropped value in startPositionSmoothScroller()
+                mFocusPosition = getTargetPosition();
+            }
             if (hasFocus()) {
                 mInSelection = true;
                 targetView.requestFocus();
@@ -379,6 +384,7 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
 
     // Represents whether child views are temporarily sliding out
     boolean mIsSlidingChildViews;
+    boolean mLayoutEatenInSliding;
 
     String getTag() {
         return TAG + ":" + mBaseGridView.getId();
@@ -1738,8 +1744,31 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
         return mGrid.appendOneColumnVisibleItems();
     }
 
+    void slideIn() {
+        if (mIsSlidingChildViews) {
+            mIsSlidingChildViews = false;
+            scrollToSelection(mFocusPosition, mSubFocusPosition, true, mPrimaryScrollExtra);
+            if (mLayoutEatenInSliding) {
+                mLayoutEatenInSliding = false;
+                if (mBaseGridView.getScrollState() != SCROLL_STATE_IDLE || isSmoothScrolling()) {
+                    mBaseGridView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                        @Override
+                        public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                            if (newState == SCROLL_STATE_IDLE) {
+                                mBaseGridView.removeOnScrollListener(this);
+                                requestLayout();
+                            }
+                        }
+                    });
+                } else {
+                    requestLayout();
+                }
+            }
+        }
+    }
+
     /**
-     * Temporarily slide out child and will be auto slide-in in next scrollToView().
+     * Temporarily slide out child and block layout and scroll requests.
      */
     void slideOut() {
         if (mIsSlidingChildViews) {
@@ -1936,6 +1965,10 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
             return;
         }
 
+        if (mIsSlidingChildViews) {
+            mLayoutEatenInSliding = true;
+            return;
+        }
         if (!mLayoutEnabled) {
             discardLayoutInfo();
             removeAndRecycleAllViews(recycler);
@@ -2211,7 +2244,7 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
     @Override
     public void collectInitialPrefetchPositions(int adapterItemCount,
             LayoutPrefetchRegistry layoutPrefetchRegistry) {
-        int numToPrefetch = mBaseGridView.mInitialItemPrefetchCount;
+        int numToPrefetch = mBaseGridView.mInitialPrefetchItemCount;
         if (adapterItemCount != 0 && numToPrefetch != 0) {
             // prefetch items centered around mFocusPosition
             int initialPos = Math.max(0, Math.min(mFocusPosition - (numToPrefetch - 1)/ 2,
@@ -2385,7 +2418,7 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
 
     public void setSelection(int position, int subposition, boolean smooth,
             int primaryScrollExtra) {
-        if (mIsSlidingChildViews || mFocusPosition != position && position != NO_POSITION
+        if (mFocusPosition != position && position != NO_POSITION
                 || subposition != mSubFocusPosition || primaryScrollExtra != mPrimaryScrollExtra) {
             scrollToSelection(position, subposition, smooth, primaryScrollExtra);
         }
@@ -2404,7 +2437,7 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
             mFocusPosition = position;
             mSubFocusPosition = subposition;
             mFocusPositionOffset = Integer.MIN_VALUE;
-            if (!mLayoutEnabled) {
+            if (!mLayoutEnabled || mIsSlidingChildViews) {
                 return;
             }
             if (smooth) {
@@ -2413,7 +2446,12 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
                             + "not be called before first layout pass");
                     return;
                 }
-                startPositionSmoothScroller(position);
+                position = startPositionSmoothScroller(position);
+                if (position != mFocusPosition) {
+                    // gets cropped by adapter size
+                    mFocusPosition = position;
+                    mSubFocusPosition = 0;
+                }
             } else {
                 mForceFullLayout = true;
                 requestLayout();
@@ -2422,7 +2460,7 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
         if (TRACE) TraceCompat.endSection();
     }
 
-    void startPositionSmoothScroller(int position) {
+    int startPositionSmoothScroller(int position) {
         LinearSmoothScroller linearSmoothScroller = new GridLinearSmoothScroller() {
             @Override
             public PointF computeScrollVectorForPosition(int targetPosition) {
@@ -2445,6 +2483,7 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
         };
         linearSmoothScroller.setTargetPosition(position);
         startSmoothScroll(linearSmoothScroller);
+        return linearSmoothScroller.getTargetPosition();
     }
 
     private void processPendingMovement(boolean forward) {
@@ -2651,17 +2690,19 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
     }
 
     /**
-     * Scroll to a given child view and change mFocusPosition.
+     * Scroll to a given child view and change mFocusPosition. Ignored when in slideOut() state.
      */
     void scrollToView(View view, boolean smooth) {
         scrollToView(view, view == null ? null : view.findFocus(), smooth);
     }
 
     /**
-     * Scroll to a given child view and change mFocusPosition.
+     * Scroll to a given child view and change mFocusPosition. Ignored when in slideOut() state.
      */
     private void scrollToView(View view, View childView, boolean smooth) {
-        mIsSlidingChildViews = false;
+        if (mIsSlidingChildViews) {
+            return;
+        }
         int newFocusPosition = getPositionByView(view);
         int newSubFocusPosition = getSubPositionByView(view, childView);
         if (newFocusPosition != mFocusPosition || newSubFocusPosition != mSubFocusPosition) {

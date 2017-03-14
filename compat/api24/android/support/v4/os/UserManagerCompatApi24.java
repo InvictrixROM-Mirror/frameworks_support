@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,12 @@
 
 package android.support.v4.os;
 
-import static android.support.annotation.RestrictTo.Scope.LIBRARY_GROUP;
-
 import android.content.Context;
 import android.os.UserManager;
 import android.support.annotation.RequiresApi;
-import android.support.annotation.RestrictTo;
 
-/** @hide */
 @RequiresApi(24)
-@RestrictTo(LIBRARY_GROUP)
-public class UserManagerCompatApi24 {
+class UserManagerCompatApi24 {
     public static boolean isUserUnlocked(Context context) {
         return context.getSystemService(UserManager.class).isUserUnlocked();
     }

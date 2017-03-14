@@ -56,6 +56,7 @@ public final class LayoutInflaterCompat {
             return mDelegateFactory.onCreateView(parent, name, context, attributeSet);
         }
 
+        @Override
         public String toString() {
             return getClass().getName() + "{" + mDelegateFactory + "}";
         }
@@ -137,8 +138,7 @@ public final class LayoutInflaterCompat {
 
     static final LayoutInflaterCompatBaseImpl IMPL;
     static {
-        final int version = Build.VERSION.SDK_INT;
-        if (version >= 21) {
+        if (Build.VERSION.SDK_INT >= 21) {
             IMPL = new LayoutInflaterCompatApi21Impl();
         } else {
             IMPL = new LayoutInflaterCompatBaseImpl();

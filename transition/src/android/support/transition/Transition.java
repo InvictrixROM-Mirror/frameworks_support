@@ -21,20 +21,28 @@ import static android.support.annotation.RestrictTo.Scope.LIBRARY_GROUP;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.TimeInterpolator;
+import android.content.Context;
+import android.content.res.TypedArray;
+import android.content.res.XmlResourceParser;
+import android.graphics.Path;
 import android.support.annotation.IdRes;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RestrictTo;
+import android.support.v4.content.res.TypedArrayUtils;
 import android.support.v4.util.ArrayMap;
 import android.support.v4.util.LongSparseArray;
 import android.support.v4.view.ViewCompat;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.InflateException;
 import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.widget.ListView;
 import android.widget.Spinner;
 
@@ -42,6 +50,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * A Transition holds information about animations that will be run on its
@@ -65,7 +74,44 @@ import java.util.List;
  * with TextureView because they rely on {@link android.view.ViewOverlay}
  * functionality, which does not currently work with TextureView.</p>
  *
- * <p>Unlike the platform version, this does not support declaration by XML resources.</p>
+ * <p>Transitions can be declared in XML resource files inside the <code>res/transition</code>
+ * directory. Transition resources consist of a tag name for one of the Transition
+ * subclasses along with attributes to define some of the attributes of that transition.
+ * For example, here is a minimal resource file that declares a {@link ChangeBounds}
+ * transition:</p>
+ *
+ * <pre>
+ *     &lt;changeBounds/&gt;
+ * </pre>
+ *
+ * <p>Note that attributes for the transition are not required, just as they are
+ * optional when declared in code; Transitions created from XML resources will use
+ * the same defaults as their code-created equivalents. Here is a slightly more
+ * elaborate example which declares a {@link TransitionSet} transition with
+ * {@link ChangeBounds} and {@link Fade} child transitions:</p>
+ *
+ * <pre>
+ *     &lt;transitionSet xmlns:android="http://schemas.android.com/apk/res/android"
+ *          android:transitionOrdering="sequential"&gt;
+ *         &lt;changeBounds/&gt;
+ *         &lt;fade android:fadingMode="fade_out"&gt;
+ *             &lt;targets&gt;
+ *                 &lt;target android:targetId="@id/grayscaleContainer"/&gt;
+ *             &lt;/targets&gt;
+ *         &lt;/fade&gt;
+ *     &lt;/transitionSet&gt;
+ * </pre>
+ *
+ * <p>In this example, the transitionOrdering attribute is used on the TransitionSet
+ * object to change from the default {@link TransitionSet#ORDERING_TOGETHER} behavior
+ * to be {@link TransitionSet#ORDERING_SEQUENTIAL} instead. Also, the {@link Fade}
+ * transition uses a fadingMode of {@link Fade#OUT} instead of the default
+ * out-in behavior. Finally, note the use of the <code>targets</code> sub-tag, which
+ * takes a set of {code target} tags, each of which lists a specific <code>targetId</code> which
+ * this transition acts upon. Use of targets is optional, but can be used to either limit the time
+ * spent checking attributes on unchanging views, or limiting the types of animations run on
+ * specific views. In this case, we know that only the <code>grayscaleContainer</code> will be
+ * disappearing, so we choose to limit the {@link Fade} transition to only that view.</p>
  */
 public abstract class Transition implements Cloneable {
 
@@ -106,11 +152,26 @@ public abstract class Transition implements Cloneable {
     public @interface MatchOrder {
     }
 
+    private static final String MATCH_INSTANCE_STR = "instance";
+    private static final String MATCH_NAME_STR = "name";
+    private static final String MATCH_ID_STR = "id";
+    private static final String MATCH_ITEM_ID_STR = "itemId";
+
     private static final int[] DEFAULT_MATCH_ORDER = {
             MATCH_NAME,
             MATCH_INSTANCE,
             MATCH_ID,
             MATCH_ITEM_ID,
+    };
+
+    private static final PathMotion STRAIGHT_PATH_MOTION = new PathMotion() {
+        @Override
+        public Path getPath(float startX, float startY, float endX, float endY) {
+            Path path = new Path();
+            path.moveTo(startX, startY);
+            path.lineTo(endX, endY);
+            return path;
+        }
     };
 
     private String mName = getClass().getName();
@@ -177,6 +238,10 @@ public abstract class Transition implements Cloneable {
     // transitionNames.
     private ArrayMap<String, String> mNameOverrides;
 
+    // The function used to interpolate along two-dimensional points. Typically used
+    // for adding curves to x/y View motion.
+    private PathMotion mPathMotion = STRAIGHT_PATH_MOTION;
+
     /**
      * Constructs a Transition object with no target objects. A transition with
      * no targets defaults to running on all target objects in the scene hierarchy
@@ -184,6 +249,71 @@ public abstract class Transition implements Cloneable {
      * objects passed down from its parent (if it is in a TransitionSet).
      */
     public Transition() {
+    }
+
+    /**
+     * Perform inflation from XML and apply a class-specific base style from a
+     * theme attribute or style resource. This constructor of Transition allows
+     * subclasses to use their own base style when they are inflating.
+     *
+     * @param context The Context the transition is running in, through which it can
+     *                access the current theme, resources, etc.
+     * @param attrs   The attributes of the XML tag that is inflating the transition.
+     */
+    public Transition(Context context, AttributeSet attrs) {
+        TypedArray a = context.obtainStyledAttributes(attrs, Styleable.TRANSITION);
+        XmlResourceParser parser = (XmlResourceParser) attrs;
+        long duration = TypedArrayUtils.getNamedInt(a, parser, "duration",
+                Styleable.Transition.DURATION, -1);
+        if (duration >= 0) {
+            setDuration(duration);
+        }
+        long startDelay = TypedArrayUtils.getNamedInt(a, parser, "startDelay",
+                Styleable.Transition.START_DELAY, -1);
+        if (startDelay > 0) {
+            setStartDelay(startDelay);
+        }
+        final int resId = TypedArrayUtils.getNamedResourceId(a, parser, "interpolator",
+                Styleable.Transition.INTERPOLATOR, 0);
+        if (resId > 0) {
+            setInterpolator(AnimationUtils.loadInterpolator(context, resId));
+        }
+        String matchOrder = TypedArrayUtils.getNamedString(a, parser, "matchOrder",
+                Styleable.Transition.MATCH_ORDER);
+        if (matchOrder != null) {
+            setMatchOrder(parseMatchOrder(matchOrder));
+        }
+        a.recycle();
+    }
+
+    @MatchOrder
+    private static int[] parseMatchOrder(String matchOrderString) {
+        StringTokenizer st = new StringTokenizer(matchOrderString, ",");
+        @MatchOrder
+        int[] matches = new int[st.countTokens()];
+        int index = 0;
+        while (st.hasMoreTokens()) {
+            String token = st.nextToken().trim();
+            if (MATCH_ID_STR.equalsIgnoreCase(token)) {
+                matches[index] = Transition.MATCH_ID;
+            } else if (MATCH_INSTANCE_STR.equalsIgnoreCase(token)) {
+                matches[index] = Transition.MATCH_INSTANCE;
+            } else if (MATCH_NAME_STR.equalsIgnoreCase(token)) {
+                matches[index] = Transition.MATCH_NAME;
+            } else if (MATCH_ITEM_ID_STR.equalsIgnoreCase(token)) {
+                matches[index] = Transition.MATCH_ITEM_ID;
+            } else if (token.isEmpty()) {
+                @MatchOrder
+                int[] smallerMatches = new int[matches.length - 1];
+                System.arraycopy(matches, 0, smallerMatches, 0, index);
+                matches = smallerMatches;
+                index--;
+            } else {
+                throw new InflateException("Unknown match type in matchOrder: '" + token + "'");
+            }
+            index++;
+        }
+        return matches;
     }
 
     /**
@@ -1074,14 +1204,13 @@ public abstract class Transition implements Cloneable {
      * id, their instance reference, their transitionName, or by the Class of that view
      * (eg, {@link Spinner}).</p>
      *
+     * @param targetName The name of a target to ignore when running this transition.
+     * @param exclude    Whether to add the target to or remove the target from the
+     *                   current list of excluded targets.
+     * @return This transition object.
      * @see #excludeTarget(View, boolean)
      * @see #excludeTarget(int, boolean)
      * @see #excludeTarget(Class, boolean)
-     *
-     * @param targetName The name of a target to ignore when running this transition.
-     * @param exclude Whether to add the target to or remove the target from the
-     * current list of excluded targets.
-     * @return This transition object.
      */
     @NonNull
     public Transition excludeTarget(@NonNull String targetName, boolean exclude) {
@@ -1861,6 +1990,43 @@ public abstract class Transition implements Cloneable {
             mListeners = null;
         }
         return this;
+    }
+
+    /**
+     * Sets the algorithm used to calculate two-dimensional interpolation.
+     * <p>
+     * Transitions such as {@link android.transition.ChangeBounds} move Views, typically
+     * in a straight path between the start and end positions. Applications that desire to
+     * have these motions move in a curve can change how Views interpolate in two dimensions
+     * by extending PathMotion and implementing
+     * {@link android.transition.PathMotion#getPath(float, float, float, float)}.
+     * </p>
+     *
+     * @param pathMotion Algorithm object to use for determining how to interpolate in two
+     *                   dimensions. If null, a straight-path algorithm will be used.
+     * @see android.transition.ArcMotion
+     * @see PatternPathMotion
+     * @see android.transition.PathMotion
+     */
+    public void setPathMotion(PathMotion pathMotion) {
+        if (pathMotion == null) {
+            mPathMotion = STRAIGHT_PATH_MOTION;
+        } else {
+            mPathMotion = pathMotion;
+        }
+    }
+
+    /**
+     * Returns the algorithm object used to interpolate along two dimensions. This is typically
+     * used to determine the View motion between two points.
+     *
+     * @return The algorithm object used to interpolate along two dimensions.
+     * @see android.transition.ArcMotion
+     * @see PatternPathMotion
+     * @see android.transition.PathMotion
+     */
+    public PathMotion getPathMotion() {
+        return mPathMotion;
     }
 
     Transition setSceneRoot(ViewGroup sceneRoot) {

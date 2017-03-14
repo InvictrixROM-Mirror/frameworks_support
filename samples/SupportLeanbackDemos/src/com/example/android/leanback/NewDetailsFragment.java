@@ -16,6 +16,7 @@ package com.example.android.leanback;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v17.leanback.app.DetailsFragmentBackgroundController;
@@ -76,8 +77,8 @@ public class NewDetailsFragment extends android.support.v17.leanback.app.Details
             new DetailsFragmentBackgroundController(this);
 
     private void initializeTest() {
-        TEST_SHARED_ELEMENT_TRANSITION = null != getActivity().getWindow()
-                .getSharedElementEnterTransition();
+        TEST_SHARED_ELEMENT_TRANSITION = Build.VERSION.SDK_INT >= 21
+                && null != getActivity().getWindow().getSharedElementEnterTransition();
         TEST_OVERVIEW_ROW_ON_SECOND = !TEST_SHARED_ELEMENT_TRANSITION;
         TEST_ENTRANCE_TRANSITION = false;
     }
@@ -227,7 +228,12 @@ public class NewDetailsFragment extends android.support.v17.leanback.app.Details
         }
         mRowsAdapter.clear();
         new Handler().postDelayed(new Runnable() {
+            @Override
             public void run() {
+                final Context context = getActivity();
+                if (context == null) {
+                    return;
+                }
                 if (TEST_OVERVIEW_ROW_ON_SECOND) {
                     ArrayObjectAdapter listRowAdapter = new ArrayObjectAdapter(cardPresenter);
                     listRowAdapter.add(new PhotoItem("Hello world", R.drawable.gallery_photo_1));
@@ -238,7 +244,6 @@ public class NewDetailsFragment extends android.support.v17.leanback.app.Details
                     mRowsAdapter.add(0, new ListRow(header, listRowAdapter));
                 }
 
-                final Context context = getActivity();
                 DetailsOverviewRow dor = new DetailsOverviewRow(mPhotoItem.getTitle());
                 dor.setImageDrawable(ResourcesCompat.getDrawable(context.getResources(),
                         mPhotoItem.getImageResourceId(), context.getTheme()));
@@ -258,7 +263,11 @@ public class NewDetailsFragment extends android.support.v17.leanback.app.Details
         }, TIME_TO_LOAD_OVERVIEW_ROW_MS);
 
         new Handler().postDelayed(new Runnable() {
+            @Override
             public void run() {
+                if (getActivity() == null) {
+                    return;
+                }
                 for (int i = 0; i < NUM_ROWS; ++i) {
                     ArrayObjectAdapter listRowAdapter = new ArrayObjectAdapter(cardPresenter);
                     listRowAdapter.add(new PhotoItem("Hello world", R.drawable.gallery_photo_1));

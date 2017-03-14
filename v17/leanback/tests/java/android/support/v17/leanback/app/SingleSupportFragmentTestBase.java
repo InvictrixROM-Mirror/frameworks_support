@@ -22,12 +22,16 @@ import android.content.Intent;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
+import android.support.v17.leanback.testutils.PollingCheck;
+import android.support.v7.widget.RecyclerView;
 
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
 public class SingleSupportFragmentTestBase {
+
+    private static final long WAIT_FOR_SCROLL_IDLE_TIMEOUT_MS = 60000;
 
     @Rule
     public TestName mUnitTestName = new TestName();
@@ -40,14 +44,17 @@ public class SingleSupportFragmentTestBase {
 
     @After
     public void afterTest() throws Throwable {
-        activityTestRule.runOnUiThread(new Runnable() {
-            public void run() {
-                if (mActivity != null) {
-                    mActivity.finish();
-                    mActivity = null;
+        final SingleSupportFragmentTestActivity activity = mActivity;
+        if (activity != null) {
+            mActivity = null;
+            activityTestRule.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    activity.finish();
                 }
-            }
-        });
+            });
+            PollingCheck.waitFor(new PollingCheck.ActivityDestroy(activity));
+        }
     }
 
     public void sendKeys(int ...keys) {
@@ -104,4 +111,28 @@ public class SingleSupportFragmentTestBase {
         mActivity = activityTestRule.launchActivity(intent);
         SystemClock.sleep(waitTimeMs);
     }
+
+    protected void waitForScrollIdle(RecyclerView recyclerView) throws Throwable {
+        waitForScrollIdle(recyclerView, null);
+    }
+
+    protected void waitForScrollIdle(RecyclerView recyclerView, Runnable verify) throws Throwable {
+        Thread.sleep(100);
+        int total = 0;
+        while (recyclerView.getLayoutManager().isSmoothScrolling()
+                || recyclerView.getScrollState() != recyclerView.SCROLL_STATE_IDLE) {
+            if ((total += 100) >= WAIT_FOR_SCROLL_IDLE_TIMEOUT_MS) {
+                throw new RuntimeException("waitForScrollIdle Timeout");
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ex) {
+                break;
+            }
+            if (verify != null) {
+                activityTestRule.runOnUiThread(verify);
+            }
+        }
+    }
+
 }

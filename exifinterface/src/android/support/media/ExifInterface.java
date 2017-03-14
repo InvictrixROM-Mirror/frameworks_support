@@ -50,7 +50,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -1185,14 +1184,19 @@ public class ExifInterface {
             new ExifTag(TAG_JPEG_INTERCHANGE_FORMAT_LENGTH, 514, IFD_FORMAT_ULONG);
 
     // Mappings from tag number to tag name and each item represents one IFD tag group.
-    private static final HashMap[] sExifTagMapsForReading = new HashMap[EXIF_TAGS.length];
+    @SuppressWarnings("unchecked")
+    private static final HashMap<Integer, ExifTag>[] sExifTagMapsForReading =
+            new HashMap[EXIF_TAGS.length];
     // Mappings from tag name to tag number and each item represents one IFD tag group.
-    private static final HashMap[] sExifTagMapsForWriting = new HashMap[EXIF_TAGS.length];
+    @SuppressWarnings("unchecked")
+    private static final HashMap<String, ExifTag>[] sExifTagMapsForWriting =
+            new HashMap[EXIF_TAGS.length];
     private static final HashSet<String> sTagSetForCompatibility = new HashSet<>(Arrays.asList(
             TAG_F_NUMBER, TAG_DIGITAL_ZOOM_RATIO, TAG_EXPOSURE_TIME, TAG_SUBJECT_DISTANCE,
             TAG_GPS_TIMESTAMP));
     // Mappings from tag number to IFD type for pointer tags.
-    private static final HashMap sExifPointerTagMap = new HashMap();
+    @SuppressWarnings("unchecked")
+    private static final HashMap<Integer, Integer> sExifPointerTagMap = new HashMap();
 
     // See JPEG File Interchange Format Version 1.02.
     // The following values are defined for handling JPEG streams. In this implementation, we are
@@ -1245,8 +1249,8 @@ public class ExifInterface {
 
         // Build up the hash tables to look up Exif tags for reading Exif tags.
         for (int ifdType = 0; ifdType < EXIF_TAGS.length; ++ifdType) {
-            sExifTagMapsForReading[ifdType] = new HashMap();
-            sExifTagMapsForWriting[ifdType] = new HashMap();
+            sExifTagMapsForReading[ifdType] = new HashMap<>();
+            sExifTagMapsForWriting[ifdType] = new HashMap<>();
             for (ExifTag tag : EXIF_TAGS[ifdType]) {
                 sExifTagMapsForReading[ifdType].put(tag.number, tag);
                 sExifTagMapsForWriting[ifdType].put(tag.name, tag);
@@ -1265,7 +1269,8 @@ public class ExifInterface {
     private final String mFilename;
     private final AssetManager.AssetInputStream mAssetInputStream;
     private int mMimeType;
-    private final HashMap[] mAttributes = new HashMap[EXIF_TAGS.length];
+    @SuppressWarnings("unchecked")
+    private final HashMap<String, ExifAttribute>[] mAttributes = new HashMap[EXIF_TAGS.length];
     private ByteOrder mExifByteOrder = ByteOrder.BIG_ENDIAN;
     private boolean mHasThumbnail;
     // The following values used for indicating a thumbnail position.
@@ -1333,9 +1338,9 @@ public class ExifInterface {
         // Retrieves all tag groups. The value from primary image tag group has a higher priority
         // than the value from the thumbnail tag group if there are more than one candidates.
         for (int i = 0; i < EXIF_TAGS.length; ++i) {
-            Object value = mAttributes[i].get(tag);
+            ExifAttribute value = mAttributes[i].get(tag);
             if (value != null) {
-                return (ExifAttribute) value;
+                return value;
             }
         }
         return null;
@@ -1453,13 +1458,12 @@ public class ExifInterface {
             if (i == IFD_TYPE_THUMBNAIL && !mHasThumbnail) {
                 continue;
             }
-            final Object obj = sExifTagMapsForWriting[i].get(tag);
-            if (obj != null) {
+            final ExifTag exifTag = sExifTagMapsForWriting[i].get(tag);
+            if (exifTag != null) {
                 if (value == null) {
                     mAttributes[i].remove(tag);
                     continue;
                 }
-                final ExifTag exifTag = (ExifTag) obj;
                 Pair<Integer, Integer> guess = guessDataFormat(value);
                 int dataFormat;
                 if (exifTag.primaryFormat == guess.first || exifTag.primaryFormat == guess.second) {
@@ -1600,7 +1604,7 @@ public class ExifInterface {
         try {
             // Initialize mAttributes.
             for (int i = 0; i < EXIF_TAGS.length; ++i) {
-                mAttributes[i] = new HashMap();
+                mAttributes[i] = new HashMap<>();
             }
 
             // Check file type
@@ -1667,8 +1671,8 @@ public class ExifInterface {
     private void printAttributes() {
         for (int i = 0; i < mAttributes.length; ++i) {
             Log.d(TAG, "The size of tag group[" + i + "]: " + mAttributes[i].size());
-            for (Map.Entry entry : (Set<Map.Entry>) mAttributes[i].entrySet()) {
-                final ExifAttribute tagValue = (ExifAttribute) entry.getValue();
+            for (Map.Entry<String, ExifAttribute> entry : mAttributes[i].entrySet()) {
+                final ExifAttribute tagValue = entry.getValue();
                 Log.d(TAG, "tagName: " + entry.getKey() + ", tagType: " + tagValue.toString()
                         + ", tagValue: '" + tagValue.getStringValue(mExifByteOrder) + "'");
             }
@@ -2076,7 +2080,7 @@ public class ExifInterface {
      * http://fileformats.archiveteam.org/wiki/Fujifilm_RAF
      */
     private boolean isRafFormat(byte[] signatureCheckBytes) throws IOException {
-        byte[] rafSignatureBytes = RAF_SIGNATURE.getBytes();
+        byte[] rafSignatureBytes = RAF_SIGNATURE.getBytes(Charset.defaultCharset());
         for (int i = 0; i < rafSignatureBytes.length; i++) {
             if (signatureCheckBytes[i] != rafSignatureBytes[i]) {
                 return false;
@@ -2734,11 +2738,11 @@ public class ExifInterface {
                     Log.d(TAG, "seek to data offset: " + offset);
                 }
                 if (mMimeType == IMAGE_TYPE_ORF) {
-                    if (tag.name == TAG_MAKER_NOTE) {
+                    if (TAG_MAKER_NOTE.equals(tag.name)) {
                         // Save offset value for reading thumbnail
                         mOrfMakerNoteOffset = offset;
                     } else if (ifdType == IFD_TYPE_ORF_MAKER_NOTE
-                            && tag.name == TAG_ORF_THUMBNAIL_IMAGE) {
+                            && TAG_ORF_THUMBNAIL_IMAGE.equals(tag.name)) {
                         // Retrieve & update values for thumbnail offset and length values for ORF
                         mOrfThumbnailOffset = offset;
                         mOrfThumbnailLength = numberOfComponents;
@@ -2757,7 +2761,7 @@ public class ExifInterface {
                                 jpegInterchangeFormatLengthAttribute);
                     }
                 } else if (mMimeType == IMAGE_TYPE_RW2) {
-                    if (tag.name == TAG_RW2_JPG_FROM_RAW) {
+                    if (TAG_RW2_JPG_FROM_RAW.equals(tag.name)) {
                         mRw2JpgFromRawOffset = offset;
                     }
                 }
@@ -2772,7 +2776,7 @@ public class ExifInterface {
             }
 
             // Recursively parse IFD when a IFD pointer tag appears.
-            Object nextIfdType = sExifPointerTagMap.get(tagNumber);
+            Integer nextIfdType = sExifPointerTagMap.get(tagNumber);
             if (DEBUG) {
                 Log.d(TAG, "nextIfdType: " + nextIfdType + " byteCount: " + byteCount);
             }
@@ -2808,7 +2812,7 @@ public class ExifInterface {
                 }
                 if (offset > 0L && offset < dataInputStream.mLength) {
                     dataInputStream.seek(offset);
-                    readImageFileDirectory(dataInputStream, (int) nextIfdType);
+                    readImageFileDirectory(dataInputStream, nextIfdType);
                 } else {
                     Log.w(TAG, "Skip jump into the IFD since its offset is invalid: " + offset);
                 }
@@ -2825,16 +2829,16 @@ public class ExifInterface {
             // DNG files have a DNG Version tag specifying the version of specifications that the
             // image file is following.
             // See http://fileformats.archiveteam.org/wiki/DNG
-            if (tag.name == TAG_DNG_VERSION) {
+            if (TAG_DNG_VERSION.equals(tag.name)) {
                 mMimeType = IMAGE_TYPE_DNG;
             }
 
             // PEF files have a Make or Model tag that begins with "PENTAX" or a compression tag
             // that is 65535.
             // See http://fileformats.archiveteam.org/wiki/Pentax_PEF
-            if (((tag.name == TAG_MAKE || tag.name == TAG_MODEL)
+            if (((TAG_MAKE.equals(tag.name) || TAG_MODEL.equals(tag.name))
                     && attribute.getStringValue(mExifByteOrder).contains(PEF_SIGNATURE))
-                    || (tag.name == TAG_COMPRESSION
+                    || (TAG_COMPRESSION.equals(tag.name)
                     && attribute.getIntValue(mExifByteOrder) == 65535)) {
                 mMimeType = IMAGE_TYPE_PEF;
             }
@@ -2971,9 +2975,9 @@ public class ExifInterface {
 
         if (stripOffsetsAttribute != null && stripByteCountsAttribute != null) {
             long[] stripOffsets =
-                    (long[]) stripOffsetsAttribute.getValue(mExifByteOrder);
+                    convertToLongArray(stripOffsetsAttribute.getValue(mExifByteOrder));
             long[] stripByteCounts =
-                    (long[]) stripByteCountsAttribute.getValue(mExifByteOrder);
+                    convertToLongArray(stripByteCountsAttribute.getValue(mExifByteOrder));
 
             if (stripOffsets == null) {
                 Log.w(TAG, "stripOffsets should not be null.");
@@ -3098,7 +3102,7 @@ public class ExifInterface {
         if (mAttributes[IFD_TYPE_THUMBNAIL].isEmpty()) {
             if (isThumbnail(mAttributes[IFD_TYPE_PREVIEW])) {
                 mAttributes[IFD_TYPE_THUMBNAIL] = mAttributes[IFD_TYPE_PREVIEW];
-                mAttributes[IFD_TYPE_PREVIEW] = new HashMap();
+                mAttributes[IFD_TYPE_PREVIEW] = new HashMap<>();
             }
         }
 
@@ -3235,8 +3239,8 @@ public class ExifInterface {
         // value which has a bigger size than 4 bytes.
         for (int i = 0; i < EXIF_TAGS.length; ++i) {
             int sum = 0;
-            for (Map.Entry entry : (Set<Map.Entry>) mAttributes[i].entrySet()) {
-                final ExifAttribute exifAttribute = (ExifAttribute) entry.getValue();
+            for (Map.Entry<String, ExifAttribute> entry : mAttributes[i].entrySet()) {
+                final ExifAttribute exifAttribute = entry.getValue();
                 final int size = exifAttribute.size();
                 if (size > 4) {
                     sum += size;
@@ -3303,12 +3307,11 @@ public class ExifInterface {
 
                 // Write entry info
                 int dataOffset = ifdOffsets[ifdType] + 2 + mAttributes[ifdType].size() * 12 + 4;
-                for (Map.Entry entry : (Set<Map.Entry>) mAttributes[ifdType].entrySet()) {
+                for (Map.Entry<String, ExifAttribute> entry : mAttributes[ifdType].entrySet()) {
                     // Convert tag name to tag number.
-                    final ExifTag tag =
-                            (ExifTag) sExifTagMapsForWriting[ifdType].get(entry.getKey());
+                    final ExifTag tag = sExifTagMapsForWriting[ifdType].get(entry.getKey());
                     final int tagNumber = tag.number;
-                    final ExifAttribute attribute = (ExifAttribute) entry.getValue();
+                    final ExifAttribute attribute = entry.getValue();
                     final int size = attribute.size();
 
                     dataOutputStream.writeUnsignedShort(tagNumber);
@@ -3338,8 +3341,8 @@ public class ExifInterface {
                 }
 
                 // Write values of data field exceeding 4 bytes after the next offset.
-                for (Map.Entry entry : (Set<Map.Entry>) mAttributes[ifdType].entrySet()) {
-                    ExifAttribute attribute = (ExifAttribute) entry.getValue();
+                for (Map.Entry<String, ExifAttribute> entry : mAttributes[ifdType].entrySet()) {
+                    ExifAttribute attribute = entry.getValue();
 
                     if (attribute.bytes.length > 4) {
                         dataOutputStream.write(attribute.bytes, 0, attribute.bytes.length);
@@ -3378,12 +3381,12 @@ public class ExifInterface {
             for (int i = 1; i < entryValues.length; ++i) {
                 final Pair<Integer, Integer> guessDataFormat = guessDataFormat(entryValues[i]);
                 int first = -1, second = -1;
-                if (guessDataFormat.first == dataFormat.first
-                        || guessDataFormat.second == dataFormat.first) {
+                if (guessDataFormat.first.equals(dataFormat.first)
+                        || guessDataFormat.second.equals(dataFormat.first)) {
                     first = dataFormat.first;
                 }
-                if (dataFormat.second != -1 && (guessDataFormat.first == dataFormat.second
-                        || guessDataFormat.second == dataFormat.second)) {
+                if (dataFormat.second != -1 && (guessDataFormat.first.equals(dataFormat.second)
+                        || guessDataFormat.second.equals(dataFormat.second))) {
                     second = dataFormat.second;
                 }
                 if (first == -1 && second == -1) {
@@ -3448,13 +3451,11 @@ public class ExifInterface {
         private static final ByteOrder BIG_ENDIAN = ByteOrder.BIG_ENDIAN;
 
         private DataInputStream mDataInputStream;
-        private InputStream mInputStream;
         private ByteOrder mByteOrder = ByteOrder.BIG_ENDIAN;
         private final int mLength;
         private int mPosition;
 
         public ByteOrderedDataInputStream(InputStream in) throws IOException {
-            mInputStream = in;
             mDataInputStream = new DataInputStream(in);
             mLength = mDataInputStream.available();
             mPosition = 0;
@@ -3496,6 +3497,13 @@ public class ExifInterface {
         public int read() throws IOException {
             ++mPosition;
             return mDataInputStream.read();
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            int bytesRead = mDataInputStream.read(b, off, len);
+            mPosition += bytesRead;
+            return bytesRead;
         }
 
         @Override
@@ -3614,6 +3622,7 @@ public class ExifInterface {
             return skipped;
         }
 
+        @Override
         public int readUnsignedShort() throws IOException {
             mPosition += 2;
             if (mPosition > mLength) {
@@ -3692,10 +3701,12 @@ public class ExifInterface {
             mByteOrder = byteOrder;
         }
 
+        @Override
         public void write(byte[] bytes) throws IOException {
             mOutputStream.write(bytes);
         }
 
+        @Override
         public void write(byte[] bytes, int offset, int length) throws IOException {
             mOutputStream.write(bytes, offset, length);
         }
@@ -3772,7 +3783,7 @@ public class ExifInterface {
 
             if (firstImageLengthValue < secondImageLengthValue &&
                     firstImageWidthValue < secondImageWidthValue) {
-                HashMap tempMap = mAttributes[firstIfdType];
+                HashMap<String, ExifAttribute> tempMap = mAttributes[firstIfdType];
                 mAttributes[firstIfdType] = mAttributes[secondIfdType];
                 mAttributes[secondIfdType] = tempMap;
             }
@@ -3806,5 +3817,23 @@ public class ExifInterface {
             out.write(buffer, 0, c);
         }
         return total;
+    }
+
+    /**
+     * Convert given int[] to long[]. If long[] is given, just return it.
+     * Return null for other types of input.
+     */
+    private static long[] convertToLongArray(Object inputObj) {
+        if (inputObj instanceof int[]) {
+            int[] input = (int[]) inputObj;
+            long[] result = new long[input.length];
+            for (int i = 0; i < input.length; i++) {
+                result[i] = input[i];
+            }
+            return result;
+        } else if (inputObj instanceof long[]) {
+            return (long[]) inputObj;
+        }
+        return null;
     }
 }

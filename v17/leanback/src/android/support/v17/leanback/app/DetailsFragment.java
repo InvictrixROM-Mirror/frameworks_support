@@ -126,7 +126,7 @@ public class DetailsFragment extends BaseFragment {
         final WeakReference<DetailsFragment> mRef;
 
         WaitEnterTransitionTimeout(DetailsFragment f) {
-            mRef = new WeakReference(f);
+            mRef = new WeakReference<>(f);
             f.getView().postDelayed(this, WAIT_ENTERTRANSITION_START);
         }
 
@@ -704,6 +704,7 @@ public class DetailsFragment extends BaseFragment {
             public void onRequestChildFocus(View child, View focused) {
                 if (child != mRootView.getFocusedChild()) {
                     if (child.getId() == R.id.details_fragment_root) {
+                        slideInGridView();
                         showTitle(true);
                     } else if (child.getId() == R.id.video_surface_container) {
                         slideOutGridView();
@@ -774,4 +775,9 @@ public class DetailsFragment extends BaseFragment {
         }
     }
 
+    void slideInGridView() {
+        if (getVerticalGridView() != null) {
+            getVerticalGridView().animateIn();
+        }
+    }
 }

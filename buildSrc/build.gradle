@@ -10,4 +10,6 @@ repositories {
 }
 dependencies {
     compile libs.gradle
+    compile libs.error_prone
+    compile libs.jarjar_gradle
 }

@@ -16,6 +16,7 @@
 
 package android.support.v4.app;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -139,6 +140,7 @@ class NotificationCompatJellybean {
             return b;
         }
 
+        @Override
         public Notification build() {
             Notification notif = b.build();
             // Merge in developer provided extras, but let the values already set
@@ -346,13 +348,14 @@ class NotificationCompatJellybean {
         }
     }
 
+    @SuppressLint("NewApi") // Intentionally looking up Notification.Action using reflection.
     private static boolean ensureActionReflectionReadyLocked() {
         if (sActionsAccessFailed) {
             return false;
         }
         try {
             if (sActionsField == null) {
-                sActionClass = Class.forName("android.app.Notification$Action");
+                sActionClass = Class.forName(Notification.Action.class.getName());
                 sActionIconField = sActionClass.getDeclaredField("icon");
                 sActionTitleField = sActionClass.getDeclaredField("title");
                 sActionIntentField = sActionClass.getDeclaredField("actionIntent");

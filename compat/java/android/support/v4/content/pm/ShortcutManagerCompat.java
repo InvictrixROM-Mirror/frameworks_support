@@ -16,6 +16,7 @@
 
 package android.support.v4.content.pm;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -23,6 +24,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.pm.ShortcutManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
@@ -41,13 +43,19 @@ public class ShortcutManagerCompat {
     @VisibleForTesting static final String INSTALL_SHORTCUT_PERMISSION =
             "com.android.launcher.permission.INSTALL_SHORTCUT";
 
+    private ShortcutManagerCompat() {
+        /* Hide constructor */
+    }
+
     /**
      * @return {@code true} if the launcher supports {@link #requestPinShortcut},
      * {@code false} otherwise
      */
+    @SuppressLint("NewApi")
     public static boolean isRequestPinShortcutSupported(@NonNull Context context) {
         if (BuildCompat.isAtLeastO()) {
-            return ShortcutManagerCompatApi26.isRequestPinShortcutSupported(context);
+            //noinspection AndroidLintNewApi
+            return context.getSystemService(ShortcutManager.class).isRequestPinShortcutSupported();
         }
 
         if (ContextCompat.checkSelfPermission(context, INSTALL_SHORTCUT_PERMISSION)
@@ -81,10 +89,13 @@ public class ShortcutManagerCompat {
      * @see IntentSender
      * @see android.app.PendingIntent#getIntentSender()
      */
+    @SuppressLint("NewApi")
     public static boolean requestPinShortcut(@NonNull final Context context,
             @NonNull ShortcutInfoCompat shortcut, @Nullable final IntentSender callback) {
         if (BuildCompat.isAtLeastO()) {
-            return ShortcutManagerCompatApi26.requestPinShortcut(context, shortcut, callback);
+            //noinspection AndroidLintNewApi
+            return context.getSystemService(ShortcutManager.class).requestPinShortcut(
+                    shortcut.toShortcutInfo(), callback);
         }
 
         if (!isRequestPinShortcutSupported(context)) {
@@ -123,11 +134,14 @@ public class ShortcutManagerCompat {
      * @see Intent#ACTION_CREATE_SHORTCUT
      */
     @NonNull
+    @SuppressLint("NewApi")
     public static Intent createShortcutResultIntent(@NonNull Context context,
             @NonNull ShortcutInfoCompat shortcut) {
         Intent result = null;
         if (BuildCompat.isAtLeastO()) {
-            result = ShortcutManagerCompatApi26.createShortcutResultIntent(context, shortcut);
+            //noinspection AndroidLintNewApi
+            result = context.getSystemService(ShortcutManager.class)
+                    .createShortcutResultIntent(shortcut.toShortcutInfo());
         }
         if (result == null) {
             result = new Intent();

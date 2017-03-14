@@ -16,7 +16,6 @@
 
 package android.support.v4.app;
 
-import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
@@ -35,6 +34,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
 import android.provider.Settings;
+import android.support.annotation.RequiresApi;
 import android.support.v4.os.BuildCompat;
 import android.util.Log;
 
@@ -188,7 +188,7 @@ public final class NotificationManagerCompat {
         }
     }
 
-    @TargetApi(19)
+    @RequiresApi(19)
     static class ImplKitKat extends ImplBase {
         @Override
         public boolean areNotificationsEnabled(Context context,
@@ -197,7 +197,7 @@ public final class NotificationManagerCompat {
         }
     }
 
-    @TargetApi(24)
+    @RequiresApi(24)
     static class ImplApi24 extends ImplKitKat {
         @Override
         public boolean areNotificationsEnabled(Context context,
@@ -611,7 +611,7 @@ public final class NotificationManagerCompat {
         final ComponentName componentName;
         final IBinder iBinder;
 
-        public ServiceConnectedEvent(ComponentName componentName,
+        ServiceConnectedEvent(ComponentName componentName,
                 final IBinder iBinder) {
             this.componentName = componentName;
             this.iBinder = iBinder;
@@ -619,7 +619,7 @@ public final class NotificationManagerCompat {
     }
 
     private interface Task {
-        public void send(INotificationSideChannel service) throws RemoteException;
+        void send(INotificationSideChannel service) throws RemoteException;
     }
 
     private static class NotifyTask implements Task {
@@ -628,7 +628,7 @@ public final class NotificationManagerCompat {
         final String tag;
         final Notification notif;
 
-        public NotifyTask(String packageName, int id, String tag, Notification notif) {
+        NotifyTask(String packageName, int id, String tag, Notification notif) {
             this.packageName = packageName;
             this.id = id;
             this.tag = tag;
@@ -640,6 +640,7 @@ public final class NotificationManagerCompat {
             service.notify(packageName, id, tag, notif);
         }
 
+        @Override
         public String toString() {
             StringBuilder sb = new StringBuilder("NotifyTask[");
             sb.append("packageName:").append(packageName);
@@ -656,14 +657,14 @@ public final class NotificationManagerCompat {
         final String tag;
         final boolean all;
 
-        public CancelTask(String packageName) {
+        CancelTask(String packageName) {
             this.packageName = packageName;
             this.id = 0;
             this.tag = null;
             this.all = true;
         }
 
-        public CancelTask(String packageName, int id, String tag) {
+        CancelTask(String packageName, int id, String tag) {
             this.packageName = packageName;
             this.id = id;
             this.tag = tag;
@@ -679,6 +680,7 @@ public final class NotificationManagerCompat {
             }
         }
 
+        @Override
         public String toString() {
             StringBuilder sb = new StringBuilder("CancelTask[");
             sb.append("packageName:").append(packageName);

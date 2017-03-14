@@ -27,12 +27,18 @@ android {
                 'base',
                 'api14',
                 'api18',
+                'api19',
+                'api21',
                 'src'
         ]
         main.res.srcDirs = [
                 'res',
                 'res-public'
         ]
+    }
+
+    aaptOptions {
+        additionalParameters "--no-version-transitions"
     }
 }
 

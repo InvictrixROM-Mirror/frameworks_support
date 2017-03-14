@@ -41,11 +41,10 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RestrictTo;
 import android.support.annotation.VisibleForTesting;
-import android.support.v4.os.ParcelableCompat;
-import android.support.v4.os.ParcelableCompatCreatorCallbacks;
 import android.support.v4.os.TraceCompat;
 import android.support.v4.view.AbsSavedState;
 import android.support.v4.view.InputDeviceCompat;
+import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.NestedScrollingChild;
 import android.support.v4.view.NestedScrollingChildHelper;
 import android.support.v4.view.ScrollingView;
@@ -62,6 +61,7 @@ import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.FocusFinder;
+import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -487,7 +487,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
      * the View's state is undefined.
      */
     @VisibleForTesting
-    final List<ViewHolder> mPendingAccessibilityImportanceChange = new ArrayList();
+    final List<ViewHolder> mPendingAccessibilityImportanceChange = new ArrayList<>();
 
     private Runnable mItemAnimatorRunner = new Runnable() {
         @Override
@@ -1746,7 +1746,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             mNestedOffsets[0] += mScrollOffset[0];
             mNestedOffsets[1] += mScrollOffset[1];
         } else if (getOverScrollMode() != View.OVER_SCROLL_NEVER) {
-            if (ev != null) {
+            if (ev != null && !MotionEventCompat.isFromSource(ev, InputDevice.SOURCE_MOUSE)) {
                 pullGlows(ev.getX(), unconsumedX, ev.getY(), unconsumedY);
             }
             considerReleasingGlowsOnScroll(x, y);
@@ -2583,7 +2583,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
     /**
      * Returns true if RecyclerView is attached to window.
      */
-    // @override
+    @Override
     public boolean isAttachedToWindow() {
         return mIsAttached;
     }
@@ -2991,7 +2991,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
         }
     }
 
-    // @Override
+    @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
         if (mLayout == null) {
             return false;
@@ -5105,7 +5105,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
 
         public void putRecycledView(ViewHolder scrap) {
             final int viewType = scrap.getItemViewType();
-            final ArrayList scrapHeap = getScrapDataForType(viewType).mScrapHeap;
+            final ArrayList<ViewHolder> scrapHeap = getScrapDataForType(viewType).mScrapHeap;
             if (mScrap.get(viewType).mMaxScrap <= scrapHeap.size()) {
                 return;
             }
@@ -6210,7 +6210,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
                     continue;
                 }
 
-                final int pos = holder.getLayoutPosition();
+                final int pos = holder.mPosition;
                 if (pos >= positionStart && pos < positionEnd) {
                     holder.addFlags(ViewHolder.FLAG_UPDATE);
                     recycleCachedViewAt(i);
@@ -9229,10 +9229,11 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
          * bounds.
          *
          * @param child The child view to be examined.
-         * @param completelyVisible If true, the method returns true iff the child is completely
-         *                          visible. If false, the method returns true iff the child is only
-         *                          partially visible (that is it will return false if the child is
-         *                          either completely visible or out of RV's bounds).
+         * @param completelyVisible If true, the method returns true if and only if the child is
+         *                          completely visible. If false, the method returns true if and
+         *                          only if the child is only partially visible (that is it will
+         *                          return false if the child is either completely visible or out
+         *                          of RV's bounds).
          * @param acceptEndPointInclusion If the view's endpoint intersection with RV's start of end
          *                                bounds is enough to consider it partially visible,
          *                                false otherwise.
@@ -11466,7 +11467,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
     }
 
     /**
-     * This is public so that the CREATOR can be access on cold launch.
+     * This is public so that the CREATOR can be accessed on cold launch.
      * @hide
      */
     @RestrictTo(LIBRARY_GROUP)
@@ -11500,18 +11501,22 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             mLayoutState = other.mLayoutState;
         }
 
-        public static final Creator<SavedState> CREATOR = ParcelableCompat.newCreator(
-                new ParcelableCompatCreatorCallbacks<SavedState>() {
-                    @Override
-                    public SavedState createFromParcel(Parcel in, ClassLoader loader) {
-                        return new SavedState(in, loader);
-                    }
+        public static final Creator<SavedState> CREATOR = new ClassLoaderCreator<SavedState>() {
+            @Override
+            public SavedState createFromParcel(Parcel in, ClassLoader loader) {
+                return new SavedState(in, loader);
+            }
 
-                    @Override
-                    public SavedState[] newArray(int size) {
-                        return new SavedState[size];
-                    }
-                });
+            @Override
+            public SavedState createFromParcel(Parcel in) {
+                return new SavedState(in, null);
+            }
+
+            @Override
+            public SavedState[] newArray(int size) {
+                return new SavedState[size];
+            }
+        };
     }
     /**
      * <p>Contains useful information about the current RecyclerView state like target scroll

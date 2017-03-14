@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -170,7 +171,16 @@ public class FragmentActivity extends BaseFragmentActivityJB implements
      */
     @Override
     public void onBackPressed() {
-        if (!mFragments.getSupportFragmentManager().popBackStackImmediate()) {
+        FragmentManager fragmentManager = mFragments.getSupportFragmentManager();
+        final boolean isStateSaved = fragmentManager.isStateSaved();
+        if (isStateSaved && Build.VERSION.SDK_INT <= Build.VERSION_CODES.N_MR1) {
+            // Older versions will throw an exception from the framework
+            // FragmentManager.popBackStackImmediate(), so we'll just
+            // return here. The Activity is likely already on its way out
+            // since the fragmentManager has already been saved.
+            return;
+        }
+        if (isStateSaved || !fragmentManager.popBackStackImmediate()) {
             super.onBackPressed();
         }
     }
@@ -238,6 +248,7 @@ public class FragmentActivity extends BaseFragmentActivityJB implements
      *
      * @param isInMultiWindowMode True if the activity is in multi-window mode.
      */
+    @Override
     @CallSuper
     public void onMultiWindowModeChanged(boolean isInMultiWindowMode) {
         mFragments.dispatchMultiWindowModeChanged(isInMultiWindowMode);
@@ -252,6 +263,7 @@ public class FragmentActivity extends BaseFragmentActivityJB implements
      *
      * @param isInPictureInPictureMode True if the activity is in picture-in-picture mode.
      */
+    @Override
     @CallSuper
     public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode) {
         mFragments.dispatchPictureInPictureModeChanged(isInPictureInPictureMode);
@@ -419,6 +431,7 @@ public class FragmentActivity extends BaseFragmentActivityJB implements
     /**
      * Hook in to note that fragment state is no longer saved.
      */
+    @Override
     public void onStateNotSaved() {
         mFragments.noteStateNotSaved();
     }
@@ -621,6 +634,7 @@ public class FragmentActivity extends BaseFragmentActivityJB implements
      * closed for you after you return.
      * @param args additional arguments to the dump request.
      */
+    @Override
     public void dump(String prefix, FileDescriptor fd, PrintWriter writer, String[] args) {
         super.dump(prefix, fd, writer, args);
         writer.print(prefix); writer.print("Local FragmentActivity ");

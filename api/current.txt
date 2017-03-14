@@ -1,3 +1,75 @@
+package android.support.animation {
+
+  public abstract class DynamicAnimation<T extends android.support.animation.DynamicAnimation<T>> {
+    method public T addEndListener(android.support.animation.DynamicAnimation.OnAnimationEndListener);
+    method public T addUpdateListener(android.support.animation.DynamicAnimation.OnAnimationUpdateListener);
+    method public void cancel();
+    method public boolean isRunning();
+    method public void removeEndListener(android.support.animation.DynamicAnimation.OnAnimationEndListener);
+    method public void removeUpdateListener(android.support.animation.DynamicAnimation.OnAnimationUpdateListener);
+    method public T setMaxValue(float);
+    method public T setMinValue(float);
+    method public T setStartValue(float);
+    method public T setStartVelocity(float);
+    method public void start();
+    field public static final android.support.animation.DynamicAnimation.ViewProperty ALPHA;
+    field public static final android.support.animation.DynamicAnimation.ViewProperty ROTATION;
+    field public static final android.support.animation.DynamicAnimation.ViewProperty ROTATION_X;
+    field public static final android.support.animation.DynamicAnimation.ViewProperty ROTATION_Y;
+    field public static final android.support.animation.DynamicAnimation.ViewProperty SCALE_X;
+    field public static final android.support.animation.DynamicAnimation.ViewProperty SCALE_Y;
+    field public static final android.support.animation.DynamicAnimation.ViewProperty SCROLL_X;
+    field public static final android.support.animation.DynamicAnimation.ViewProperty SCROLL_Y;
+    field public static final android.support.animation.DynamicAnimation.ViewProperty TRANSLATION_X;
+    field public static final android.support.animation.DynamicAnimation.ViewProperty TRANSLATION_Y;
+    field public static final android.support.animation.DynamicAnimation.ViewProperty TRANSLATION_Z;
+    field public static final android.support.animation.DynamicAnimation.ViewProperty X;
+    field public static final android.support.animation.DynamicAnimation.ViewProperty Y;
+    field public static final android.support.animation.DynamicAnimation.ViewProperty Z;
+  }
+
+  public static abstract interface DynamicAnimation.OnAnimationEndListener {
+    method public abstract void onAnimationEnd(android.support.animation.DynamicAnimation, boolean, float, float);
+  }
+
+  public static abstract interface DynamicAnimation.OnAnimationUpdateListener {
+    method public abstract void onAnimationUpdate(android.support.animation.DynamicAnimation, float, float);
+  }
+
+  public static abstract class DynamicAnimation.ViewProperty {
+  }
+
+  public final class SpringAnimation extends android.support.animation.DynamicAnimation {
+    ctor public SpringAnimation(android.view.View, android.support.animation.DynamicAnimation.ViewProperty);
+    ctor public SpringAnimation(android.view.View, android.support.animation.DynamicAnimation.ViewProperty, float);
+    method public void animateToFinalPosition(float);
+    method public boolean canSkipToEnd();
+    method public android.support.animation.SpringForce getSpring();
+    method public android.support.animation.SpringAnimation setSpring(android.support.animation.SpringForce);
+    method public void skipToEnd();
+  }
+
+  public final class SpringForce {
+    ctor public SpringForce();
+    ctor public SpringForce(float);
+    method public float getDampingRatio();
+    method public float getFinalPosition();
+    method public float getStiffness();
+    method public android.support.animation.SpringForce setDampingRatio(float);
+    method public android.support.animation.SpringForce setFinalPosition(float);
+    method public android.support.animation.SpringForce setStiffness(float);
+    field public static final float DAMPING_RATIO_HIGH_BOUNCY = 0.2f;
+    field public static final float DAMPING_RATIO_LOW_BOUNCY = 0.75f;
+    field public static final float DAMPING_RATIO_MEDIUM_BOUNCY = 0.5f;
+    field public static final float DAMPING_RATIO_NO_BOUNCY = 1.0f;
+    field public static final float STIFFNESS_HIGH = 10000.0f;
+    field public static final float STIFFNESS_LOW = 200.0f;
+    field public static final float STIFFNESS_MEDIUM = 1500.0f;
+    field public static final float STIFFNESS_VERY_LOW = 50.0f;
+  }
+
+}
+
 package android.support.app.recommendation {
 
   public final class ContentRecommendation {
@@ -869,16 +941,34 @@ package android.support.design.widget {
 
 package android.support.graphics.drawable {
 
-  public class AnimatedVectorDrawableCompat extends android.support.graphics.drawable.VectorDrawableCommon {
+  public abstract interface Animatable2Compat {
+    method public abstract void clearAnimationCallbacks();
+    method public abstract void registerAnimationCallback(android.support.graphics.drawable.Animatable2Compat.AnimationCallback);
+    method public abstract boolean unregisterAnimationCallback(android.support.graphics.drawable.Animatable2Compat.AnimationCallback);
+  }
+
+  public static abstract class Animatable2Compat.AnimationCallback {
+    ctor public Animatable2Compat.AnimationCallback();
+    method public void onAnimationEnd(android.graphics.drawable.Drawable);
+    method public void onAnimationStart(android.graphics.drawable.Drawable);
+  }
+
+  public class AnimatedVectorDrawableCompat extends android.support.graphics.drawable.VectorDrawableCommon implements android.support.graphics.drawable.Animatable2Compat {
+    method public void clearAnimationCallbacks();
+    method public static void clearAnimationCallbacks(android.graphics.drawable.Drawable);
     method public static android.support.graphics.drawable.AnimatedVectorDrawableCompat create(android.content.Context, int);
     method public static android.support.graphics.drawable.AnimatedVectorDrawableCompat createFromXmlInner(android.content.Context, android.content.res.Resources, org.xmlpull.v1.XmlPullParser, android.util.AttributeSet, android.content.res.Resources.Theme) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
     method public void draw(android.graphics.Canvas);
     method public int getOpacity();
     method public boolean isRunning();
+    method public void registerAnimationCallback(android.support.graphics.drawable.Animatable2Compat.AnimationCallback);
+    method public static void registerAnimationCallback(android.graphics.drawable.Drawable, android.support.graphics.drawable.Animatable2Compat.AnimationCallback);
     method public void setAlpha(int);
     method public void setColorFilter(android.graphics.ColorFilter);
     method public void start();
     method public void stop();
+    method public boolean unregisterAnimationCallback(android.support.graphics.drawable.Animatable2Compat.AnimationCallback);
+    method public static boolean unregisterAnimationCallback(android.graphics.drawable.Drawable, android.support.graphics.drawable.Animatable2Compat.AnimationCallback);
   }
 
    abstract class VectorDrawableCommon extends android.graphics.drawable.Drawable {
@@ -1102,7 +1192,6 @@ package android.support.media.tv {
     method public android.net.Uri getAppLinkIntentUri();
     method public android.net.Uri getAppLinkPosterArtUri();
     method public java.lang.String getAppLinkText();
-    method public java.lang.String getChannelLogo();
     method public java.lang.String getDescription();
     method public java.lang.String getDisplayName();
     method public java.lang.String getDisplayNumber();
@@ -1135,7 +1224,6 @@ package android.support.media.tv {
     method public android.support.media.tv.Channel.Builder setAppLinkIntentUri(android.net.Uri);
     method public android.support.media.tv.Channel.Builder setAppLinkPosterArtUri(android.net.Uri);
     method public android.support.media.tv.Channel.Builder setAppLinkText(java.lang.String);
-    method public android.support.media.tv.Channel.Builder setChannelLogo(java.lang.String);
     method public android.support.media.tv.Channel.Builder setDescription(java.lang.String);
     method public android.support.media.tv.Channel.Builder setDisplayName(java.lang.String);
     method public android.support.media.tv.Channel.Builder setDisplayNumber(java.lang.String);
@@ -1148,7 +1236,6 @@ package android.support.media.tv {
     method public android.support.media.tv.Channel.Builder setInternalProviderFlag4(long);
     method public android.support.media.tv.Channel.Builder setNetworkAffiliation(java.lang.String);
     method public android.support.media.tv.Channel.Builder setOriginalNetworkId(int);
-    method public android.support.media.tv.Channel.Builder setPackageName(java.lang.String);
     method public android.support.media.tv.Channel.Builder setSearchable(boolean);
     method public android.support.media.tv.Channel.Builder setServiceId(int);
     method public android.support.media.tv.Channel.Builder setServiceType(java.lang.String);
@@ -1587,14 +1674,146 @@ package android.support.percent {
 
 }
 
+package android.support.text.emoji {
+
+  public class EmojiCompat {
+    method public static android.support.text.emoji.EmojiCompat get();
+    method public static boolean handleDeleteSurroundingText(android.view.inputmethod.InputConnection, android.text.Editable, int, int, boolean);
+    method public static boolean handleOnKeyDown(android.text.Editable, int, android.view.KeyEvent);
+    method public boolean hasEmojiGlyph(java.lang.CharSequence);
+    method public boolean hasEmojiGlyph(java.lang.CharSequence, int);
+    method public static android.support.text.emoji.EmojiCompat init(android.support.text.emoji.EmojiCompat.Config);
+    method public boolean isInitialized();
+    method public java.lang.CharSequence process(java.lang.CharSequence);
+    method public java.lang.CharSequence process(java.lang.CharSequence, int, int);
+    method public void registerInitCallback(android.support.text.emoji.EmojiCompat.InitCallback);
+    method public void unregisterInitCallback(android.support.text.emoji.EmojiCompat.InitCallback);
+    field public static final java.lang.String EDITOR_INFO_METAVERSION_KEY = "android.support.text.emoji.emojiCompat_metadataVersion";
+    field public static final java.lang.String EDITOR_INFO_REPLACE_ALL_KEY = "android.support.text.emoji.emojiCompat_replaceAll";
+  }
+
+  public static abstract class EmojiCompat.Config {
+    ctor protected EmojiCompat.Config(android.support.text.emoji.EmojiCompat.MetadataLoader);
+    method public android.support.text.emoji.EmojiCompat.Config registerInitCallback(android.support.text.emoji.EmojiCompat.InitCallback);
+    method public android.support.text.emoji.EmojiCompat.Config setMaxEmojiPerText(int);
+    method public android.support.text.emoji.EmojiCompat.Config setReplaceAll(boolean);
+    method public android.support.text.emoji.EmojiCompat.Config unregisterInitCallback(android.support.text.emoji.EmojiCompat.InitCallback);
+  }
+
+  public static abstract class EmojiCompat.InitCallback {
+    ctor public EmojiCompat.InitCallback();
+    method public void onFailed(java.lang.Throwable);
+    method public void onInitialized();
+  }
+
+  public static abstract class EmojiCompat.LoaderCallback {
+    ctor public EmojiCompat.LoaderCallback();
+    method public abstract void onFailed(java.lang.Throwable);
+    method public abstract void onLoaded(android.support.text.emoji.MetadataRepo);
+  }
+
+  public static abstract interface EmojiCompat.MetadataLoader {
+    method public abstract void load(android.support.text.emoji.EmojiCompat.LoaderCallback);
+  }
+
+  public abstract class EmojiSpan extends android.text.style.ReplacementSpan {
+    method public int getSize(android.graphics.Paint, java.lang.CharSequence, int, int, android.graphics.Paint.FontMetricsInt);
+  }
+
+  public final class MetadataRepo {
+    method public static android.support.text.emoji.MetadataRepo create(android.graphics.Typeface, java.io.InputStream) throws java.io.IOException;
+    method public static android.support.text.emoji.MetadataRepo create(android.graphics.Typeface, java.nio.ByteBuffer) throws java.io.IOException;
+    method public static android.support.text.emoji.MetadataRepo create(android.content.res.AssetManager, java.lang.String) throws java.io.IOException;
+  }
+
+}
+
+package android.support.text.emoji.bundled {
+
+  public class BundledEmojiCompatConfig extends android.support.text.emoji.EmojiCompat.Config {
+    ctor public BundledEmojiCompatConfig(android.content.Context);
+  }
+
+}
+
+package android.support.text.emoji.widget {
+
+  public class EmojiAppCompatButton extends android.support.v7.widget.AppCompatButton {
+    ctor public EmojiAppCompatButton(android.content.Context);
+    ctor public EmojiAppCompatButton(android.content.Context, android.util.AttributeSet);
+    ctor public EmojiAppCompatButton(android.content.Context, android.util.AttributeSet, int);
+  }
+
+  public class EmojiAppCompatEditText extends android.support.v7.widget.AppCompatEditText {
+    ctor public EmojiAppCompatEditText(android.content.Context);
+    ctor public EmojiAppCompatEditText(android.content.Context, android.util.AttributeSet);
+    ctor public EmojiAppCompatEditText(android.content.Context, android.util.AttributeSet, int);
+  }
+
+  public class EmojiAppCompatTextView extends android.support.v7.widget.AppCompatTextView {
+    ctor public EmojiAppCompatTextView(android.content.Context);
+    ctor public EmojiAppCompatTextView(android.content.Context, android.util.AttributeSet);
+    ctor public EmojiAppCompatTextView(android.content.Context, android.util.AttributeSet, int);
+  }
+
+  public class EmojiButton extends android.widget.Button {
+    ctor public EmojiButton(android.content.Context);
+    ctor public EmojiButton(android.content.Context, android.util.AttributeSet);
+    ctor public EmojiButton(android.content.Context, android.util.AttributeSet, int);
+    ctor public EmojiButton(android.content.Context, android.util.AttributeSet, int, int);
+  }
+
+  public class EmojiEditText extends android.widget.EditText {
+    ctor public EmojiEditText(android.content.Context);
+    ctor public EmojiEditText(android.content.Context, android.util.AttributeSet);
+    ctor public EmojiEditText(android.content.Context, android.util.AttributeSet, int);
+    ctor public EmojiEditText(android.content.Context, android.util.AttributeSet, int, int);
+  }
+
+  public final class EmojiEditTextHelper {
+    ctor public EmojiEditTextHelper(android.widget.EditText);
+    method public android.text.method.KeyListener getKeyListener(android.text.method.KeyListener);
+    method public android.view.inputmethod.InputConnection onCreateInputConnection(android.view.inputmethod.InputConnection, android.view.inputmethod.EditorInfo);
+  }
+
+  public class EmojiTextView extends android.widget.TextView {
+    ctor public EmojiTextView(android.content.Context);
+    ctor public EmojiTextView(android.content.Context, android.util.AttributeSet);
+    ctor public EmojiTextView(android.content.Context, android.util.AttributeSet, int);
+    ctor public EmojiTextView(android.content.Context, android.util.AttributeSet, int, int);
+  }
+
+  public final class EmojiTextViewHelper {
+    ctor public EmojiTextViewHelper(android.widget.TextView);
+    method public android.text.InputFilter[] getFilters(android.text.InputFilter[]);
+    method public android.text.method.TransformationMethod getTransformationMethod(android.text.method.TransformationMethod);
+    method public void setAllCaps(boolean);
+    method public void updateTransformationMethod();
+  }
+
+}
+
 package android.support.transition {
+
+  public class ArcMotion extends android.support.transition.PathMotion {
+    ctor public ArcMotion();
+    method public float getMaximumAngle();
+    method public float getMinimumHorizontalAngle();
+    method public float getMinimumVerticalAngle();
+    method public android.graphics.Path getPath(float, float, float, float);
+    method public void setMaximumAngle(float);
+    method public void setMinimumHorizontalAngle(float);
+    method public void setMinimumVerticalAngle(float);
+  }
 
   public class AutoTransition extends android.support.transition.TransitionSet {
     ctor public AutoTransition();
+    ctor public AutoTransition(android.content.Context, android.util.AttributeSet);
   }
 
   public class ChangeBounds extends android.support.transition.Transition {
     ctor public ChangeBounds();
+    ctor public ChangeBounds(android.content.Context, android.util.AttributeSet);
     method public void captureEndValues(android.support.transition.TransitionValues);
     method public void captureStartValues(android.support.transition.TransitionValues);
     method public void setResizeClip(boolean);
@@ -1603,8 +1822,22 @@ package android.support.transition {
   public class Fade extends android.support.transition.Visibility {
     ctor public Fade(int);
     ctor public Fade();
+    ctor public Fade(android.content.Context, android.util.AttributeSet);
     field public static final int IN = 1; // 0x1
     field public static final int OUT = 2; // 0x2
+  }
+
+  public abstract class PathMotion {
+    ctor public PathMotion();
+    method public abstract android.graphics.Path getPath(float, float, float, float);
+  }
+
+  public class PatternPathMotion extends android.support.transition.PathMotion {
+    ctor public PatternPathMotion();
+    ctor public PatternPathMotion(android.graphics.Path);
+    method public android.graphics.Path getPath(float, float, float, float);
+    method public android.graphics.Path getPatternPath();
+    method public void setPatternPath(android.graphics.Path);
   }
 
   public class Scene {
@@ -1620,6 +1853,7 @@ package android.support.transition {
 
   public abstract class Transition {
     ctor public Transition();
+    ctor public Transition(android.content.Context, android.util.AttributeSet);
     method public android.support.transition.Transition addListener(android.support.transition.Transition.TransitionListener);
     method public android.support.transition.Transition addTarget(android.view.View);
     method public android.support.transition.Transition addTarget(int);
@@ -1639,6 +1873,7 @@ package android.support.transition {
     method public long getDuration();
     method public android.animation.TimeInterpolator getInterpolator();
     method public java.lang.String getName();
+    method public android.support.transition.PathMotion getPathMotion();
     method public long getStartDelay();
     method public java.util.List<java.lang.Integer> getTargetIds();
     method public java.util.List<java.lang.String> getTargetNames();
@@ -1654,6 +1889,7 @@ package android.support.transition {
     method public android.support.transition.Transition setDuration(long);
     method public android.support.transition.Transition setInterpolator(android.animation.TimeInterpolator);
     method public void setMatchOrder(int...);
+    method public void setPathMotion(android.support.transition.PathMotion);
     method public android.support.transition.Transition setStartDelay(long);
     field public static final int MATCH_ID = 3; // 0x3
     field public static final int MATCH_INSTANCE = 1; // 0x1
@@ -1669,6 +1905,12 @@ package android.support.transition {
     method public abstract void onTransitionStart(android.support.transition.Transition);
   }
 
+  public class TransitionInflater {
+    method public static android.support.transition.TransitionInflater from(android.content.Context);
+    method public android.support.transition.Transition inflateTransition(int);
+    method public android.support.transition.TransitionManager inflateTransitionManager(int, android.view.ViewGroup);
+  }
+
   public class TransitionManager {
     ctor public TransitionManager();
     method public static void beginDelayedTransition(android.view.ViewGroup);
@@ -1682,6 +1924,7 @@ package android.support.transition {
 
   public class TransitionSet extends android.support.transition.Transition {
     ctor public TransitionSet();
+    ctor public TransitionSet(android.content.Context, android.util.AttributeSet);
     method public android.support.transition.TransitionSet addTransition(android.support.transition.Transition);
     method public void captureEndValues(android.support.transition.TransitionValues);
     method public void captureStartValues(android.support.transition.TransitionValues);
@@ -1702,11 +1945,18 @@ package android.support.transition {
 
   public abstract class Visibility extends android.support.transition.Transition {
     ctor public Visibility();
+    ctor public Visibility(android.content.Context, android.util.AttributeSet);
     method public void captureEndValues(android.support.transition.TransitionValues);
     method public void captureStartValues(android.support.transition.TransitionValues);
+    method public int getMode();
     method public boolean isVisible(android.support.transition.TransitionValues);
     method public android.animation.Animator onAppear(android.view.ViewGroup, android.support.transition.TransitionValues, int, android.support.transition.TransitionValues, int);
+    method public android.animation.Animator onAppear(android.view.ViewGroup, android.view.View, android.support.transition.TransitionValues, android.support.transition.TransitionValues);
     method public android.animation.Animator onDisappear(android.view.ViewGroup, android.support.transition.TransitionValues, int, android.support.transition.TransitionValues, int);
+    method public android.animation.Animator onDisappear(android.view.ViewGroup, android.view.View, android.support.transition.TransitionValues, android.support.transition.TransitionValues);
+    method public void setMode(int);
+    field public static final int MODE_IN = 1; // 0x1
+    field public static final int MODE_OUT = 2; // 0x2
   }
 
 }
@@ -2892,10 +3142,7 @@ package android.support.v17.leanback.graphics {
   public class BoundsRule {
     ctor public BoundsRule();
     ctor public BoundsRule(android.support.v17.leanback.graphics.BoundsRule);
-    method public static android.support.v17.leanback.graphics.BoundsRule.ValueRule absoluteValue(int);
     method public void calculateBounds(android.graphics.Rect, android.graphics.Rect);
-    method public static android.support.v17.leanback.graphics.BoundsRule.ValueRule inheritFromParent(float);
-    method public static android.support.v17.leanback.graphics.BoundsRule.ValueRule inheritFromParentWithOffset(float, int);
     field public android.support.v17.leanback.graphics.BoundsRule.ValueRule bottom;
     field public android.support.v17.leanback.graphics.BoundsRule.ValueRule left;
     field public android.support.v17.leanback.graphics.BoundsRule.ValueRule right;
@@ -2903,8 +3150,11 @@ package android.support.v17.leanback.graphics {
   }
 
   public static final class BoundsRule.ValueRule {
+    method public static android.support.v17.leanback.graphics.BoundsRule.ValueRule absoluteValue(int);
     method public int getAbsoluteValue();
     method public float getFraction();
+    method public static android.support.v17.leanback.graphics.BoundsRule.ValueRule inheritFromParent(float);
+    method public static android.support.v17.leanback.graphics.BoundsRule.ValueRule inheritFromParentWithOffset(float, int);
     method public void setAbsoluteValue(int);
     method public void setFraction(float);
   }
@@ -4010,71 +4260,47 @@ package android.support.v17.leanback.widget {
 
   public abstract class Parallax<PropertyT extends android.util.Property> {
     ctor public Parallax();
-    method public void addEffect(android.support.v17.leanback.widget.ParallaxEffect);
-    method public android.support.v17.leanback.widget.ParallaxEffect addEffect(android.support.v17.leanback.widget.Parallax.IntPropertyMarkerValue...);
-    method public android.support.v17.leanback.widget.ParallaxEffect addEffect(android.support.v17.leanback.widget.Parallax.FloatPropertyMarkerValue...);
-    method public abstract PropertyT addProperty(java.lang.String);
+    method public android.support.v17.leanback.widget.ParallaxEffect addEffect(android.support.v17.leanback.widget.Parallax.PropertyMarkerValue...);
+    method public final PropertyT addProperty(java.lang.String);
     method public abstract PropertyT createProperty(java.lang.String, int);
     method public java.util.List<android.support.v17.leanback.widget.ParallaxEffect> getEffects();
+    method public abstract float getMaxValue();
     method public final java.util.List<PropertyT> getProperties();
     method public void removeAllEffects();
     method public void removeEffect(android.support.v17.leanback.widget.ParallaxEffect);
     method public void updateValues();
-    method public abstract void verifyProperties() throws java.lang.IllegalStateException;
-  }
-
-  public static abstract class Parallax.FloatParallax<FloatPropertyT extends android.support.v17.leanback.widget.Parallax.FloatProperty> extends android.support.v17.leanback.widget.Parallax {
-    ctor public Parallax.FloatParallax();
-    method public final FloatPropertyT addProperty(java.lang.String);
-    method public abstract float getMaxValue();
-    method public final float getPropertyValue(int);
-    method public final void setPropertyValue(int, float);
-    method public final void verifyProperties() throws java.lang.IllegalStateException;
   }
 
   public static class Parallax.FloatProperty extends android.util.Property {
     ctor public Parallax.FloatProperty(java.lang.String, int);
-    method public final android.support.v17.leanback.widget.Parallax.FloatPropertyMarkerValue at(float, float);
-    method public final android.support.v17.leanback.widget.Parallax.FloatPropertyMarkerValue atAbsolute(float);
-    method public final android.support.v17.leanback.widget.Parallax.FloatPropertyMarkerValue atFraction(float);
-    method public final java.lang.Float get(android.support.v17.leanback.widget.Parallax.FloatParallax);
+    method public final android.support.v17.leanback.widget.Parallax.PropertyMarkerValue at(float, float);
+    method public final android.support.v17.leanback.widget.Parallax.PropertyMarkerValue atAbsolute(float);
+    method public final android.support.v17.leanback.widget.Parallax.PropertyMarkerValue atFraction(float);
+    method public final android.support.v17.leanback.widget.Parallax.PropertyMarkerValue atMax();
+    method public final android.support.v17.leanback.widget.Parallax.PropertyMarkerValue atMin();
+    method public final java.lang.Float get(android.support.v17.leanback.widget.Parallax);
     method public final int getIndex();
-    method public final void set(android.support.v17.leanback.widget.Parallax.FloatParallax, java.lang.Float);
+    method public final float getValue(android.support.v17.leanback.widget.Parallax);
+    method public final void set(android.support.v17.leanback.widget.Parallax, java.lang.Float);
+    method public final void setValue(android.support.v17.leanback.widget.Parallax, float);
     field public static final float UNKNOWN_AFTER = 3.4028235E38f;
     field public static final float UNKNOWN_BEFORE = -3.4028235E38f;
   }
 
-  public static class Parallax.FloatPropertyMarkerValue extends android.support.v17.leanback.widget.Parallax.PropertyMarkerValue {
-    ctor public Parallax.FloatPropertyMarkerValue(android.support.v17.leanback.widget.Parallax.FloatProperty, float);
-    ctor public Parallax.FloatPropertyMarkerValue(android.support.v17.leanback.widget.Parallax.FloatProperty, float, float);
-    method public final float getMarkerValue(android.support.v17.leanback.widget.Parallax.FloatParallax);
-  }
-
-  public static abstract class Parallax.IntParallax<IntPropertyT extends android.support.v17.leanback.widget.Parallax.IntProperty> extends android.support.v17.leanback.widget.Parallax {
-    ctor public Parallax.IntParallax();
-    method public final IntPropertyT addProperty(java.lang.String);
-    method public abstract int getMaxValue();
-    method public final int getPropertyValue(int);
-    method public final void setPropertyValue(int, int);
-    method public final void verifyProperties() throws java.lang.IllegalStateException;
-  }
-
   public static class Parallax.IntProperty extends android.util.Property {
     ctor public Parallax.IntProperty(java.lang.String, int);
-    method public final android.support.v17.leanback.widget.Parallax.IntPropertyMarkerValue at(int, float);
-    method public final android.support.v17.leanback.widget.Parallax.IntPropertyMarkerValue atAbsolute(int);
-    method public final android.support.v17.leanback.widget.Parallax.IntPropertyMarkerValue atFraction(float);
-    method public final java.lang.Integer get(android.support.v17.leanback.widget.Parallax.IntParallax);
+    method public final android.support.v17.leanback.widget.Parallax.PropertyMarkerValue at(int, float);
+    method public final android.support.v17.leanback.widget.Parallax.PropertyMarkerValue atAbsolute(int);
+    method public final android.support.v17.leanback.widget.Parallax.PropertyMarkerValue atFraction(float);
+    method public final android.support.v17.leanback.widget.Parallax.PropertyMarkerValue atMax();
+    method public final android.support.v17.leanback.widget.Parallax.PropertyMarkerValue atMin();
+    method public final java.lang.Integer get(android.support.v17.leanback.widget.Parallax);
     method public final int getIndex();
-    method public final void set(android.support.v17.leanback.widget.Parallax.IntParallax, java.lang.Integer);
+    method public final int getValue(android.support.v17.leanback.widget.Parallax);
+    method public final void set(android.support.v17.leanback.widget.Parallax, java.lang.Integer);
+    method public final void setValue(android.support.v17.leanback.widget.Parallax, int);
     field public static final int UNKNOWN_AFTER = 2147483647; // 0x7fffffff
     field public static final int UNKNOWN_BEFORE = -2147483648; // 0x80000000
-  }
-
-  public static class Parallax.IntPropertyMarkerValue extends android.support.v17.leanback.widget.Parallax.PropertyMarkerValue {
-    ctor public Parallax.IntPropertyMarkerValue(android.support.v17.leanback.widget.Parallax.IntProperty, int);
-    ctor public Parallax.IntPropertyMarkerValue(android.support.v17.leanback.widget.Parallax.IntProperty, int, float);
-    method public final int getMarkerValue(android.support.v17.leanback.widget.Parallax.IntParallax);
   }
 
   public static class Parallax.PropertyMarkerValue<PropertyT> {
@@ -4082,39 +4308,31 @@ package android.support.v17.leanback.widget {
     method public PropertyT getProperty();
   }
 
-  public abstract class ParallaxEffect<ParallaxEffectT extends android.support.v17.leanback.widget.ParallaxEffect, PropertyMarkerValueT extends android.support.v17.leanback.widget.Parallax.PropertyMarkerValue> {
-    ctor public ParallaxEffect();
+  public abstract class ParallaxEffect {
     method public final void addTarget(android.support.v17.leanback.widget.ParallaxTarget);
-    method protected abstract float calculateFraction(android.support.v17.leanback.widget.Parallax);
-    method public final java.util.List<PropertyMarkerValueT> getPropertyRanges();
+    method public final java.util.List<android.support.v17.leanback.widget.Parallax.PropertyMarkerValue> getPropertyRanges();
     method public final java.util.List<android.support.v17.leanback.widget.ParallaxTarget> getTargets();
     method public final void performMapping(android.support.v17.leanback.widget.Parallax);
     method public final void removeTarget(android.support.v17.leanback.widget.ParallaxTarget);
-    method public final void setPropertyRanges(PropertyMarkerValueT...);
+    method public final void setPropertyRanges(android.support.v17.leanback.widget.Parallax.PropertyMarkerValue...);
     method public final android.support.v17.leanback.widget.ParallaxEffect target(android.support.v17.leanback.widget.ParallaxTarget);
     method public final android.support.v17.leanback.widget.ParallaxEffect target(java.lang.Object, android.animation.PropertyValuesHolder);
-  }
-
-  public static final class ParallaxEffect.FloatEffect extends android.support.v17.leanback.widget.ParallaxEffect {
-    ctor public ParallaxEffect.FloatEffect();
-    method protected float calculateFraction(android.support.v17.leanback.widget.Parallax);
-  }
-
-  public static final class ParallaxEffect.IntEffect extends android.support.v17.leanback.widget.ParallaxEffect {
-    ctor public ParallaxEffect.IntEffect();
-    method protected float calculateFraction(android.support.v17.leanback.widget.Parallax);
+    method public final <T, V extends java.lang.Number> android.support.v17.leanback.widget.ParallaxEffect target(T, android.util.Property<T, V>);
   }
 
   public abstract class ParallaxTarget {
     ctor public ParallaxTarget();
-    method public abstract float getFraction();
-    method public abstract void update(float);
+    method public void directUpdate(java.lang.Number);
+    method public boolean isDirectMapping();
+    method public void update(float);
+  }
+
+  public static final class ParallaxTarget.DirectPropertyTarget<T, V extends java.lang.Number> extends android.support.v17.leanback.widget.ParallaxTarget {
+    ctor public ParallaxTarget.DirectPropertyTarget(java.lang.Object, android.util.Property<T, V>);
   }
 
   public static final class ParallaxTarget.PropertyValuesHolderTarget extends android.support.v17.leanback.widget.ParallaxTarget {
     ctor public ParallaxTarget.PropertyValuesHolderTarget(java.lang.Object, android.animation.PropertyValuesHolder);
-    method public float getFraction();
-    method public void update(float);
   }
 
   public class PlaybackControlsRow extends android.support.v17.leanback.widget.Row {
@@ -4306,10 +4524,10 @@ package android.support.v17.leanback.widget {
     method public void unselect();
   }
 
-  public class RecyclerViewParallax extends android.support.v17.leanback.widget.Parallax.IntParallax {
+  public class RecyclerViewParallax extends android.support.v17.leanback.widget.Parallax {
     ctor public RecyclerViewParallax();
     method public android.support.v17.leanback.widget.RecyclerViewParallax.ChildPositionProperty createProperty(java.lang.String, int);
-    method public int getMaxValue();
+    method public float getMaxValue();
     method public android.support.v7.widget.RecyclerView getRecyclerView();
     method public void setRecyclerView(android.support.v7.widget.RecyclerView);
   }
@@ -4828,18 +5046,18 @@ package android.support.v4.accessibilityservice {
     method public static java.lang.String capabilityToString(int);
     method public static java.lang.String feedbackTypeToString(int);
     method public static java.lang.String flagToString(int);
-    method public static boolean getCanRetrieveWindowContent(android.accessibilityservice.AccessibilityServiceInfo);
+    method public static deprecated boolean getCanRetrieveWindowContent(android.accessibilityservice.AccessibilityServiceInfo);
     method public static int getCapabilities(android.accessibilityservice.AccessibilityServiceInfo);
     method public static deprecated java.lang.String getDescription(android.accessibilityservice.AccessibilityServiceInfo);
-    method public static java.lang.String getId(android.accessibilityservice.AccessibilityServiceInfo);
-    method public static android.content.pm.ResolveInfo getResolveInfo(android.accessibilityservice.AccessibilityServiceInfo);
-    method public static java.lang.String getSettingsActivityName(android.accessibilityservice.AccessibilityServiceInfo);
+    method public static deprecated java.lang.String getId(android.accessibilityservice.AccessibilityServiceInfo);
+    method public static deprecated android.content.pm.ResolveInfo getResolveInfo(android.accessibilityservice.AccessibilityServiceInfo);
+    method public static deprecated java.lang.String getSettingsActivityName(android.accessibilityservice.AccessibilityServiceInfo);
     method public static java.lang.String loadDescription(android.accessibilityservice.AccessibilityServiceInfo, android.content.pm.PackageManager);
     field public static final int CAPABILITY_CAN_FILTER_KEY_EVENTS = 8; // 0x8
     field public static final int CAPABILITY_CAN_REQUEST_ENHANCED_WEB_ACCESSIBILITY = 4; // 0x4
     field public static final int CAPABILITY_CAN_REQUEST_TOUCH_EXPLORATION = 2; // 0x2
     field public static final int CAPABILITY_CAN_RETRIEVE_WINDOW_CONTENT = 1; // 0x1
-    field public static final int DEFAULT = 1; // 0x1
+    field public static final deprecated int DEFAULT = 1; // 0x1
     field public static final int FEEDBACK_ALL_MASK = -1; // 0xffffffff
     field public static final int FEEDBACK_BRAILLE = 32; // 0x20
     field public static final int FLAG_INCLUDE_NOT_IMPORTANT_VIEWS = 2; // 0x2
@@ -5190,6 +5408,7 @@ package android.support.v4.app {
     method public abstract android.support.v4.app.Fragment getFragment(android.os.Bundle, java.lang.String);
     method public abstract android.support.v4.app.Fragment getPrimaryNavigationFragment();
     method public abstract boolean isDestroyed();
+    method public abstract boolean isStateSaved();
     method public abstract void popBackStack();
     method public abstract void popBackStack(java.lang.String, int);
     method public abstract void popBackStack(int, int);
@@ -6033,6 +6252,13 @@ package android.support.v4.content.pm {
   }
 
   public class ShortcutInfoCompat {
+    method public android.content.ComponentName getActivity();
+    method public java.lang.CharSequence getDisabledMessage();
+    method public java.lang.String getId();
+    method public android.content.Intent getIntent();
+    method public android.content.Intent[] getIntents();
+    method public java.lang.CharSequence getLongLabel();
+    method public java.lang.CharSequence getShortLabel();
   }
 
   public static class ShortcutInfoCompat.Builder {
@@ -6049,7 +6275,6 @@ package android.support.v4.content.pm {
   }
 
   public class ShortcutManagerCompat {
-    ctor public ShortcutManagerCompat();
     method public static android.content.Intent createShortcutResultIntent(android.content.Context, android.support.v4.content.pm.ShortcutInfoCompat);
     method public static boolean isRequestPinShortcutSupported(android.content.Context);
     method public static boolean requestPinShortcut(android.content.Context, android.support.v4.content.pm.ShortcutInfoCompat, android.content.IntentSender);
@@ -6222,8 +6447,7 @@ package android.support.v4.hardware.fingerprint {
 package android.support.v4.math {
 
   public class MathUtils {
-    ctor public MathUtils();
-    method public static float clamp(float, int, int);
+    method public static float clamp(float, float, float);
     method public static double clamp(double, double, double);
     method public static int clamp(int, int, int);
   }
@@ -6544,7 +6768,7 @@ package android.support.v4.media.session {
     ctor public MediaButtonReceiver();
     method public static android.app.PendingIntent buildMediaButtonPendingIntent(android.content.Context, long);
     method public static android.app.PendingIntent buildMediaButtonPendingIntent(android.content.Context, android.content.ComponentName, long);
-    method public static android.view.KeyEvent handleIntent(android.support.v4.media.session.MediaSessionCompat, android.content.Intent);
+    method public static deprecated android.view.KeyEvent handleIntent(android.support.v4.media.session.MediaSessionCompat, android.content.Intent);
     method public void onReceive(android.content.Context, android.content.Intent);
   }
 
@@ -6570,6 +6794,7 @@ package android.support.v4.media.session {
     method public android.app.PendingIntent getSessionActivity();
     method public android.support.v4.media.session.MediaSessionCompat.Token getSessionToken();
     method public android.support.v4.media.session.MediaControllerCompat.TransportControls getTransportControls();
+    method public boolean isCaptioningEnabled();
     method public boolean isShuffleModeEnabled();
     method public void registerCallback(android.support.v4.media.session.MediaControllerCompat.Callback);
     method public void registerCallback(android.support.v4.media.session.MediaControllerCompat.Callback, android.os.Handler);
@@ -6585,6 +6810,7 @@ package android.support.v4.media.session {
     ctor public MediaControllerCompat.Callback();
     method public void binderDied();
     method public void onAudioInfoChanged(android.support.v4.media.session.MediaControllerCompat.PlaybackInfo);
+    method public void onCaptioningEnabledChanged(boolean);
     method public void onExtrasChanged(android.os.Bundle);
     method public void onMetadataChanged(android.support.v4.media.MediaMetadataCompat);
     method public void onPlaybackStateChanged(android.support.v4.media.session.PlaybackStateCompat);
@@ -6621,6 +6847,7 @@ package android.support.v4.media.session {
     method public abstract void seekTo(long);
     method public abstract void sendCustomAction(android.support.v4.media.session.PlaybackStateCompat.CustomAction, android.os.Bundle);
     method public abstract void sendCustomAction(java.lang.String, android.os.Bundle);
+    method public abstract void setCaptioningEnabled(boolean);
     method public abstract void setRating(android.support.v4.media.RatingCompat);
     method public abstract void setRepeatMode(int);
     method public abstract void setShuffleModeEnabled(boolean);
@@ -6647,6 +6874,7 @@ package android.support.v4.media.session {
     method public void setActive(boolean);
     method public void setCallback(android.support.v4.media.session.MediaSessionCompat.Callback);
     method public void setCallback(android.support.v4.media.session.MediaSessionCompat.Callback, android.os.Handler);
+    method public void setCaptioningEnabled(boolean);
     method public void setExtras(android.os.Bundle);
     method public void setFlags(int);
     method public void setMediaButtonReceiver(android.app.PendingIntent);
@@ -6660,6 +6888,8 @@ package android.support.v4.media.session {
     method public void setRepeatMode(int);
     method public void setSessionActivity(android.app.PendingIntent);
     method public void setShuffleModeEnabled(boolean);
+    field public static final java.lang.String ACTION_FLAG_AS_INAPPROPRIATE = "android.support.v4.media.session.action.FLAG_AS_INAPPROPRIATE";
+    field public static final java.lang.String ACTION_SKIP_AD = "android.support.v4.media.session.action.SKIP_AD";
     field public static final int FLAG_HANDLES_MEDIA_BUTTONS = 1; // 0x1
     field public static final int FLAG_HANDLES_QUEUE_COMMANDS = 4; // 0x4
     field public static final int FLAG_HANDLES_TRANSPORT_CONTROLS = 2; // 0x2
@@ -6686,6 +6916,7 @@ package android.support.v4.media.session {
     method public void onRemoveQueueItemAt(int);
     method public void onRewind();
     method public void onSeekTo(long);
+    method public void onSetCaptioningEnabled(boolean);
     method public void onSetRating(android.support.v4.media.RatingCompat);
     method public void onSetRepeatMode(int);
     method public void onSetShuffleModeEnabled(boolean);
@@ -6764,6 +6995,7 @@ package android.support.v4.media.session {
     field public static final long ACTION_PREPARE_FROM_URI = 131072L; // 0x20000L
     field public static final long ACTION_REWIND = 8L; // 0x8L
     field public static final long ACTION_SEEK_TO = 256L; // 0x100L
+    field public static final long ACTION_SET_CAPTIONING_ENABLED = 1048576L; // 0x100000L
     field public static final long ACTION_SET_RATING = 128L; // 0x80L
     field public static final long ACTION_SET_REPEAT_MODE = 262144L; // 0x40000L
     field public static final long ACTION_SET_SHUFFLE_MODE_ENABLED = 524288L; // 0x80000L
@@ -6898,11 +7130,11 @@ package android.support.v4.os {
     ctor public OperationCanceledException(java.lang.String);
   }
 
-  public final class ParcelableCompat {
-    method public static <T> android.os.Parcelable.Creator<T> newCreator(android.support.v4.os.ParcelableCompatCreatorCallbacks<T>);
+  public final deprecated class ParcelableCompat {
+    method public static deprecated <T> android.os.Parcelable.Creator<T> newCreator(android.support.v4.os.ParcelableCompatCreatorCallbacks<T>);
   }
 
-  public abstract interface ParcelableCompatCreatorCallbacks<T> {
+  public abstract deprecated interface ParcelableCompatCreatorCallbacks<T> {
     method public abstract T createFromParcel(android.os.Parcel, java.lang.ClassLoader);
     method public abstract T[] newArray(int);
   }
@@ -7391,14 +7623,19 @@ package android.support.v4.view {
     method public static deprecated boolean expandActionView(android.view.MenuItem);
     method public static android.support.v4.view.ActionProvider getActionProvider(android.view.MenuItem);
     method public static deprecated android.view.View getActionView(android.view.MenuItem);
+    method public int getAlphabeticModifiers(android.view.MenuItem);
     method public static java.lang.CharSequence getContentDescription(android.view.MenuItem);
+    method public int getNumericModifiers(android.view.MenuItem);
     method public static java.lang.CharSequence getTooltipText(android.view.MenuItem);
     method public static deprecated boolean isActionViewExpanded(android.view.MenuItem);
     method public static android.view.MenuItem setActionProvider(android.view.MenuItem, android.support.v4.view.ActionProvider);
     method public static deprecated android.view.MenuItem setActionView(android.view.MenuItem, android.view.View);
     method public static deprecated android.view.MenuItem setActionView(android.view.MenuItem, int);
+    method public static void setAlphabeticShortcut(android.view.MenuItem, char, int);
     method public static void setContentDescription(android.view.MenuItem, java.lang.CharSequence);
+    method public static void setNumericShortcut(android.view.MenuItem, char, int);
     method public static deprecated android.view.MenuItem setOnActionExpandListener(android.view.MenuItem, android.support.v4.view.MenuItemCompat.OnActionExpandListener);
+    method public static void setShortcut(android.view.MenuItem, char, char, int, int);
     method public static deprecated void setShowAsAction(android.view.MenuItem, int);
     method public static void setTooltipText(android.view.MenuItem, java.lang.CharSequence);
     field public static final deprecated int SHOW_AS_ACTION_ALWAYS = 2; // 0x2
@@ -7790,9 +8027,9 @@ package android.support.v4.view {
     field public static final int SCROLL_INDICATOR_TOP = 1; // 0x1
   }
 
-  public final class ViewConfigurationCompat {
+  public final deprecated class ViewConfigurationCompat {
     method public static deprecated int getScaledPagingTouchSlop(android.view.ViewConfiguration);
-    method public static boolean hasPermanentMenuKey(android.view.ViewConfiguration);
+    method public static deprecated boolean hasPermanentMenuKey(android.view.ViewConfiguration);
   }
 
   public final class ViewGroupCompat {
@@ -8040,7 +8277,7 @@ package android.support.v4.view.accessibility {
   }
 
   public class AccessibilityNodeInfoCompat {
-    ctor public AccessibilityNodeInfoCompat(java.lang.Object);
+    ctor public deprecated AccessibilityNodeInfoCompat(java.lang.Object);
     method public void addAction(int);
     method public void addAction(android.support.v4.view.accessibility.AccessibilityNodeInfoCompat.AccessibilityActionCompat);
     method public void addChild(android.view.View);
@@ -8063,7 +8300,7 @@ package android.support.v4.view.accessibility {
     method public int getDrawingOrder();
     method public java.lang.CharSequence getError();
     method public android.os.Bundle getExtras();
-    method public java.lang.Object getInfo();
+    method public deprecated java.lang.Object getInfo();
     method public int getInputType();
     method public android.support.v4.view.accessibility.AccessibilityNodeInfoCompat getLabelFor();
     method public android.support.v4.view.accessibility.AccessibilityNodeInfoCompat getLabeledBy();
@@ -8160,6 +8397,8 @@ package android.support.v4.view.accessibility {
     method public void setTraversalBefore(android.view.View, int);
     method public void setViewIdResourceName(java.lang.String);
     method public void setVisibleToUser(boolean);
+    method public android.view.accessibility.AccessibilityNodeInfo unwrap();
+    method public static android.support.v4.view.accessibility.AccessibilityNodeInfoCompat wrap(android.view.accessibility.AccessibilityNodeInfo);
     field public static final int ACTION_ACCESSIBILITY_FOCUS = 64; // 0x40
     field public static final java.lang.String ACTION_ARGUMENT_COLUMN_INT = "android.view.accessibility.action.ARGUMENT_COLUMN_INT";
     field public static final java.lang.String ACTION_ARGUMENT_EXTEND_SELECTION_BOOLEAN = "ACTION_ARGUMENT_EXTEND_SELECTION_BOOLEAN";
@@ -9021,6 +9260,7 @@ package android.support.v7.app {
     method public android.support.v7.graphics.drawable.DrawerArrowDrawable getDrawerArrowDrawable();
     method public android.view.View.OnClickListener getToolbarNavigationClickListener();
     method public boolean isDrawerIndicatorEnabled();
+    method public boolean isDrawerSlideAnimationEnabled();
     method public void onConfigurationChanged(android.content.res.Configuration);
     method public void onDrawerClosed(android.view.View);
     method public void onDrawerOpened(android.view.View);
@@ -9029,6 +9269,7 @@ package android.support.v7.app {
     method public boolean onOptionsItemSelected(android.view.MenuItem);
     method public void setDrawerArrowDrawable(android.support.v7.graphics.drawable.DrawerArrowDrawable);
     method public void setDrawerIndicatorEnabled(boolean);
+    method public void setDrawerSlideAnimationEnabled(boolean);
     method public void setHomeAsUpIndicator(android.graphics.drawable.Drawable);
     method public void setHomeAsUpIndicator(int);
     method public void setToolbarNavigationClickListener(android.view.View.OnClickListener);
@@ -9949,6 +10190,7 @@ package android.support.v7.preference {
     method public android.support.v7.preference.Preference.OnPreferenceChangeListener getOnPreferenceChangeListener();
     method public android.support.v7.preference.Preference.OnPreferenceClickListener getOnPreferenceClickListener();
     method public int getOrder();
+    method public android.support.v7.preference.PreferenceGroup getParent();
     method protected boolean getPersistedBoolean(boolean);
     method protected float getPersistedFloat(float);
     method protected int getPersistedInt(int);
@@ -10686,7 +10928,8 @@ package android.support.v7.widget {
     method public int findLastVisibleItemPosition();
     method public android.support.v7.widget.RecyclerView.LayoutParams generateDefaultLayoutParams();
     method protected int getExtraLayoutSpace(android.support.v7.widget.RecyclerView.State);
-    method public int getInitialItemPrefetchCount();
+    method public deprecated int getInitialItemPrefetchCount();
+    method public int getInitialPrefetchItemCount();
     method public int getOrientation();
     method public boolean getRecycleChildrenOnDetach();
     method public boolean getReverseLayout();
@@ -11656,6 +11899,10 @@ package android.support.v7.widget {
     field public static final android.os.Parcelable.Creator<android.support.v7.widget.Toolbar.SavedState> CREATOR;
   }
 
+  public class TooltipCompat {
+    method public static void setTooltipText(android.view.View, java.lang.CharSequence);
+  }
+
 }
 
 package android.support.v7.widget.helper {
@@ -11770,6 +12017,51 @@ package android.support.wearable.view {
     field public static final int BOX_RIGHT = 4; // 0x4
     field public static final int BOX_TOP = 2; // 0x2
     field public int boxedEdges;
+  }
+
+  public class CurvedOffsettingHelper extends android.support.wearable.view.WearableRecyclerView.OffsettingHelper {
+    ctor public CurvedOffsettingHelper();
+    method public void adjustAnchorOffsetXY(android.view.View, float[]);
+    method public void updateChild(android.view.View, android.support.wearable.view.WearableRecyclerView);
+  }
+
+  public class SwipeDismissFrameLayout extends android.widget.FrameLayout {
+    ctor public SwipeDismissFrameLayout(android.content.Context);
+    ctor public SwipeDismissFrameLayout(android.content.Context, android.util.AttributeSet);
+    ctor public SwipeDismissFrameLayout(android.content.Context, android.util.AttributeSet, int);
+    ctor public SwipeDismissFrameLayout(android.content.Context, android.util.AttributeSet, int, int);
+    method public void addCallback(android.support.wearable.view.SwipeDismissFrameLayout.Callback);
+    method public void removeCallback(android.support.wearable.view.SwipeDismissFrameLayout.Callback);
+    method public void reset();
+  }
+
+  public static abstract class SwipeDismissFrameLayout.Callback {
+    ctor public SwipeDismissFrameLayout.Callback();
+    method public void onDismissed(android.support.wearable.view.SwipeDismissFrameLayout);
+    method public void onSwipeCancelled();
+    method public void onSwipeStarted();
+  }
+
+  public class WearableRecyclerView extends android.support.v7.widget.RecyclerView {
+    ctor public WearableRecyclerView(android.content.Context);
+    ctor public WearableRecyclerView(android.content.Context, android.util.AttributeSet);
+    ctor public WearableRecyclerView(android.content.Context, android.util.AttributeSet, int);
+    ctor public WearableRecyclerView(android.content.Context, android.util.AttributeSet, int, int);
+    method public float getBezelWidthFraction();
+    method public boolean getEdgeItemsCenteringEnabled();
+    method public android.support.wearable.view.WearableRecyclerView.OffsettingHelper getOffsettingHelper();
+    method public float getScrollDegreesPerScreen();
+    method public boolean isCircularScrollingGestureEnabled();
+    method public void setBezelWidthFraction(float);
+    method public void setCircularScrollingGestureEnabled(boolean);
+    method public void setEdgeItemsCenteringEnabled(boolean);
+    method public void setOffsettingHelper(android.support.wearable.view.WearableRecyclerView.OffsettingHelper);
+    method public void setScrollDegreesPerScreen(float);
+  }
+
+  public static abstract class WearableRecyclerView.OffsettingHelper {
+    ctor public WearableRecyclerView.OffsettingHelper();
+    method public abstract void updateChild(android.view.View, android.support.wearable.view.WearableRecyclerView);
   }
 
 }

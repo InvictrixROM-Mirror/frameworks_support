@@ -39,11 +39,13 @@ import static android.support.v4.media.MediaBrowserProtocol.DATA_SEARCH_QUERY;
 import static android.support.v4.media.MediaBrowserProtocol.EXTRA_CLIENT_VERSION;
 import static android.support.v4.media.MediaBrowserProtocol.EXTRA_MESSENGER_BINDER;
 import static android.support.v4.media.MediaBrowserProtocol.EXTRA_SERVICE_VERSION;
+import static android.support.v4.media.MediaBrowserProtocol.EXTRA_SESSION_BINDER;
 import static android.support.v4.media.MediaBrowserProtocol.SERVICE_MSG_ON_CONNECT;
 import static android.support.v4.media.MediaBrowserProtocol.SERVICE_MSG_ON_CONNECT_FAILED;
 import static android.support.v4.media.MediaBrowserProtocol.SERVICE_MSG_ON_LOAD_CHILDREN;
 import static android.support.v4.media.MediaBrowserProtocol.SERVICE_VERSION_CURRENT;
 
+import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -59,6 +61,7 @@ import android.os.RemoteException;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.annotation.RestrictTo;
 import android.support.v4.app.BundleCompat;
 import android.support.v4.media.session.MediaSessionCompat;
@@ -215,13 +218,14 @@ public abstract class MediaBrowserServiceCompat extends Service {
         @Override
         public Bundle getBrowserRootHints() {
             if (mCurConnection == null) {
-                throw new IllegalStateException("This should be called inside of onLoadChildren or"
-                        + " onLoadItem methods");
+                throw new IllegalStateException("This should be called inside of onLoadChildren,"
+                        + " onLoadItem or onSearch methods");
             }
             return mCurConnection.rootHints == null ? null : new Bundle(mCurConnection.rootHints);
         }
     }
 
+    @RequiresApi(21)
     class MediaBrowserServiceImplApi21 implements MediaBrowserServiceImpl,
             MediaBrowserServiceCompatApi21.ServiceCompatProxy {
         Object mServiceObj;
@@ -277,8 +281,8 @@ public abstract class MediaBrowserServiceCompat extends Service {
                 return null;
             }
             if (mCurConnection == null) {
-                throw new IllegalStateException("This should be called inside of onLoadChildren or"
-                        + " onLoadItem methods");
+                throw new IllegalStateException("This should be called inside of onLoadChildren,"
+                        + " onLoadItem or onSearch methods");
             }
             return mCurConnection.rootHints == null ? null : new Bundle(mCurConnection.rootHints);
         }
@@ -293,6 +297,8 @@ public abstract class MediaBrowserServiceCompat extends Service {
                 rootExtras = new Bundle();
                 rootExtras.putInt(EXTRA_SERVICE_VERSION, SERVICE_VERSION_CURRENT);
                 BundleCompat.putBinder(rootExtras, EXTRA_MESSENGER_BINDER, mMessenger.getBinder());
+                BundleCompat.putBinder(rootExtras, EXTRA_SESSION_BINDER,
+                        (IBinder) mSession.getExtraBinder());
             }
             BrowserRoot root = MediaBrowserServiceCompat.this.onGetRoot(
                     clientPackageName, clientUid, rootHints);
@@ -336,6 +342,7 @@ public abstract class MediaBrowserServiceCompat extends Service {
         }
     }
 
+    @RequiresApi(23)
     class MediaBrowserServiceImplApi23 extends MediaBrowserServiceImplApi21 implements
             MediaBrowserServiceCompatApi23.ServiceCompatProxy {
         @Override
@@ -371,11 +378,12 @@ public abstract class MediaBrowserServiceCompat extends Service {
     }
 
     // TODO: Rename to MediaBrowserServiceImplApi26 once O is released
+    @RequiresApi(26)
     class MediaBrowserServiceImplApi24 extends MediaBrowserServiceImplApi23 implements
-            MediaBrowserServiceCompatApi24.ServiceCompatProxy {
+            MediaBrowserServiceCompatApi26.ServiceCompatProxy {
         @Override
         public void onCreate() {
-            mServiceObj = MediaBrowserServiceCompatApi24.createService(
+            mServiceObj = MediaBrowserServiceCompatApi26.createService(
                     MediaBrowserServiceCompat.this, this);
             MediaBrowserServiceCompatApi21.onCreate(mServiceObj);
         }
@@ -425,6 +433,29 @@ public abstract class MediaBrowserServiceCompat extends Service {
                         : new Bundle(mCurConnection.rootHints);
             }
             return MediaBrowserServiceCompatApi24.getBrowserRootHints(mServiceObj);
+        }
+
+        @Override
+        public void onSearch(@NonNull String query, Bundle extras,
+                final MediaBrowserServiceCompatApi24.ResultWrapper resultWrapper) {
+            final Result<List<MediaBrowserCompat.MediaItem>> result =
+                    new Result<List<MediaBrowserCompat.MediaItem>>(query) {
+                        @Override
+                        void onResultSent(List<MediaBrowserCompat.MediaItem> list,
+                                @ResultFlags int flags) {
+                            List<Parcel> parcelList = null;
+                            if (list != null) {
+                                parcelList = new ArrayList<>();
+                                for (MediaBrowserCompat.MediaItem item : list) {
+                                    Parcel parcel = Parcel.obtain();
+                                    item.writeToParcel(parcel, 0);
+                                    parcelList.add(parcel);
+                                }
+                            }
+                            resultWrapper.sendResult(parcelList, flags);
+                        }
+            };
+            MediaBrowserServiceCompat.this.onSearch(query, extras, result);
         }
     }
 
@@ -509,7 +540,7 @@ public abstract class MediaBrowserServiceCompat extends Service {
         Bundle rootHints;
         ServiceCallbacks callbacks;
         BrowserRoot root;
-        HashMap<String, List<Pair<IBinder, Bundle>>> subscriptions = new HashMap();
+        HashMap<String, List<Pair<IBinder, Bundle>>> subscriptions = new HashMap<>();
 
         ConnectionRecord() {
         }
@@ -527,6 +558,7 @@ public abstract class MediaBrowserServiceCompat extends Service {
      *
      * @see MediaBrowserServiceCompat#onLoadChildren
      * @see MediaBrowserServiceCompat#onLoadItem
+     * @see MediaBrowserServiceCompat#onSearch
      */
     public static class Result<T> {
         private Object mDebug;
@@ -827,9 +859,11 @@ public abstract class MediaBrowserServiceCompat extends Service {
     }
 
     @Override
+    @SuppressLint("NewApi")
     public void onCreate() {
         super.onCreate();
-        if (Build.VERSION.SDK_INT >= 26 || BuildCompat.isAtLeastO()) {
+        if (BuildCompat.isAtLeastO()) {
+            //noinspection AndroidLintNewApi
             mImpl = new MediaBrowserServiceImplApi24();
         } else if (Build.VERSION.SDK_INT >= 23) {
             mImpl = new MediaBrowserServiceImplApi23();
@@ -1016,8 +1050,8 @@ public abstract class MediaBrowserServiceCompat extends Service {
      * Note that this will return null when connected to {@link android.media.browse.MediaBrowser}
      * and running on API 23 or lower.
      *
-     * @throws IllegalStateException If this method is called outside of {@link #onLoadChildren}
-     *             or {@link #onLoadItem}
+     * @throws IllegalStateException If this method is called outside of {@link #onLoadChildren},
+     *             {@link #onLoadItem} or {@link #onSearch}.
      * @see MediaBrowserServiceCompat.BrowserRoot#EXTRA_RECENT
      * @see MediaBrowserServiceCompat.BrowserRoot#EXTRA_OFFLINE
      * @see MediaBrowserServiceCompat.BrowserRoot#EXTRA_SUGGESTED
@@ -1320,8 +1354,9 @@ public abstract class MediaBrowserServiceCompat extends Service {
          * @see #EXTRA_RECENT
          * @see #EXTRA_OFFLINE
          * @see #EXTRA_SUGGESTED
-         * @deprecated Use {@link MediaBrowserCompat#search(String, Bundle,
-         *             MediaBrowserCompat.SearchCallback)} instead.
+         * @deprecated The search functionality is now supported by the methods
+         *             {@link MediaBrowserCompat#search} and {@link #onSearch}. Use those methods
+         *             instead.
          */
         @Deprecated
         public static final String EXTRA_SUGGESTION_KEYWORDS

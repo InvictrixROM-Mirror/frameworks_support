@@ -30,6 +30,8 @@ LOCAL_SRC_FILES := \
     $(call all-java-files-under,base) \
     $(call all-java-files-under,api14) \
     $(call all-java-files-under,api18) \
+    $(call all-java-files-under,api19) \
+    $(call all-java-files-under,api21) \
     $(call all-java-files-under,src)
 LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
 LOCAL_SHARED_ANDROID_LIBRARIES := \
@@ -37,5 +39,5 @@ LOCAL_SHARED_ANDROID_LIBRARIES := \
     android-support-v4
 LOCAL_JAR_EXCLUDE_FILES := none
 LOCAL_JAVA_LANGUAGE_VERSION := 1.7
-LOCAL_AAPT_FLAGS := --add-javadoc-annotation doconly
+LOCAL_AAPT_FLAGS := --no-version-transitions --add-javadoc-annotation doconly
 include $(BUILD_STATIC_JAVA_LIBRARY)

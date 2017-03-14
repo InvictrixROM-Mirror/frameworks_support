@@ -82,6 +82,9 @@ project(':support-animated-vector-drawable').projectDir = new File(rootDir, 'gra
 include ':support-transition'
 project(':support-transition').projectDir = new File(rootDir, 'transition')
 
+include ':support-dynamic-animation'
+project(':support-dynamic-animation').projectDir = new File(rootDir, 'dynamic-animation')
+
 include ':support-exifinterface'
 project(':support-exifinterface').projectDir = new File(rootDir, 'exifinterface')
 
@@ -93,6 +96,15 @@ project(':support-tv-provider').projectDir = new File(rootDir, 'tv-provider')
 
 include ':support-instantvideo'
 project(':support-instantvideo').projectDir = new File(rootDir, 'instantvideo')
+
+include ':support-emoji'
+project(':support-emoji').projectDir = new File(rootDir, 'emoji/core')
+
+include ':support-emoji-typeface'
+project(':support-emoji-typeface').projectDir = new File(rootDir, 'emoji/bundled-typeface')
+
+include ':support-emoji-appcompat'
+project(':support-emoji-appcompat').projectDir = new File(rootDir, 'emoji/appcompat')
 
 /////////////////////////////
 //
@@ -129,6 +141,24 @@ project(':support-v7-demos').projectDir = new File(samplesRoot, 'Support7Demos')
 include ':support-v13-demos'
 project(':support-v13-demos').projectDir = new File(samplesRoot, 'Support13Demos')
 
+include ':support-vector-drawable-demos'
+project(':support-vector-drawable-demos').projectDir = new File(samplesRoot, 'SupportVectorDrawableDemos')
+
+include ':support-animation-demos'
+project(':support-animation-demos').projectDir = new File(samplesRoot, 'SupportAnimationDemos')
+
+include ':support-app-navigation'
+project(':support-app-navigation').projectDir = new File(samplesRoot, 'SupportAppNavigation')
+
+/////////////////////////////
+//
+// Testing libraries
+//
+/////////////////////////////
+
+include ':support-testutils'
+project(':support-testutils').projectDir = new File(rootDir, 'testutils')
+
 /////////////////////////////
 //
 // External
@@ -142,3 +172,7 @@ project(':doclava').projectDir = new File(externalRoot, 'doclava')
 
 include ':jdiff'
 project(':jdiff').projectDir = new File(externalRoot, 'jdiff')
+
+///// FLATFOOT START
+
+///// FLATFOOT END

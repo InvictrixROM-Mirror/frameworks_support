@@ -16,6 +16,7 @@
 
 package android.support.v4.widget;
 
+import android.support.annotation.RequiresApi;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
@@ -32,8 +33,6 @@ import android.os.Parcelable;
 import android.support.annotation.ColorInt;
 import android.support.annotation.DrawableRes;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.os.ParcelableCompat;
-import android.support.v4.os.ParcelableCompatCreatorCallbacks;
 import android.support.v4.view.AbsSavedState;
 import android.support.v4.view.AccessibilityDelegateCompat;
 import android.support.v4.view.ViewCompat;
@@ -199,10 +198,9 @@ public class SlidingPaneLayout extends ViewGroup {
     static final SlidingPanelLayoutImpl IMPL;
 
     static {
-        final int deviceVersion = Build.VERSION.SDK_INT;
-        if (deviceVersion >= 17) {
+        if (Build.VERSION.SDK_INT >= 17) {
             IMPL = new SlidingPanelLayoutImplJBMR1();
-        } else if (deviceVersion >= 16) {
+        } else if (Build.VERSION.SDK_INT >= 16) {
             IMPL = new SlidingPanelLayoutImplJB();
         } else {
             IMPL = new SlidingPanelLayoutImplBase();
@@ -1479,18 +1477,22 @@ public class SlidingPaneLayout extends ViewGroup {
             out.writeInt(isOpen ? 1 : 0);
         }
 
-        public static final Creator<SavedState> CREATOR = ParcelableCompat.newCreator(
-                new ParcelableCompatCreatorCallbacks<SavedState>() {
-                    @Override
-                    public SavedState createFromParcel(Parcel in, ClassLoader loader) {
-                        return new SavedState(in, loader);
-                    }
+        public static final Creator<SavedState> CREATOR = new ClassLoaderCreator<SavedState>() {
+            @Override
+            public SavedState createFromParcel(Parcel in, ClassLoader loader) {
+                return new SavedState(in, null);
+            }
 
-                    @Override
-                    public SavedState[] newArray(int size) {
-                        return new SavedState[size];
-                    }
-                });
+            @Override
+            public SavedState createFromParcel(Parcel in) {
+                return new SavedState(in, null);
+            }
+
+            @Override
+            public SavedState[] newArray(int size) {
+                return new SavedState[size];
+            }
+        };
     }
 
     interface SlidingPanelLayoutImpl {
@@ -1505,6 +1507,7 @@ public class SlidingPaneLayout extends ViewGroup {
         }
     }
 
+    @RequiresApi(16)
     static class SlidingPanelLayoutImplJB extends SlidingPanelLayoutImplBase {
         /*
          * Private API hacks! Nasty! Bad!
@@ -1549,6 +1552,7 @@ public class SlidingPaneLayout extends ViewGroup {
         }
     }
 
+    @RequiresApi(17)
     static class SlidingPanelLayoutImplJBMR1 extends SlidingPanelLayoutImplBase {
         @Override
         public void invalidateChildRegion(SlidingPaneLayout parent, View child) {

@@ -21,10 +21,10 @@ import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.media.AudioManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -32,7 +32,6 @@ import android.os.ResultReceiver;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.v4.media.MediaDescriptionCompat;
-import android.support.v4.media.PollingCheck;
 import android.support.v4.media.RatingCompat;
 import android.support.v4.media.VolumeProviderCompat;
 
@@ -52,6 +51,8 @@ public class MediaControllerCompatTest {
     private static final String EXTRAS_KEY = "test-key";
     private static final String EXTRAS_VALUE = "test-val";
     private static final float DELTA = 1e-4f;
+    private static final boolean ENABLED = true;
+    private static final boolean DISABLED = false;
 
     private final Object mWaitLock = new Object();
     private Handler mHandler = new Handler(Looper.getMainLooper());
@@ -90,15 +91,6 @@ public class MediaControllerCompatTest {
                 RatingCompat.RATING_NONE, mController.getRatingType());
 
         mSession.setRatingType(RatingCompat.RATING_5_STARS);
-        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.LOLLIPOP) {
-            // Wait until the extra binder is ready.
-            new PollingCheck(TIME_OUT_MS) {
-                @Override
-                protected boolean check() {
-                    return mController.getRatingType() != RatingCompat.RATING_NONE;
-                }
-            }.run();
-        }
         assertEquals(RatingCompat.RATING_5_STARS, mController.getRatingType());
     }
 
@@ -162,6 +154,15 @@ public class MediaControllerCompatTest {
             assertTrue(mCallback.mOnRemoveQueueItemCalled);
             assertEquals(mediaId, mCallback.mQueueDescription.getMediaId());
             assertEquals(mediaTitle, mCallback.mQueueDescription.getTitle());
+
+            // Try to modify the queue when the session does not support queue management.
+            mSession.setFlags(0);
+            try {
+                mController.addQueueItem(itemDescription);
+                fail();
+            } catch (UnsupportedOperationException e) {
+                // Expected.
+            }
         }
     }
 
@@ -349,6 +350,12 @@ public class MediaControllerCompatTest {
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
 
             mCallback.reset();
+            controls.setCaptioningEnabled(ENABLED);
+            mWaitLock.wait(TIME_OUT_MS);
+            assertTrue(mCallback.mOnSetCaptioningEnabledCalled);
+            assertEquals(ENABLED, mCallback.mCaptioningEnabled);
+
+            mCallback.reset();
             final int repeatMode = PlaybackStateCompat.REPEAT_MODE_ALL;
             controls.setRepeatMode(repeatMode);
             mWaitLock.wait(TIME_OUT_MS);
@@ -356,11 +363,10 @@ public class MediaControllerCompatTest {
             assertEquals(repeatMode, mCallback.mRepeatMode);
 
             mCallback.reset();
-            final boolean shuffleModeEnabled = true;
-            controls.setShuffleModeEnabled(shuffleModeEnabled);
+            controls.setShuffleModeEnabled(ENABLED);
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnSetShuffleModeEnabledCalled);
-            assertEquals(shuffleModeEnabled, mCallback.mShuffleModeEnabled);
+            assertEquals(ENABLED, mCallback.mShuffleModeEnabled);
         }
     }
 
@@ -394,6 +400,7 @@ public class MediaControllerCompatTest {
         private String mCommand;
         private Bundle mExtras;
         private ResultReceiver mCommandCallback;
+        private boolean mCaptioningEnabled;
         private int mRepeatMode;
         private boolean mShuffleModeEnabled;
         private int mQueueIndex;
@@ -418,6 +425,7 @@ public class MediaControllerCompatTest {
         private boolean mOnPrepareFromMediaIdCalled;
         private boolean mOnPrepareFromSearchCalled;
         private boolean mOnPrepareFromUriCalled;
+        private boolean mOnSetCaptioningEnabledCalled;
         private boolean mOnSetRepeatModeCalled;
         private boolean mOnSetShuffleModeEnabledCalled;
         private boolean mOnAddQueueItemCalled;
@@ -436,6 +444,7 @@ public class MediaControllerCompatTest {
             mExtras = null;
             mCommand = null;
             mCommandCallback = null;
+            mCaptioningEnabled = false;
             mShuffleModeEnabled = false;
             mRepeatMode = PlaybackStateCompat.REPEAT_MODE_NONE;
             mQueueIndex = -1;
@@ -460,6 +469,7 @@ public class MediaControllerCompatTest {
             mOnPrepareFromMediaIdCalled = false;
             mOnPrepareFromSearchCalled = false;
             mOnPrepareFromUriCalled = false;
+            mOnSetCaptioningEnabledCalled = false;
             mOnSetRepeatModeCalled = false;
             mOnSetShuffleModeEnabledCalled = false;
             mOnAddQueueItemCalled = false;
@@ -673,6 +683,15 @@ public class MediaControllerCompatTest {
             synchronized (mWaitLock) {
                 mOnRemoveQueueItemCalled = true;
                 mQueueDescription = description;
+                mWaitLock.notify();
+            }
+        }
+
+        @Override
+        public void onSetCaptioningEnabled(boolean enabled) {
+            synchronized (mWaitLock) {
+                mOnSetCaptioningEnabledCalled = true;
+                mCaptioningEnabled = enabled;
                 mWaitLock.notify();
             }
         }

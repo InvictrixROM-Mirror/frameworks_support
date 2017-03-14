@@ -19,7 +19,7 @@ package android.support.v4.view;
 import static android.support.annotation.RestrictTo.Scope.LIBRARY_GROUP;
 
 import android.animation.ValueAnimator;
-import android.annotation.TargetApi;
+import android.support.annotation.RequiresApi;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -51,7 +51,6 @@ import android.view.ViewParent;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
-import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeProvider;
 
 import java.lang.annotation.Retention;
@@ -442,7 +441,7 @@ public class ViewCompat {
         }
 
         public void onInitializeAccessibilityNodeInfo(View v, AccessibilityNodeInfoCompat info) {
-            v.onInitializeAccessibilityNodeInfo((AccessibilityNodeInfo) info.getInfo());
+            v.onInitializeAccessibilityNodeInfo(info.unwrap());
         }
 
         @SuppressWarnings("deprecation")
@@ -923,11 +922,10 @@ public class ViewCompat {
         }
 
         public void setTooltipText(View view, CharSequence tooltipText) {
-            ViewCompatICS.setTooltipText(view, tooltipText);
         }
     }
 
-    @TargetApi(15)
+    @RequiresApi(15)
     static class ViewCompatApi15Impl extends ViewCompatBaseImpl {
         @Override
         public boolean hasOnClickListeners(View view) {
@@ -935,7 +933,7 @@ public class ViewCompat {
         }
     }
 
-    @TargetApi(16)
+    @RequiresApi(16)
     static class ViewCompatApi16Impl extends ViewCompatApi15Impl {
         @Override
         public boolean hasTransientState(View view) {
@@ -1026,7 +1024,7 @@ public class ViewCompat {
         }
     }
 
-    @TargetApi(17)
+    @RequiresApi(17)
     static class ViewCompatApi17Impl extends ViewCompatApi16Impl {
 
         @Override
@@ -1085,7 +1083,7 @@ public class ViewCompat {
         }
     }
 
-    @TargetApi(18)
+    @RequiresApi(18)
     static class ViewCompatApi18Impl extends ViewCompatApi17Impl {
         @Override
         public void setClipBounds(View view, Rect clipBounds) {
@@ -1103,7 +1101,7 @@ public class ViewCompat {
         }
     }
 
-    @TargetApi(19)
+    @RequiresApi(19)
     static class ViewCompatApi19Impl extends ViewCompatApi18Impl {
         @Override
         public int getAccessibilityLiveRegion(View view) {
@@ -1136,7 +1134,7 @@ public class ViewCompat {
         }
     }
 
-    @TargetApi(21)
+    @RequiresApi(21)
     static class ViewCompatApi21Impl extends ViewCompatApi19Impl {
         private static ThreadLocal<Rect> sThreadLocalRect;
 
@@ -1391,7 +1389,7 @@ public class ViewCompat {
         }
     }
 
-    @TargetApi(23)
+    @RequiresApi(23)
     static class ViewCompatApi23Impl extends ViewCompatApi21Impl {
         @Override
         public void setScrollIndicators(View view, int indicators) {
@@ -1420,7 +1418,7 @@ public class ViewCompat {
         }
     }
 
-    @TargetApi(24)
+    @RequiresApi(24)
     static class ViewCompatApi24Impl extends ViewCompatApi23Impl {
         @Override
         public void dispatchStartTemporaryDetach(View view) {
@@ -1455,7 +1453,7 @@ public class ViewCompat {
         }
     }
 
-    @TargetApi(26)
+    @RequiresApi(26)
     static class ViewCompatApi26Impl extends ViewCompatApi24Impl {
         @Override
         public void setTooltipText(View view, CharSequence tooltipText) {
@@ -1465,24 +1463,24 @@ public class ViewCompat {
 
     static final ViewCompatBaseImpl IMPL;
     static {
-        final int version = android.os.Build.VERSION.SDK_INT;
         if (BuildCompat.isAtLeastO()) {
+            //noinspection AndroidLintNewApi
             IMPL = new ViewCompatApi26Impl();
-        } else if (version >= 24) {
+        } else if (Build.VERSION.SDK_INT >= 24) {
             IMPL = new ViewCompatApi24Impl();
-        } else if (version >= 23) {
+        } else if (Build.VERSION.SDK_INT >= 23) {
             IMPL = new ViewCompatApi23Impl();
-        } else if (version >= 21) {
+        } else if (Build.VERSION.SDK_INT >= 21) {
             IMPL = new ViewCompatApi21Impl();
-        } else if (version >= 19) {
+        } else if (Build.VERSION.SDK_INT >= 19) {
             IMPL = new ViewCompatApi19Impl();
-        } else if (version >= 18) {
+        } else if (Build.VERSION.SDK_INT >= 18) {
             IMPL = new ViewCompatApi18Impl();
-        } else if (version >= 17) {
+        } else if (Build.VERSION.SDK_INT >= 17) {
             IMPL = new ViewCompatApi17Impl();
-        } else if (version >= 16) {
+        } else if (Build.VERSION.SDK_INT >= 16) {
             IMPL = new ViewCompatApi16Impl();
-        } else if (version >= 15) {
+        } else if (Build.VERSION.SDK_INT >= 15) {
             IMPL = new ViewCompatApi15Impl();
         } else {
             IMPL = new ViewCompatBaseImpl();
@@ -3322,12 +3320,9 @@ public class ViewCompat {
 
     /**
      * Sets the tooltip for the view.
-     * <p>
-     * Compatibility:
-     * <ul>
-     * <li>API &lt; 26: Sets or clears (when tooltip is null) the view's OnLongClickListener and
-     * OnHoverListener. Creates a Toast on long click or mouse hover.
-     * </ul>
+     *
+     * <p>Prior to API 26 this does nothing. Use TooltipCompat class from v7 appcompat library
+     * for a compatible tooltip implementation.</p>
      *
      * @param tooltipText the tooltip text
      */
