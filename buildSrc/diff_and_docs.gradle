@@ -25,10 +25,28 @@ import org.gradle.api.InvalidUserDataException
 
 import groovy.io.FileType
 
+// Generates API files for the current SDK. This is necessary for federation.
+task generateSdkApi(type: DoclavaTask, dependsOn: [configurations.doclava]) {
+    docletpath = configurations.doclava.resolve()
+    destinationDir = project.docsDir
+
+    classpath = project.androidJar
+    source zipTree(project.androidSrcJar)
+
+    apiFile = new File(project.docsDir, 'release/sdk_current.txt')
+    removedApiFile = new File(project.docsDir, 'release/sdk_removed.txt')
+    generateDocs = false
+
+    options {
+        addStringOption "stubpackages", "android.*"
+    }
+}
+
 // Generates online docs.
-task generateDocs(type: DoclavaTask, dependsOn: configurations.doclava) {
+task generateDocs(type: DoclavaTask, dependsOn: [configurations.doclava, generateSdkApi]) {
     group = JavaBasePlugin.DOCUMENTATION_GROUP
-    description = 'Generates d.android.com style documentation.'
+    description = 'Generates d.android.com-style documentation.'
+
     docletpath = configurations.doclava.resolve()
     destinationDir = new File(project.docsDir, "online")
 
@@ -39,6 +57,12 @@ task generateDocs(type: DoclavaTask, dependsOn: configurations.doclava) {
     hdfOption.add(
             ['android.whichdoc', 'online'],
             ['android.hasSamples', 'true'])
+
+    def federateOption = new DoclavaMultilineJavadocOptionFileOption('federate')
+    federateOption.add(['Android', 'https://developer.android.com'])
+
+    def federationapiOption = new DoclavaMultilineJavadocOptionFileOption('federationapi')
+    federationapiOption.add(['Android', generateSdkApi.apiFile.absolutePath])
 
     // Track API change history.
     def apiFilePattern = /(\d+\.\d+\.\d).txt/
@@ -60,9 +84,10 @@ task generateDocs(type: DoclavaTask, dependsOn: configurations.doclava) {
     options {
         addStringOption "templatedir",
                 "${supportRootFolder}/../../external/doclava/res/assets/templates-sdk"
-        addStringOption "federate Android", "http://developer.android.com"
         addStringOption "stubpackages", "android.support.*"
         addStringOption "samplesdir", "${supportRootFolder}/samples"
+        addOption federateOption
+        addOption federationapiOption
         addOption hdfOption
         addOption sinceOption
     }
@@ -70,21 +95,18 @@ task generateDocs(type: DoclavaTask, dependsOn: configurations.doclava) {
     exclude '**/BuildConfig.java'
 }
 
-JDiffTask createApiDiffsTask(String taskName, File oldApiXml, File newApiXml, File outDir,
-                             Configuration jdiff, Task... dependencies) {
-    return tasks.create(name: taskName, type: JDiffTask.class) {
-        dependsOn jdiff
-        dependsOn dependencies
+// Generates a distribution artifact for online docs.
+task distDocs(type: Zip, dependsOn: generateDocs) {
+    group = JavaBasePlugin.DOCUMENTATION_GROUP
+    description = 'Generates distribution artifact for d.android.com-style documentation.'
 
-        docletpath = jdiff.resolve()
+    from generateDocs.destinationDir
+    destinationDir project.distDir
+    baseName = "android-support-docs"
+    version = project.buildNumber
 
-        oldApiXmlFile oldApiXml
-        newApiXmlFile newApiXml
-        destinationDir = outDir
-
-        // This prefix is based on the assumption that the output diffs will
-        // ultimately land in frameworks/base/docs/html/sdk/support_api_diff/.
-        newJavadocPrefix = "../reference/"
+    doLast {
+        logger.lifecycle('Wrote API reference to ${archivePath}')
     }
 }
 
@@ -103,7 +125,6 @@ task generateApi(type: DoclavaTask, dependsOn: configurations.doclava) {
     options {
         addStringOption "templatedir",
                 "${supportRootFolder}/../../external/doclava/res/assets/templates-sdk"
-        addStringOption "federate Android", "http://developer.android.com"
         addStringOption "stubpackages", "android.support.*"
     }
     exclude '**/BuildConfig.java'

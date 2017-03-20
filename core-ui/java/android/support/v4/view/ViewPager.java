@@ -34,7 +34,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.accessibility.AccessibilityEventCompat;
 import android.support.v4.view.accessibility.AccessibilityNodeInfoCompat;
-import android.support.v4.view.accessibility.AccessibilityRecordCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.FocusFinder;
@@ -918,7 +917,7 @@ public class ViewPager extends ViewGroup {
     // of travel has on the overall snap duration.
     float distanceInfluenceForSnapDuration(float f) {
         f -= 0.5f; // center the values about 0.
-        f *= 0.3f * Math.PI / 2.0f;
+        f *= 0.3f * (float) Math.PI / 2.0f;
         return (float) Math.sin(f);
     }
 
@@ -2288,7 +2287,7 @@ public class ViewPager extends ViewGroup {
         endDrag();
         mLeftEdge.onRelease();
         mRightEdge.onRelease();
-        needsInvalidate = mLeftEdge.isFinished() | mRightEdge.isFinished();
+        needsInvalidate = mLeftEdge.isFinished() || mRightEdge.isFinished();
         return needsInvalidate;
     }
 
@@ -3025,14 +3024,11 @@ public class ViewPager extends ViewGroup {
         public void onInitializeAccessibilityEvent(View host, AccessibilityEvent event) {
             super.onInitializeAccessibilityEvent(host, event);
             event.setClassName(ViewPager.class.getName());
-            final AccessibilityRecordCompat recordCompat =
-                    AccessibilityEventCompat.asRecord(event);
-            recordCompat.setScrollable(canScroll());
-            if (event.getEventType() == AccessibilityEventCompat.TYPE_VIEW_SCROLLED
-                    && mAdapter != null) {
-                recordCompat.setItemCount(mAdapter.getCount());
-                recordCompat.setFromIndex(mCurItem);
-                recordCompat.setToIndex(mCurItem);
+            event.setScrollable(canScroll());
+            if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_SCROLLED && mAdapter != null) {
+                event.setItemCount(mAdapter.getCount());
+                event.setFromIndex(mCurItem);
+                event.setToIndex(mCurItem);
             }
         }
 

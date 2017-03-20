@@ -18,4 +18,5 @@
     <item name="transition_scene_layoutid_cache" type="id"/>
     <item name="transition_current_scene" type="id"/>
     <item name="transition_layout_save" type="id"/>
+    <item name="transition_position" type="id"/>
 </resources>

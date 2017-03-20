@@ -17,6 +17,7 @@ package android.support.media.tv;
 
 import static android.support.annotation.RestrictTo.Scope.LIBRARY_GROUP;
 
+import android.annotation.TargetApi;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
@@ -62,6 +63,7 @@ import java.nio.charset.Charset;
  * }
  * </pre>
  */
+@TargetApi(21)
 public final class Channel {
     /**
      * @hide
@@ -73,6 +75,8 @@ public final class Channel {
     private static final int INVALID_INTEGER_VALUE = -1;
     private static final int IS_SEARCHABLE = 1;
     private static final int IS_TRANSIENT = 1;
+    private static final int IS_BROWSABLE = 1;
+    private static final int IS_SYSTEM_APPROVED = 1;
 
     private final long mId;
     private final String mPackageName;
@@ -99,6 +103,8 @@ public final class Channel {
     private final Long mInternalProviderFlag3;
     private final Long mInternalProviderFlag4;
     private final int mTransient;
+    private final int mBrowsable;
+    private final int mSystemApproved;
 
     private Channel(Builder builder) {
         mId = builder.mId;
@@ -126,6 +132,8 @@ public final class Channel {
         mInternalProviderFlag3 = builder.mInternalProviderFlag3;
         mInternalProviderFlag4 = builder.mInternalProviderFlag4;
         mTransient = builder.mTransient;
+        mBrowsable = builder.mBrowsable;
+        mSystemApproved = builder.mSystemApproved;
     }
 
     /**
@@ -247,7 +255,6 @@ public final class Channel {
         return Intent.parseUri(mAppLinkIntentUri.toString(), Intent.URI_INTENT_SCHEME);
     }
 
-
     /**
      * @return The value of {@link Channels#COLUMN_NETWORK_AFFILIATION} for the channel.
      */
@@ -316,6 +323,22 @@ public final class Channel {
         return mTransient == IS_TRANSIENT;
     }
 
+    /**
+     * @return The value of {@link Channels#COLUMN_BROWSABLE} for the channel.
+     */
+    public boolean isBrowsable() {
+        return mBrowsable == IS_BROWSABLE;
+    }
+
+    /**
+     * @return The value of {@link Channels#COLUMN_SYSTEM_APPROVED} for the channel.
+     * @hide
+     */
+    @RestrictTo(LIBRARY_GROUP)
+    public boolean isSystemApproved() {
+        return mSystemApproved == IS_SYSTEM_APPROVED;
+    }
+
     @Override
     public String toString() {
         return "Channel{"
@@ -327,8 +350,7 @@ public final class Channel {
                 + ", displayNumber=" + mDisplayNumber
                 + ", displayName=" + mDisplayName
                 + ", description=" + mDescription
-                + ", videoFormat=" + mVideoFormat
-                + ", appLinkText=" + mAppLinkText + "}";
+                + ", videoFormat=" + mVideoFormat + "}";
     }
 
     /**
@@ -336,6 +358,18 @@ public final class Channel {
      * TV Input Framework database.
      */
     public ContentValues toContentValues() {
+        return toContentValues(false);
+    }
+
+    /**
+     * Returns fields of the Channel in the ContentValues format to be easily inserted into the
+     * TV Input Framework database.
+     *
+     * @param includeProtectedFields Whether the fields protected by system is included or not.
+     * @hide
+     */
+    @RestrictTo(LIBRARY_GROUP)
+    public ContentValues toContentValues(boolean includeProtectedFields) {
         ContentValues values = new ContentValues();
         if (mId != INVALID_CHANNEL_ID) {
             values.put(Channels._ID, mId);
@@ -427,6 +461,13 @@ public final class Channel {
         if (BuildCompat.isAtLeastO()) {
             values.put(Channels.COLUMN_TRANSIENT, mTransient);
         }
+
+        if (includeProtectedFields) {
+            values.put(Channels.COLUMN_BROWSABLE, mBrowsable);
+            if (BuildCompat.isAtLeastO()) {
+                values.put(Channels.COLUMN_SYSTEM_APPROVED, mSystemApproved);
+            }
+        }
         return values;
     }
 
@@ -498,6 +539,10 @@ public final class Channel {
                 && !cursor.isNull(index)) {
             builder.setVideoFormat(cursor.getString(index));
         }
+        if ((index = cursor.getColumnIndex(Channels.COLUMN_BROWSABLE)) >= 0
+                && !cursor.isNull(index)) {
+            builder.setBrowsable(cursor.getInt(index) == IS_BROWSABLE);
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if ((index = cursor.getColumnIndex(Channels.COLUMN_APP_LINK_COLOR)) >= 0
                     && !cursor.isNull(index)) {
@@ -541,6 +586,10 @@ public final class Channel {
                     && !cursor.isNull(index)) {
                 builder.setTransient(cursor.getInt(index) == IS_TRANSIENT);
             }
+            if ((index = cursor.getColumnIndex(Channels.COLUMN_SYSTEM_APPROVED)) >= 0
+                    && !cursor.isNull(index)) {
+                builder.setSystemApproved(cursor.getInt(index) == IS_SYSTEM_APPROVED);
+            }
         }
         return builder.build();
     }
@@ -562,6 +611,7 @@ public final class Channel {
                 Channels.COLUMN_TRANSPORT_STREAM_ID,
                 Channels.COLUMN_TYPE,
                 Channels.COLUMN_VIDEO_FORMAT,
+                Channels.COLUMN_BROWSABLE,
         };
         String[] marshmallowColumns = new String[] {
                 Channels.COLUMN_APP_LINK_COLOR,
@@ -576,12 +626,13 @@ public final class Channel {
         };
         String[] oReleaseColumns = new String[] {
                 Channels.COLUMN_TRANSIENT,
+                Channels.COLUMN_SYSTEM_APPROVED,
         };
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            return CollectionUtils.concatAll(baseColumns, marshmallowColumns);
-        }
         if (BuildCompat.isAtLeastO()) {
             return CollectionUtils.concatAll(baseColumns, marshmallowColumns, oReleaseColumns);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            return CollectionUtils.concatAll(baseColumns, marshmallowColumns);
         }
         return baseColumns;
     }
@@ -615,6 +666,8 @@ public final class Channel {
         private Long mInternalProviderFlag3;
         private Long mInternalProviderFlag4;
         private int mTransient;
+        private int mBrowsable;
+        private int mSystemApproved;
 
         public Builder() {
         }
@@ -645,6 +698,8 @@ public final class Channel {
             mInternalProviderFlag3 = other.mInternalProviderFlag3;
             mInternalProviderFlag4 = other.mInternalProviderFlag4;
             mTransient = other.mTransient;
+            mBrowsable = other.mBrowsable;
+            mSystemApproved = other.mSystemApproved;
         }
 
         /**
@@ -956,6 +1011,32 @@ public final class Channel {
         @RestrictTo(LIBRARY_GROUP)
         public Builder setTransient(boolean value) {
             mTransient = value ? IS_TRANSIENT : 0;
+            return this;
+        }
+
+        /**
+         * Sets whether this channel is browsable or not.
+         *
+         * @param value The value of {@link Channels#COLUMN_BROWSABLE} for the channel.
+         * @return This Builder object to allow for chaining of calls to builder methods.
+         * @hide
+         */
+        @RestrictTo(LIBRARY_GROUP)
+        public Builder setBrowsable(boolean value) {
+            mBrowsable = value ? IS_BROWSABLE : 0;
+            return this;
+        }
+
+        /**
+         * Sets whether system approved this channel or not.
+         *
+         * @param value The value of {@link Channels#COLUMN_SYSTEM_APPROVED} for the channel.
+         * @return This Builder object to allow for chaining of calls to builder methods.
+         * @hide
+         */
+        @RestrictTo(LIBRARY_GROUP)
+        public Builder setSystemApproved(boolean value) {
+            mSystemApproved = value ? IS_SYSTEM_APPROVED : 0;
             return this;
         }
 
