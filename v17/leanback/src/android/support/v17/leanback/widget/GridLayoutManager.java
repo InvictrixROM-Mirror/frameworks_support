@@ -1655,14 +1655,14 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
                 ? Gravity.getAbsoluteGravity(mGravity & Gravity.RELATIVE_HORIZONTAL_GRAVITY_MASK,
                 View.LAYOUT_DIRECTION_RTL)
                 : mGravity & Gravity.HORIZONTAL_GRAVITY_MASK;
-        if (mOrientation == HORIZONTAL && verticalGravity == Gravity.TOP
-                || mOrientation == VERTICAL && horizontalGravity == Gravity.LEFT) {
+        if ((mOrientation == HORIZONTAL && verticalGravity == Gravity.TOP)
+                || (mOrientation == VERTICAL && horizontalGravity == Gravity.LEFT)) {
             // do nothing
-        } else if (mOrientation == HORIZONTAL && verticalGravity == Gravity.BOTTOM
-                || mOrientation == VERTICAL && horizontalGravity == Gravity.RIGHT) {
+        } else if ((mOrientation == HORIZONTAL && verticalGravity == Gravity.BOTTOM)
+                || (mOrientation == VERTICAL && horizontalGravity == Gravity.RIGHT)) {
             startSecondary += getRowSizeSecondary(rowIndex) - sizeSecondary;
-        } else if (mOrientation == HORIZONTAL && verticalGravity == Gravity.CENTER_VERTICAL
-                || mOrientation == VERTICAL && horizontalGravity == Gravity.CENTER_HORIZONTAL) {
+        } else if ((mOrientation == HORIZONTAL && verticalGravity == Gravity.CENTER_VERTICAL)
+                || (mOrientation == VERTICAL && horizontalGravity == Gravity.CENTER_HORIZONTAL)) {
             startSecondary += (getRowSizeSecondary(rowIndex) - sizeSecondary) / 2;
         }
         int left, top, right, bottom;
@@ -1775,6 +1775,9 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
             return;
         }
         mIsSlidingChildViews = true;
+        if (getChildCount() == 0) {
+            return;
+        }
         if (mOrientation == VERTICAL) {
             int distance = -getHeight();
             int top = getChildAt(0).getTop();
@@ -2418,7 +2421,7 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
 
     public void setSelection(int position, int subposition, boolean smooth,
             int primaryScrollExtra) {
-        if (mFocusPosition != position && position != NO_POSITION
+        if ((mFocusPosition != position && position != NO_POSITION)
                 || subposition != mSubFocusPosition || primaryScrollExtra != mPrimaryScrollExtra) {
             scrollToSelection(position, subposition, smooth, primaryScrollExtra);
         }

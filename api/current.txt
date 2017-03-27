@@ -1191,7 +1191,7 @@ package android.support.media.tv {
     method public java.lang.String getAvailability();
     method public java.lang.String getContentId();
     method public int getDurationMillis();
-    method public int getInteractionCount();
+    method public long getInteractionCount();
     method public java.lang.String getInteractionType();
     method public java.lang.String getInternalProviderId();
     method public int getItemCount();
@@ -1219,7 +1219,7 @@ package android.support.media.tv {
     method public T setAvailability(java.lang.String);
     method public T setContentId(java.lang.String);
     method public T setDurationMillis(int);
-    method public T setInteractionCount(int);
+    method public T setInteractionCount(long);
     method public T setInteractionType(java.lang.String);
     method public T setInternalProviderId(java.lang.String);
     method public T setItemCount(int);
@@ -1678,13 +1678,13 @@ package android.support.media.tv {
 
 package android.support.percent {
 
-  public class PercentFrameLayout extends android.widget.FrameLayout {
+  public deprecated class PercentFrameLayout extends android.widget.FrameLayout {
     ctor public PercentFrameLayout(android.content.Context);
     ctor public PercentFrameLayout(android.content.Context, android.util.AttributeSet);
     ctor public PercentFrameLayout(android.content.Context, android.util.AttributeSet, int);
   }
 
-  public static class PercentFrameLayout.LayoutParams extends android.widget.FrameLayout.LayoutParams implements android.support.percent.PercentLayoutHelper.PercentLayoutParams {
+  public static deprecated class PercentFrameLayout.LayoutParams extends android.widget.FrameLayout.LayoutParams implements android.support.percent.PercentLayoutHelper.PercentLayoutParams {
     ctor public PercentFrameLayout.LayoutParams(android.content.Context, android.util.AttributeSet);
     ctor public PercentFrameLayout.LayoutParams(int, int);
     ctor public PercentFrameLayout.LayoutParams(int, int, int);
@@ -1695,7 +1695,7 @@ package android.support.percent {
     method public android.support.percent.PercentLayoutHelper.PercentLayoutInfo getPercentLayoutInfo();
   }
 
-  public class PercentLayoutHelper {
+  public deprecated class PercentLayoutHelper {
     ctor public PercentLayoutHelper(android.view.ViewGroup);
     method public void adjustChildren(int, int);
     method public static void fetchWidthAndHeight(android.view.ViewGroup.LayoutParams, android.content.res.TypedArray, int, int);
@@ -1704,7 +1704,7 @@ package android.support.percent {
     method public void restoreOriginalParams();
   }
 
-  public static class PercentLayoutHelper.PercentLayoutInfo {
+  public static deprecated class PercentLayoutHelper.PercentLayoutInfo {
     ctor public PercentLayoutHelper.PercentLayoutInfo();
     method public void fillLayoutParams(android.view.ViewGroup.LayoutParams, int, int);
     method public deprecated void fillMarginLayoutParams(android.view.ViewGroup.MarginLayoutParams, int, int);
@@ -1722,17 +1722,17 @@ package android.support.percent {
     field public float widthPercent;
   }
 
-  public static abstract interface PercentLayoutHelper.PercentLayoutParams {
+  public static abstract deprecated interface PercentLayoutHelper.PercentLayoutParams {
     method public abstract android.support.percent.PercentLayoutHelper.PercentLayoutInfo getPercentLayoutInfo();
   }
 
-  public class PercentRelativeLayout extends android.widget.RelativeLayout {
+  public deprecated class PercentRelativeLayout extends android.widget.RelativeLayout {
     ctor public PercentRelativeLayout(android.content.Context);
     ctor public PercentRelativeLayout(android.content.Context, android.util.AttributeSet);
     ctor public PercentRelativeLayout(android.content.Context, android.util.AttributeSet, int);
   }
 
-  public static class PercentRelativeLayout.LayoutParams extends android.widget.RelativeLayout.LayoutParams implements android.support.percent.PercentLayoutHelper.PercentLayoutParams {
+  public static deprecated class PercentRelativeLayout.LayoutParams extends android.widget.RelativeLayout.LayoutParams implements android.support.percent.PercentLayoutHelper.PercentLayoutParams {
     ctor public PercentRelativeLayout.LayoutParams(android.content.Context, android.util.AttributeSet);
     ctor public PercentRelativeLayout.LayoutParams(int, int);
     ctor public PercentRelativeLayout.LayoutParams(android.view.ViewGroup.LayoutParams);
@@ -1892,6 +1892,24 @@ package android.support.transition {
     ctor public ChangeClipBounds(android.content.Context, android.util.AttributeSet);
     method public void captureEndValues(android.support.transition.TransitionValues);
     method public void captureStartValues(android.support.transition.TransitionValues);
+  }
+
+  public class ChangeImageTransform extends android.support.transition.Transition {
+    ctor public ChangeImageTransform();
+    ctor public ChangeImageTransform(android.content.Context, android.util.AttributeSet);
+    method public void captureEndValues(android.support.transition.TransitionValues);
+    method public void captureStartValues(android.support.transition.TransitionValues);
+  }
+
+  public class ChangeTransform extends android.support.transition.Transition {
+    ctor public ChangeTransform();
+    ctor public ChangeTransform(android.content.Context, android.util.AttributeSet);
+    method public void captureEndValues(android.support.transition.TransitionValues);
+    method public void captureStartValues(android.support.transition.TransitionValues);
+    method public boolean getReparent();
+    method public boolean getReparentWithOverlay();
+    method public void setReparent(boolean);
+    method public void setReparentWithOverlay(boolean);
   }
 
   public class CircularPropagation extends android.support.transition.VisibilityPropagation {
@@ -2865,6 +2883,9 @@ package android.support.v17.leanback.app {
     method protected abstract int getPageCount();
     method protected abstract java.lang.CharSequence getPageDescription(int);
     method protected abstract java.lang.CharSequence getPageTitle(int);
+    method protected final boolean isLogoAnimationFinished();
+    method protected void moveToNextPage();
+    method protected void moveToPreviousPage();
     method protected abstract android.view.View onCreateBackgroundView(android.view.LayoutInflater, android.view.ViewGroup);
     method protected abstract android.view.View onCreateContentView(android.view.LayoutInflater, android.view.ViewGroup);
     method protected android.animation.Animator onCreateDescriptionAnimator();
@@ -2873,6 +2894,7 @@ package android.support.v17.leanback.app {
     method protected android.animation.Animator onCreateLogoAnimation();
     method protected android.animation.Animator onCreateTitleAnimator();
     method protected void onFinishFragment();
+    method protected void onLogoAnimationFinished();
     method protected void onPageChanged(int, int);
     method public int onProvideTheme();
     method public final void setIconResouceId(int);
@@ -2887,6 +2909,9 @@ package android.support.v17.leanback.app {
     method protected abstract int getPageCount();
     method protected abstract java.lang.CharSequence getPageDescription(int);
     method protected abstract java.lang.CharSequence getPageTitle(int);
+    method protected final boolean isLogoAnimationFinished();
+    method protected void moveToNextPage();
+    method protected void moveToPreviousPage();
     method protected abstract android.view.View onCreateBackgroundView(android.view.LayoutInflater, android.view.ViewGroup);
     method protected abstract android.view.View onCreateContentView(android.view.LayoutInflater, android.view.ViewGroup);
     method protected android.animation.Animator onCreateDescriptionAnimator();
@@ -2895,6 +2920,7 @@ package android.support.v17.leanback.app {
     method protected android.animation.Animator onCreateLogoAnimation();
     method protected android.animation.Animator onCreateTitleAnimator();
     method protected void onFinishFragment();
+    method protected void onLogoAnimationFinished();
     method protected void onPageChanged(int, int);
     method public int onProvideTheme();
     method public final void setIconResouceId(int);
@@ -5316,6 +5342,7 @@ package android.support.v4.app {
     method public final android.support.v4.app.FragmentManager getFragmentManager();
     method public final java.lang.Object getHost();
     method public final int getId();
+    method public android.view.LayoutInflater getLayoutInflater(android.os.Bundle);
     method public android.support.v4.app.LoaderManager getLoaderManager();
     method public final android.support.v4.app.Fragment getParentFragment();
     method public java.lang.Object getReenterTransition();
@@ -5518,6 +5545,7 @@ package android.support.v4.app {
     method public abstract android.support.v4.app.FragmentManager.BackStackEntry getBackStackEntryAt(int);
     method public abstract int getBackStackEntryCount();
     method public abstract android.support.v4.app.Fragment getFragment(android.os.Bundle, java.lang.String);
+    method public abstract java.util.List<android.support.v4.app.Fragment> getFragments();
     method public abstract android.support.v4.app.Fragment getPrimaryNavigationFragment();
     method public abstract boolean isDestroyed();
     method public abstract boolean isStateSaved();
@@ -6261,6 +6289,7 @@ package android.support.v4.content {
     field public static final deprecated java.lang.String EXTRA_CHANGED_PACKAGE_LIST = "android.intent.extra.changed_package_list";
     field public static final deprecated java.lang.String EXTRA_CHANGED_UID_LIST = "android.intent.extra.changed_uid_list";
     field public static final java.lang.String EXTRA_HTML_TEXT = "android.intent.extra.HTML_TEXT";
+    field public static final java.lang.String EXTRA_START_PLAYBACK = "android.intent.extra.START_PLAYBACK";
     field public static final deprecated int FLAG_ACTIVITY_CLEAR_TASK = 32768; // 0x8000
     field public static final deprecated int FLAG_ACTIVITY_TASK_ON_HOME = 16384; // 0x4000
   }
@@ -10312,6 +10341,7 @@ package android.support.v7.preference {
     method protected int getPersistedInt(int);
     method protected long getPersistedLong(long);
     method protected java.lang.String getPersistedString(java.lang.String);
+    method public android.support.v7.preference.PreferenceDataStore getPreferenceDataStore();
     method public android.support.v7.preference.PreferenceManager getPreferenceManager();
     method public android.content.SharedPreferences getSharedPreferences();
     method public boolean getShouldDisableView();
@@ -10360,6 +10390,7 @@ package android.support.v7.preference {
     method public void setOnPreferenceClickListener(android.support.v7.preference.Preference.OnPreferenceClickListener);
     method public void setOrder(int);
     method public void setPersistent(boolean);
+    method public void setPreferenceDataStore(android.support.v7.preference.PreferenceDataStore);
     method public void setSelectable(boolean);
     method public void setShouldDisableView(boolean);
     method public void setSummary(java.lang.CharSequence);
@@ -10393,6 +10424,20 @@ package android.support.v7.preference {
     ctor public PreferenceCategory(android.content.Context, android.util.AttributeSet, int);
     ctor public PreferenceCategory(android.content.Context, android.util.AttributeSet);
     ctor public PreferenceCategory(android.content.Context);
+  }
+
+  public abstract class PreferenceDataStore {
+    ctor public PreferenceDataStore();
+    method public boolean getBoolean(java.lang.String, boolean);
+    method public float getFloat(java.lang.String, float);
+    method public int getInt(java.lang.String, int);
+    method public long getLong(java.lang.String, long);
+    method public java.lang.String getString(java.lang.String, java.lang.String);
+    method public void putBoolean(java.lang.String, boolean);
+    method public void putFloat(java.lang.String, float);
+    method public void putInt(java.lang.String, int);
+    method public void putLong(java.lang.String, long);
+    method public void putString(java.lang.String, java.lang.String);
   }
 
   public abstract class PreferenceDialogFragmentCompat extends android.support.v4.app.DialogFragment implements android.content.DialogInterface.OnClickListener {
@@ -10474,6 +10519,7 @@ package android.support.v7.preference {
     method public android.support.v7.preference.PreferenceManager.OnNavigateToScreenListener getOnNavigateToScreenListener();
     method public android.support.v7.preference.PreferenceManager.OnPreferenceTreeClickListener getOnPreferenceTreeClickListener();
     method public android.support.v7.preference.PreferenceManager.PreferenceComparisonCallback getPreferenceComparisonCallback();
+    method public android.support.v7.preference.PreferenceDataStore getPreferenceDataStore();
     method public android.support.v7.preference.PreferenceScreen getPreferenceScreen();
     method public android.content.SharedPreferences getSharedPreferences();
     method public int getSharedPreferencesMode();
@@ -10486,6 +10532,7 @@ package android.support.v7.preference {
     method public void setOnNavigateToScreenListener(android.support.v7.preference.PreferenceManager.OnNavigateToScreenListener);
     method public void setOnPreferenceTreeClickListener(android.support.v7.preference.PreferenceManager.OnPreferenceTreeClickListener);
     method public void setPreferenceComparisonCallback(android.support.v7.preference.PreferenceManager.PreferenceComparisonCallback);
+    method public void setPreferenceDataStore(android.support.v7.preference.PreferenceDataStore);
     method public boolean setPreferences(android.support.v7.preference.PreferenceScreen);
     method public void setSharedPreferencesMode(int);
     method public void setSharedPreferencesName(java.lang.String);

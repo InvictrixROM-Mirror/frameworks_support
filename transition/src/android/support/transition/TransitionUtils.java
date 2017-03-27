@@ -18,6 +18,7 @@ package android.support.transition;
 
 import android.animation.Animator;
 import android.animation.AnimatorSet;
+import android.animation.TypeEvaluator;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
@@ -83,8 +84,8 @@ class TransitionUtils {
         int bitmapHeight = Math.round(bounds.height());
         if (bitmapWidth > 0 && bitmapHeight > 0) {
             float scale = Math.min(1f, ((float) MAX_IMAGE_SIZE) / (bitmapWidth * bitmapHeight));
-            bitmapWidth *= scale;
-            bitmapHeight *= scale;
+            bitmapWidth = (int) (bitmapWidth * scale);
+            bitmapHeight = (int) (bitmapHeight * scale);
             matrix.postTranslate(-bounds.left, -bounds.top);
             matrix.postScale(scale, scale);
             bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888);
@@ -105,6 +106,28 @@ class TransitionUtils {
             animatorSet.playTogether(animator1, animator2);
             return animatorSet;
         }
+    }
+
+    static class MatrixEvaluator implements TypeEvaluator<Matrix> {
+
+        final float[] mTempStartValues = new float[9];
+
+        final float[] mTempEndValues = new float[9];
+
+        final Matrix mTempMatrix = new Matrix();
+
+        @Override
+        public Matrix evaluate(float fraction, Matrix startValue, Matrix endValue) {
+            startValue.getValues(mTempStartValues);
+            endValue.getValues(mTempEndValues);
+            for (int i = 0; i < 9; i++) {
+                float diff = mTempEndValues[i] - mTempStartValues[i];
+                mTempEndValues[i] = mTempStartValues[i] + (fraction * diff);
+            }
+            mTempMatrix.setValues(mTempEndValues);
+            return mTempMatrix;
+        }
+
     }
 
 }

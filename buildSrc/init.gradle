@@ -29,6 +29,7 @@ if (supportRoot == null) {
 def init = new Properties()
 ext.init = init
 ext.init.checkoutRoot = "${supportRoot}/../.."
+ext.init.debugKeystore = file("${supportRoot}/development/keystore/debug.keystore")
 ext.init.prebuiltsRoot = "${init.checkoutRoot}/prebuilts"
 ext.init.prebuiltsRootUri = "file://${init.prebuiltsRoot}"
 ext.init.enablePublicRepos = System.getenv("ALLOW_PUBLIC_REPOS") != null
@@ -84,6 +85,7 @@ def setSdkInLocalPropertiesFile() {
                 files("${fullSdkPath}/platforms/android-${gradle.currentSdk}/android.jar")
         project.ext.androidSrcJar =
                 file("${fullSdkPath}/platforms/android-${gradle.currentSdk}/android-stubs-src.jar")
+        project.ext.androidApiTxt = null
         System.setProperty('android.home', "${init.prebuiltsRoot}/fullsdk-${platform}")
         File props = file("local.properties")
         props.write "sdk.dir=${fullSdkPath}"
@@ -91,7 +93,8 @@ def setSdkInLocalPropertiesFile() {
     } else {
         gradle.ext.currentSdk = 'current'
         project.ext.androidJar = files("${init.prebuiltsRoot}/sdk/current/android.jar")
-        project.ext.androidSrcJar = files("${init.prebuiltsRoot}/sdk/current/android-stubs-src.jar")
+        project.ext.androidSrcJar = null
+        project.ext.androidApiTxt = file("${init.prebuiltsRoot}/sdk/api/26.txt")
         File props = file("local.properties")
         props.write "android.dir=../../"
         ext.usingFullSdk = false
