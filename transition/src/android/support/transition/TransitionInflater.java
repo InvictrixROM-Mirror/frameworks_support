@@ -134,6 +134,8 @@ public class TransitionInflater {
                 transition = new Fade(mContext, attrs);
             } else if ("changeBounds".equals(name)) {
                 transition = new ChangeBounds(mContext, attrs);
+            } else if ("slide".equals(name)) {
+                transition = new Slide(mContext, attrs);
             } else if ("explode".equals(name)) {
                 transition = new Explode(mContext, attrs);
             } else if ("changeImageTransform".equals(name)) {
@@ -150,6 +152,22 @@ public class TransitionInflater {
                 transition = (Transition) createCustom(attrs, Transition.class, "transition");
             } else if ("targets".equals(name)) {
                 getTargetIds(parser, attrs, parent);
+            } else if ("arcMotion".equals(name)) {
+                if (parent == null) {
+                    throw new RuntimeException("Invalid use of arcMotion element");
+                }
+                parent.setPathMotion(new ArcMotion(mContext, attrs));
+            } else if ("pathMotion".equals(name)) {
+                if (parent == null) {
+                    throw new RuntimeException("Invalid use of pathMotion element");
+                }
+                parent.setPathMotion((PathMotion) createCustom(attrs, PathMotion.class,
+                        "pathMotion"));
+            } else if ("patternPathMotion".equals(name)) {
+                if (parent == null) {
+                    throw new RuntimeException("Invalid use of patternPathMotion element");
+                }
+                parent.setPathMotion(new PatternPathMotion(mContext, attrs));
             } else {
                 throw new RuntimeException("Unknown scene name: " + parser.getName());
             }

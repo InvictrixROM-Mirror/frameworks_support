@@ -35,7 +35,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * Tests usage of the {@link FragmentTransaction} class.
@@ -234,9 +234,9 @@ public class FragmentTransactionTest {
                 .commit();
 
         FragmentTestUtil.executePendingTransactions(mActivityRule);
-        List<Fragment> fragments = fm.getFragments();
+        Collection<Fragment> fragments = fm.getFragments();
         assertEquals(1, fragments.size());
-        assertEquals(fragment, fragments.get(0));
+        assertTrue(fragments.contains(fragment));
 
         // Removed fragments shouldn't show
         fm.beginTransaction()
@@ -264,13 +264,13 @@ public class FragmentTransactionTest {
         FragmentTestUtil.executePendingTransactions(mActivityRule);
         fragments = fm.getFragments();
         assertEquals(1, fragments.size());
-        assertEquals(fragment, fragments.get(0));
+        assertTrue(fragments.contains(fragment));
 
         // And showing it again shouldn't change anything:
         FragmentTestUtil.popBackStackImmediate(mActivityRule);
         fragments = fm.getFragments();
         assertEquals(1, fragments.size());
-        assertEquals(fragment, fragments.get(0));
+        assertTrue(fragments.contains(fragment));
 
         // Now pop back to the start state
         FragmentTestUtil.popBackStackImmediate(mActivityRule);
@@ -278,8 +278,9 @@ public class FragmentTransactionTest {
         // We can't force concurrency, but we can do it lots of times and hope that
         // we hit it.
         for (int i = 0; i < 100; i++) {
+            Fragment fragment2 = new CorrectFragment();
             fm.beginTransaction()
-                    .add(R.id.content, fragment)
+                    .add(R.id.content, fragment2)
                     .addToBackStack(null)
                     .commit();
             getFragmentsUntilSize(1);
@@ -287,6 +288,49 @@ public class FragmentTransactionTest {
             fm.popBackStack();
             getFragmentsUntilSize(0);
         }
+    }
+
+    /**
+     * When a FragmentManager is detached, it should allow commitAllowingStateLoss()
+     * and commitNowAllowingStateLoss() by just dropping the transaction.
+     */
+    @Test
+    public void commitAllowStateLossDetached() throws Throwable {
+        Fragment fragment1 = new CorrectFragment();
+        mActivity.getSupportFragmentManager()
+                .beginTransaction()
+                .add(fragment1, "1")
+                .commit();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        final FragmentManager fm = fragment1.getChildFragmentManager();
+        mActivity.getSupportFragmentManager()
+                .beginTransaction()
+                .remove(fragment1)
+                .commit();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        assertEquals(0, mActivity.getSupportFragmentManager().getFragments().size());
+        assertEquals(0, fm.getFragments().size());
+
+        // Now the fragment1's fragment manager should allow commitAllowingStateLoss
+        // by doing nothing since it has been detached.
+        Fragment fragment2 = new CorrectFragment();
+        fm.beginTransaction()
+                .add(fragment2, "2")
+                .commitAllowingStateLoss();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        assertEquals(0, fm.getFragments().size());
+
+        // It should also allow commitNowAllowingStateLoss by doing nothing
+        mActivityRule.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Fragment fragment3 = new CorrectFragment();
+                fm.beginTransaction()
+                        .add(fragment3, "3")
+                        .commitNowAllowingStateLoss();
+                assertEquals(0, fm.getFragments().size());
+            }
+        });
     }
 
     private void getFragmentsUntilSize(int expectedSize) {

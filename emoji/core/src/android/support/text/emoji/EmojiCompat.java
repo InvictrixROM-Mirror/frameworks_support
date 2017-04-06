@@ -17,10 +17,11 @@ package android.support.text.emoji;
 
 import static android.support.annotation.RestrictTo.Scope.LIBRARY_GROUP;
 
-import android.graphics.Typeface;
+import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.AnyThread;
+import android.support.annotation.ColorInt;
 import android.support.annotation.GuardedBy;
 import android.support.annotation.IntDef;
 import android.support.annotation.IntRange;
@@ -90,6 +91,31 @@ public class EmojiCompat {
     public static final String EDITOR_INFO_REPLACE_ALL_KEY =
             "android.support.text.emoji.emojiCompat_replaceAll";
 
+    /**
+     * EmojiCompat is initializing.
+     */
+    public static final int LOAD_STATE_LOADING = 0;
+
+    /**
+     * EmojiCompat successfully initialized.
+     */
+    public static final int LOAD_STATE_SUCCESS = 1;
+
+    /**
+     * An unrecoverable error occurred during initialization of EmojiCompat. Calls to functions
+     * such as {@link #process(CharSequence)} will fail.
+     */
+    public static final int LOAD_STATE_FAILURE = 2;
+
+    /**
+     * @hide
+     */
+    @RestrictTo(LIBRARY_GROUP)
+    @IntDef({LOAD_STATE_LOADING, LOAD_STATE_SUCCESS, LOAD_STATE_FAILURE})
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface LoadState {
+    }
+
     private static final Object sInstanceLock = new Object();
 
     @GuardedBy("sInstanceLock")
@@ -104,7 +130,9 @@ public class EmojiCompat {
     @LoadState
     private int mLoadState;
 
-    private final Config mConfig;
+    /**
+     * Handler with main looper to run the callbacks on.
+     */
     private final Handler mMainHandler;
 
     /**
@@ -118,14 +146,30 @@ public class EmojiCompat {
      */
     private MetadataRepo mMetadataRepo;
 
-    private static final int LOAD_STATE_LOADING = 0;
-    private static final int LOAD_STATE_SUCCESS = 1;
-    private static final int LOAD_STATE_FAIL = 2;
+    /**
+     * MetadataLoader instance given in the Config instance.
+     */
+    private final MetadataLoader mMetadataLoader;
 
-    @IntDef({LOAD_STATE_LOADING, LOAD_STATE_SUCCESS, LOAD_STATE_FAIL})
-    @Retention(RetentionPolicy.SOURCE)
-    private @interface LoadState {
-    }
+    /**
+     * @see Config#setMaxEmojiPerText(int)
+     */
+    private final int mMaxEmojiPerText;
+
+    /**
+     * @see Config#setReplaceAll(boolean)
+     */
+    private final boolean mReplaceAll;
+
+    /**
+     * @see Config#setEmojiSpanIndicatorEnabled(boolean)
+     */
+    private final boolean mEmojiSpanIndicatorEnabled;
+
+    /**
+     * @see Config#setEmojiSpanIndicatorColor(int)
+     */
+    private final int mEmojiSpanIndicatorColor;
 
     /**
      * Private constructor for singleton instance.
@@ -134,11 +178,15 @@ public class EmojiCompat {
      */
     private EmojiCompat(@NonNull final Config config) {
         mInitLock = new ReentrantReadWriteLock();
-        mConfig = config;
+        mMaxEmojiPerText = config.mMaxEmojiPerText;
+        mReplaceAll = config.mReplaceAll;
+        mEmojiSpanIndicatorEnabled = config.mEmojiSpanIndicatorEnabled;
+        mEmojiSpanIndicatorColor = config.mEmojiSpanIndicatorColor;
+        mMetadataLoader = config.mMetadataLoader;
         mMainHandler = new Handler(Looper.getMainLooper());
         mInitCallbacks = new ArraySet<>();
-        if (mConfig.mInitCallbacks != null && !mConfig.mInitCallbacks.isEmpty()) {
-            mInitCallbacks.addAll(mConfig.mInitCallbacks);
+        if (config.mInitCallbacks != null && !config.mInitCallbacks.isEmpty()) {
+            mInitCallbacks.addAll(config.mInitCallbacks);
         }
         loadMetadata();
     }
@@ -213,7 +261,7 @@ public class EmojiCompat {
         }
 
         try {
-            mConfig.mMetadataLoader.load(new LoaderCallback() {
+            mMetadataLoader.load(new LoaderCallback() {
                 @Override
                 public void onLoaded(@NonNull MetadataRepo metadataRepo) {
                     onMetadataLoadSuccess(metadataRepo);
@@ -236,8 +284,8 @@ public class EmojiCompat {
         }
 
         mMetadataRepo = metadataRepo;
-        mProcessor = new EmojiProcessor(mMetadataRepo, new SpanFactory(),
-                mConfig.mReplaceAll, mConfig.mMaxEmojiPerText);
+        mProcessor = new EmojiProcessor(mMetadataRepo, new SpanFactory(), mReplaceAll,
+                mMaxEmojiPerText);
 
         final Collection<InitCallback> initCallbacks = new ArrayList<>();
         mInitLock.writeLock().lock();
@@ -256,7 +304,7 @@ public class EmojiCompat {
         final Collection<InitCallback> initCallbacks = new ArrayList<>();
         mInitLock.writeLock().lock();
         try {
-            mLoadState = LOAD_STATE_FAIL;
+            mLoadState = LOAD_STATE_FAILURE;
             initCallbacks.addAll(mInitCallbacks);
             mInitCallbacks.clear();
         } finally {
@@ -279,7 +327,7 @@ public class EmojiCompat {
 
         mInitLock.writeLock().lock();
         try {
-            if (mLoadState == LOAD_STATE_SUCCESS || mLoadState == LOAD_STATE_FAIL) {
+            if (mLoadState == LOAD_STATE_SUCCESS || mLoadState == LOAD_STATE_FAILURE) {
                 mMainHandler.post(new ListenerDispatcher(initCallback, mLoadState));
             } else {
                 mInitCallbacks.add(initCallback);
@@ -305,15 +353,48 @@ public class EmojiCompat {
     }
 
     /**
+     * Returns loading state of the EmojiCompat instance.
+     *
+     * @return one of {@link #LOAD_STATE_LOADING}, {@link #LOAD_STATE_SUCCESS},
+     * {@link #LOAD_STATE_FAILURE}
+     */
+    public @LoadState int getLoadState() {
+        mInitLock.readLock().lock();
+        try {
+            return mLoadState;
+        } finally {
+            mInitLock.readLock().unlock();
+        }
+    }
+
+    /**
      * @return {@code true} if EmojiCompat is successfully initialized
      */
-    public boolean isInitialized() {
+    private boolean isInitialized() {
         mInitLock.readLock().lock();
         try {
             return mLoadState == LOAD_STATE_SUCCESS;
         } finally {
             mInitLock.readLock().unlock();
         }
+    }
+
+    /**
+     * @return whether a background should be drawn for the emoji.
+     * @hide
+     */
+    @RestrictTo(LIBRARY_GROUP)
+    boolean isEmojiSpanIndicatorEnabled() {
+        return mEmojiSpanIndicatorEnabled;
+    }
+
+    /**
+     * @return whether a background should be drawn for the emoji.
+     * @hide
+     */
+    @RestrictTo(LIBRARY_GROUP)
+    @ColorInt int getEmojiSpanIndicatorColor() {
+        return mEmojiSpanIndicatorColor;
     }
 
     /**
@@ -431,26 +512,34 @@ public class EmojiCompat {
      *            equal to {@code start} parameter, also less than {@code charSequence.length()}
      *
      * @throws IllegalStateException if not initialized yet
+     * @throws IllegalArgumentException in the following cases:
+     *                                  {@code start < 0}, {@code end < 0}, {@code end < start},
+     *                                  {@code start > charSequence.length()},
+     *                                  {@code end > charSequence.length()}
      */
     public CharSequence process(@NonNull final CharSequence charSequence,
             @IntRange(from = 0) final int start, @IntRange(from = 0) final int end) {
         Preconditions.checkState(isInitialized(), "Not initialized yet");
-        return mProcessor.process(charSequence, start, end);
-    }
+        Preconditions.checkArgumentNonnegative(start, "start cannot be negative");
+        Preconditions.checkArgumentNonnegative(end, "end cannot be negative");
+        Preconditions.checkArgument(start <= end, "start should be <= than end");
 
-    /**
-     * Returns the Typeface instance that is created using the emoji font.
-     *
-     * @return {@link Typeface} instance that is created using the emoji font
-     *
-     * @hide
-     */
-    @RestrictTo(LIBRARY_GROUP)
-    Typeface getTypeface() {
-        if (mMetadataRepo != null) {
-            return mMetadataRepo.getTypeface();
+        // early return since there is nothing to do
+        if (charSequence == null) {
+            return charSequence;
         }
-        return null;
+
+        Preconditions.checkArgument(start <= charSequence.length(),
+                "start should be < than charSequence length");
+        Preconditions.checkArgument(end <= charSequence.length(),
+                "end should be < than charSequence length");
+
+        // early return since there is nothing to do
+        if (charSequence.length() == 0 || start == end) {
+            return charSequence;
+        }
+
+        return mProcessor.process(charSequence, start, end);
     }
 
     /**
@@ -468,7 +557,7 @@ public class EmojiCompat {
     public void updateEditorInfoAttrs(@NonNull final EditorInfo outAttrs) {
         if (isInitialized() && outAttrs != null && outAttrs.extras != null) {
             outAttrs.extras.putInt(EDITOR_INFO_METAVERSION_KEY, mMetadataRepo.getMetadataVersion());
-            outAttrs.extras.putBoolean(EDITOR_INFO_REPLACE_ALL_KEY, mConfig.mReplaceAll);
+            outAttrs.extras.putBoolean(EDITOR_INFO_REPLACE_ALL_KEY, mReplaceAll);
         }
     }
 
@@ -544,7 +633,8 @@ public class EmojiCompat {
     }
 
     /**
-     * Configuration class for EmojiCompat.
+     * Configuration class for EmojiCompat. Changes to the values will be ignored after
+     * {@link #init(Config)} is called.
      *
      * @see #init(EmojiCompat.Config)
      */
@@ -557,6 +647,8 @@ public class EmojiCompat {
         private int mMaxEmojiPerText = 100;
         private boolean mReplaceAll;
         private Set<InitCallback> mInitCallbacks;
+        private boolean mEmojiSpanIndicatorEnabled;
+        private int mEmojiSpanIndicatorColor = Color.GREEN;
 
         /**
          * Default constructor.
@@ -632,6 +724,30 @@ public class EmojiCompat {
             mReplaceAll = replaceAll;
             return this;
         }
+
+        /**
+         * Determines whether a background will be drawn for the emojis that are found and
+         * replaced by EmojiCompat. Should be used only for debugging purposes. The indicator color
+         * can be set using {@link #setEmojiSpanIndicatorColor(int)}.
+         *
+         * @param emojiSpanIndicatorEnabled when {@code true} a background is drawn for each emoji
+         *                                  that is replaced
+         */
+        public Config setEmojiSpanIndicatorEnabled(boolean emojiSpanIndicatorEnabled) {
+            mEmojiSpanIndicatorEnabled = emojiSpanIndicatorEnabled;
+            return this;
+        }
+
+        /**
+         * Sets the color used as emoji span indicator. The default value is
+         * {@link Color#GREEN Color.GREEN}.
+         *
+         * @see #setEmojiSpanIndicatorEnabled(boolean)
+         */
+        public Config setEmojiSpanIndicatorColor(@ColorInt int color) {
+            mEmojiSpanIndicatorColor = color;
+            return this;
+        }
     }
 
     /**
@@ -671,7 +787,7 @@ public class EmojiCompat {
                         mInitCallbacks.get(i).onInitialized();
                     }
                     break;
-                case LOAD_STATE_FAIL:
+                case LOAD_STATE_FAILURE:
                 default:
                     for (int i = 0; i < size; i++) {
                         mInitCallbacks.get(i).onFailed(mThrowable);

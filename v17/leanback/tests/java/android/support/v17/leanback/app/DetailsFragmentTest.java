@@ -15,9 +15,9 @@
  */
 package android.support.v17.leanback.app;
 
-import static junit.framework.TestCase.assertFalse;
-
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.animation.PropertyValuesHolder;
@@ -29,13 +29,17 @@ import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
 import android.support.v17.leanback.R;
 import android.support.v17.leanback.graphics.FitWidthBitmapDrawable;
 import android.support.v17.leanback.media.MediaPlayerGlue;
 import android.support.v17.leanback.testutils.PollingCheck;
+import android.support.v17.leanback.transition.TransitionHelper;
+import android.support.v17.leanback.util.StateMachine;
 import android.support.v17.leanback.widget.DetailsParallax;
 import android.support.v17.leanback.widget.DetailsParallaxDrawable;
 import android.support.v17.leanback.widget.ParallaxTarget;
@@ -56,6 +60,11 @@ import org.junit.runners.JUnit4;
 public class DetailsFragmentTest extends SingleFragmentTestBase {
 
     static final int PARALLAX_VERTICAL_OFFSET = -300;
+
+    static int getCoverDrawableAlpha(DetailsFragmentBackgroundController controller) {
+        return ((FitWidthBitmapDrawable) controller.mParallaxDrawable.getCoverDrawable())
+                .getAlpha();
+    }
 
     public static class DetailsFragmentParallax extends DetailsTestFragment {
 
@@ -386,6 +395,14 @@ public class DetailsFragmentTest extends SingleFragmentTestBase {
         navigateBetweenRowsAndVideoUsingDPADInternal(DetailsFragmentWithVideo2.class);
     }
 
+    public static class EmptyFragmentClass extends Fragment {
+        @Override
+        public void onStart() {
+            super.onStart();
+            getActivity().finish();
+        }
+    }
+
     private void fragmentOnStartWithVideoInternal(Class cls) throws Throwable {
         launchAndWaitActivity(cls,
                 new Options().uiVisibility(
@@ -427,22 +444,11 @@ public class DetailsFragmentTest extends SingleFragmentTestBase {
                     public void run() {
                         Intent intent = new Intent(mActivity, SingleFragmentTestActivity.class);
                         intent.putExtra(SingleFragmentTestActivity.EXTRA_FRAGMENT_NAME,
-                                Fragment.class.getName());
+                                EmptyFragmentClass.class.getName());
                         mActivity.startActivity(intent);
                     }
                 }
         );
-        PollingCheck.waitFor(2000, new PollingCheck.PollingCheckCondition() {
-            @Override
-            public boolean canProceed() {
-                return !detailsFragment.isResumed();
-            }
-        });
-        // pop empty activity, have to wait 1000 before sending BACK key or the key will lose
-        // nowhere.
-        Thread.sleep(1000);
-        sendKeys(KeyEvent.KEYCODE_BACK);
-
         PollingCheck.waitFor(2000, new PollingCheck.PollingCheckCondition() {
             @Override
             public boolean canProceed() {
@@ -509,4 +515,593 @@ public class DetailsFragmentTest extends SingleFragmentTestBase {
         assertTrue(firstRow.hasFocus());
         assertEquals(originalFirstRowTop, firstRow.getTop());
     }
+
+    public static class DetailsFragmentWithNoVideo extends DetailsTestFragment {
+
+        final DetailsFragmentBackgroundController mDetailsBackground =
+                new DetailsFragmentBackgroundController(this);
+
+        public DetailsFragmentWithNoVideo() {
+            mTimeToLoadOverviewRow = mTimeToLoadRelatedRow = 100;
+        }
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            mDetailsBackground.enableParallax();
+
+            setItem(new PhotoItem("Hello world", "Fake content goes here",
+                    android.support.v17.leanback.test.R.drawable.spiderman));
+        }
+
+        @Override
+        public void onStart() {
+            super.onStart();
+            Bitmap bitmap = BitmapFactory.decodeResource(getActivity().getResources(),
+                    android.support.v17.leanback.test.R.drawable.spiderman);
+            mDetailsBackground.setCoverBitmap(bitmap);
+        }
+
+        @Override
+        public void onStop() {
+            mDetailsBackground.setCoverBitmap(null);
+            super.onStop();
+        }
+    }
+
+    @Test
+    public void lateSetupVideo() {
+        launchAndWaitActivity(DetailsFragmentWithNoVideo.class, new Options().uiVisibility(
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN), 0);
+        final DetailsFragmentWithNoVideo detailsFragment =
+                (DetailsFragmentWithNoVideo) mActivity.getTestFragment();
+
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
+            @Override
+            public void run() {
+                detailsFragment.setItem(new PhotoItem("Hello world", "Fake content goes here",
+                        android.support.v17.leanback.test.R.drawable.spiderman));
+            }
+        });
+
+        PollingCheck.waitFor(4000, new PollingCheck.PollingCheckCondition() {
+            @Override
+            public boolean canProceed() {
+                return detailsFragment.getRowsFragment().getVerticalGridView().getChildCount() > 0;
+            }
+        });
+        final View firstRow = detailsFragment.getRowsFragment().getVerticalGridView().getChildAt(0);
+        final int screenHeight = detailsFragment.getRowsFragment().getVerticalGridView()
+                .getHeight();
+
+        assertTrue(firstRow.hasFocus());
+        assertTrue(detailsFragment.isShowingTitle());
+        assertTrue(firstRow.getTop() > 0 && firstRow.getTop() < screenHeight);
+
+        sendKeys(KeyEvent.KEYCODE_DPAD_UP);
+        assertTrue(firstRow.hasFocus());
+
+        SystemClock.sleep(1000);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        final MediaPlayerGlue glue = new MediaPlayerGlue(mActivity);
+                        detailsFragment.mDetailsBackgroundController.setupVideoPlayback(glue);
+                        glue.setMode(MediaPlayerGlue.REPEAT_ALL);
+                        glue.setArtist("A Googleer");
+                        glue.setTitle("Diving with Sharks");
+                        glue.setMediaSource(Uri.parse(
+                                "android.resource://android.support.v17.leanback.test/raw/video"));
+                    }
+                }
+        );
+
+        // after setup Video Playback the DPAD up will navigate to Video Fragment.
+        PollingCheck.waitFor(4000, new PollingCheck.PollingCheckCondition() {
+                @Override
+                    public boolean canProceed() {
+                        return detailsFragment.mVideoFragment != null
+                                && detailsFragment.mVideoFragment.getView() != null;
+                }
+        });
+        sendKeys(KeyEvent.KEYCODE_DPAD_UP);
+        assertTrue(detailsFragment.mVideoFragment.getView().hasFocus());
+        PollingCheck.waitFor(4000, new PollingCheck.PollingCheckCondition() {
+            @Override
+            public boolean canProceed() {
+                return ((MediaPlayerGlue) detailsFragment.mDetailsBackgroundController
+                        .getPlaybackGlue()).isMediaPlaying();
+            }
+        });
+        PollingCheck.waitFor(4000, new PollingCheck.PollingCheckCondition() {
+            @Override
+            public boolean canProceed() {
+                return 0 == getCoverDrawableAlpha(detailsFragment.mDetailsBackgroundController);
+            }
+        });
+
+        // wait a little bit to replace with new Glue
+        SystemClock.sleep(1000);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        final MediaPlayerGlue glue2 = new MediaPlayerGlue(mActivity);
+                        detailsFragment.mDetailsBackgroundController.setupVideoPlayback(glue2);
+                        glue2.setMode(MediaPlayerGlue.REPEAT_ALL);
+                        glue2.setArtist("A Googleer");
+                        glue2.setTitle("Diving with Sharks");
+                        glue2.setMediaSource(Uri.parse(
+                                "android.resource://android.support.v17.leanback.test/raw/video"));
+                    }
+                }
+        );
+
+        // test switchToRows() and switchToVideo()
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        detailsFragment.mDetailsBackgroundController.switchToRows();
+                    }
+                }
+        );
+        assertTrue(detailsFragment.mRowsFragment.getView().hasFocus());
+        PollingCheck.waitFor(new PollingCheck.ViewStableOnScreen(firstRow));
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        detailsFragment.mDetailsBackgroundController.switchToVideo();
+                    }
+                }
+        );
+        assertTrue(detailsFragment.mVideoFragment.getView().hasFocus());
+        PollingCheck.waitFor(new PollingCheck.ViewStableOnScreen(firstRow));
+    }
+
+    @Test
+    public void clearVideo() {
+        launchAndWaitActivity(DetailsFragmentWithNoVideo.class, new Options().uiVisibility(
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN), 0);
+        final DetailsFragmentWithNoVideo detailsFragment =
+                (DetailsFragmentWithNoVideo) mActivity.getTestFragment();
+
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
+            @Override
+            public void run() {
+                detailsFragment.setItem(new PhotoItem("Hello world", "Fake content goes here",
+                        android.support.v17.leanback.test.R.drawable.spiderman));
+            }
+        });
+
+        PollingCheck.waitFor(4000, new PollingCheck.PollingCheckCondition() {
+            @Override
+            public boolean canProceed() {
+                return detailsFragment.getRowsFragment().getVerticalGridView().getChildCount() > 0;
+            }
+        });
+        final View firstRow = detailsFragment.getRowsFragment().getVerticalGridView().getChildAt(0);
+        final int screenHeight = detailsFragment.getRowsFragment().getVerticalGridView()
+                .getHeight();
+
+        assertTrue(firstRow.hasFocus());
+        assertTrue(detailsFragment.isShowingTitle());
+        assertTrue(firstRow.getTop() > 0 && firstRow.getTop() < screenHeight);
+
+        SystemClock.sleep(1000);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        final MediaPlayerGlue glue = new MediaPlayerGlue(mActivity);
+                        detailsFragment.mDetailsBackgroundController.setupVideoPlayback(glue);
+                        glue.setMode(MediaPlayerGlue.REPEAT_ALL);
+                        glue.setArtist("A Googleer");
+                        glue.setTitle("Diving with Sharks");
+                        glue.setMediaSource(Uri.parse(
+                                "android.resource://android.support.v17.leanback.test/raw/video"));
+                    }
+                }
+        );
+
+        PollingCheck.waitFor(4000, new PollingCheck.PollingCheckCondition() {
+            @Override
+            public boolean canProceed() {
+                return ((MediaPlayerGlue) detailsFragment.mDetailsBackgroundController
+                        .getPlaybackGlue()).isMediaPlaying();
+            }
+        });
+        PollingCheck.waitFor(4000, new PollingCheck.PollingCheckCondition() {
+            @Override
+            public boolean canProceed() {
+                return 0 == getCoverDrawableAlpha(detailsFragment.mDetailsBackgroundController);
+            }
+        });
+
+        // wait a little bit then clear glue
+        SystemClock.sleep(1000);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        detailsFragment.mDetailsBackgroundController.setupVideoPlayback(null);
+                    }
+                }
+        );
+        // background should fade in upon clear playback
+        PollingCheck.waitFor(4000, new PollingCheck.PollingCheckCondition() {
+            @Override
+            public boolean canProceed() {
+                return 255 == getCoverDrawableAlpha(detailsFragment.mDetailsBackgroundController);
+            }
+        });
+    }
+
+    public static class DetailsFragmentWithNoItem extends DetailsTestFragment {
+
+        final DetailsFragmentBackgroundController mDetailsBackground =
+                new DetailsFragmentBackgroundController(this);
+
+        public DetailsFragmentWithNoItem() {
+            mTimeToLoadOverviewRow = mTimeToLoadRelatedRow = 100;
+        }
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            mDetailsBackground.enableParallax();
+        }
+
+        @Override
+        public void onStart() {
+            super.onStart();
+            Bitmap bitmap = BitmapFactory.decodeResource(getActivity().getResources(),
+                    android.support.v17.leanback.test.R.drawable.spiderman);
+            mDetailsBackground.setCoverBitmap(bitmap);
+        }
+
+        @Override
+        public void onStop() {
+            mDetailsBackground.setCoverBitmap(null);
+            super.onStop();
+        }
+    }
+
+    @Test
+    public void noInitialItem() {
+        launchAndWaitActivity(DetailsFragmentWithNoItem.class, new Options().uiVisibility(
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN), 0);
+        final DetailsFragmentWithNoItem detailsFragment =
+                (DetailsFragmentWithNoItem) mActivity.getTestFragment();
+
+        final int recyclerViewHeight = detailsFragment.getRowsFragment().getVerticalGridView()
+                .getHeight();
+        assertTrue(recyclerViewHeight > 0);
+
+        assertEquals(255, getCoverDrawableAlpha(detailsFragment.mDetailsBackgroundController));
+        Drawable coverDrawable = detailsFragment.mDetailsBackgroundController.getCoverDrawable();
+        assertEquals(0, coverDrawable.getBounds().top);
+        assertEquals(recyclerViewHeight, coverDrawable.getBounds().bottom);
+        Drawable bottomDrawable = detailsFragment.mDetailsBackgroundController.getBottomDrawable();
+        assertEquals(recyclerViewHeight, bottomDrawable.getBounds().top);
+        assertEquals(recyclerViewHeight, bottomDrawable.getBounds().bottom);
+    }
+
+    public static class DetailsFragmentSwitchToVideoInOnCreate extends DetailsTestFragment {
+
+        final DetailsFragmentBackgroundController mDetailsBackground =
+                new DetailsFragmentBackgroundController(this);
+
+        public DetailsFragmentSwitchToVideoInOnCreate() {
+            mTimeToLoadOverviewRow = mTimeToLoadRelatedRow = 100;
+        }
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            mDetailsBackground.enableParallax();
+            mDetailsBackground.switchToVideo();
+        }
+
+        @Override
+        public void onStart() {
+            super.onStart();
+            Bitmap bitmap = BitmapFactory.decodeResource(getActivity().getResources(),
+                    android.support.v17.leanback.test.R.drawable.spiderman);
+            mDetailsBackground.setCoverBitmap(bitmap);
+        }
+
+        @Override
+        public void onStop() {
+            mDetailsBackground.setCoverBitmap(null);
+            super.onStop();
+        }
+    }
+
+    @Test
+    public void switchToVideoInOnCreate() {
+        launchAndWaitActivity(DetailsFragmentSwitchToVideoInOnCreate.class,
+                new Options().uiVisibility(
+                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN), 0);
+        final DetailsFragmentSwitchToVideoInOnCreate detailsFragment =
+                (DetailsFragmentSwitchToVideoInOnCreate) mActivity.getTestFragment();
+
+        // the pending enter transition flag should be automatically cleared
+        assertEquals(StateMachine.STATUS_INVOKED,
+                detailsFragment.STATE_ENTER_TRANSITION_COMPLETE.getStatus());
+        assertNull(TransitionHelper.getEnterTransition(mActivity.getWindow()));
+        assertEquals(0, getCoverDrawableAlpha(detailsFragment.mDetailsBackgroundController));
+        assertTrue(detailsFragment.getRowsFragment().getView().hasFocus());
+        //SystemClock.sleep(5000);
+        assertFalse(detailsFragment.isShowingTitle());
+
+        SystemClock.sleep(1000);
+        assertNull(detailsFragment.mVideoFragment);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        final MediaPlayerGlue glue = new MediaPlayerGlue(mActivity);
+                        detailsFragment.mDetailsBackgroundController.setupVideoPlayback(glue);
+                        glue.setMode(MediaPlayerGlue.REPEAT_ALL);
+                        glue.setArtist("A Googleer");
+                        glue.setTitle("Diving with Sharks");
+                        glue.setMediaSource(Uri.parse(
+                                "android.resource://android.support.v17.leanback.test/raw/video"));
+                    }
+                }
+        );
+        // once the video fragment is created it would be immediately assigned focus
+        PollingCheck.waitFor(4000, new PollingCheck.PollingCheckCondition() {
+            @Override
+            public boolean canProceed() {
+                return detailsFragment.mVideoFragment != null
+                        && detailsFragment.mVideoFragment.getView() != null
+                        && detailsFragment.mVideoFragment.getView().hasFocus();
+            }
+        });
+        // wait auto hide play controls done:
+        PollingCheck.waitFor(8000, new PollingCheck.PollingCheckCondition() {
+            @Override
+            public boolean canProceed() {
+                return ((PlaybackFragment) detailsFragment.mVideoFragment).mBgAlpha == 0;
+            }
+        });
+
+        // switchToRows does nothing if there is no row
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        detailsFragment.mDetailsBackgroundController.switchToRows();
+                    }
+                }
+        );
+        assertTrue(detailsFragment.mVideoFragment.getView().hasFocus());
+
+        // create item, it should be layout outside screen
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        detailsFragment.setItem(new PhotoItem("Hello world",
+                                "Fake content goes here",
+                                android.support.v17.leanback.test.R.drawable.spiderman));
+                    }
+                }
+        );
+        PollingCheck.waitFor(4000, new PollingCheck.PollingCheckCondition() {
+            @Override
+            public boolean canProceed() {
+                return detailsFragment.getVerticalGridView().getChildCount() > 0
+                        && detailsFragment.getVerticalGridView().getChildAt(0).getTop()
+                        >= detailsFragment.getVerticalGridView().getHeight();
+            }
+        });
+
+        // pressing BACK will return to details row
+        sendKeys(KeyEvent.KEYCODE_BACK);
+        PollingCheck.waitFor(4000, new PollingCheck.PollingCheckCondition() {
+            @Override
+            public boolean canProceed() {
+                return detailsFragment.getVerticalGridView().getChildAt(0).getTop()
+                        < (detailsFragment.getVerticalGridView().getHeight() * 0.7f);
+            }
+        });
+        assertTrue(detailsFragment.getVerticalGridView().getChildAt(0).hasFocus());
+    }
+
+    @Test
+    public void switchToVideoBackToQuit() {
+        launchAndWaitActivity(DetailsFragmentSwitchToVideoInOnCreate.class,
+                new Options().uiVisibility(
+                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN), 0);
+        final DetailsFragmentSwitchToVideoInOnCreate detailsFragment =
+                (DetailsFragmentSwitchToVideoInOnCreate) mActivity.getTestFragment();
+
+        // the pending enter transition flag should be automatically cleared
+        assertEquals(StateMachine.STATUS_INVOKED,
+                detailsFragment.STATE_ENTER_TRANSITION_COMPLETE.getStatus());
+        assertNull(TransitionHelper.getEnterTransition(mActivity.getWindow()));
+        assertEquals(0, getCoverDrawableAlpha(detailsFragment.mDetailsBackgroundController));
+        assertTrue(detailsFragment.getRowsFragment().getView().hasFocus());
+        assertFalse(detailsFragment.isShowingTitle());
+
+        SystemClock.sleep(1000);
+        assertNull(detailsFragment.mVideoFragment);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        final MediaPlayerGlue glue = new MediaPlayerGlue(mActivity);
+                        detailsFragment.mDetailsBackgroundController.setupVideoPlayback(glue);
+                        glue.setMode(MediaPlayerGlue.REPEAT_ALL);
+                        glue.setArtist("A Googleer");
+                        glue.setTitle("Diving with Sharks");
+                        glue.setMediaSource(Uri.parse(
+                                "android.resource://android.support.v17.leanback.test/raw/video"));
+                    }
+                }
+        );
+        // once the video fragment is created it would be immediately assigned focus
+        PollingCheck.waitFor(4000, new PollingCheck.PollingCheckCondition() {
+            @Override
+            public boolean canProceed() {
+                return detailsFragment.mVideoFragment != null
+                        && detailsFragment.mVideoFragment.getView() != null
+                        && detailsFragment.mVideoFragment.getView().hasFocus();
+            }
+        });
+        // wait auto hide play controls done:
+        PollingCheck.waitFor(8000, new PollingCheck.PollingCheckCondition() {
+            @Override
+            public boolean canProceed() {
+                return ((PlaybackFragment) detailsFragment.mVideoFragment).mBgAlpha == 0;
+            }
+        });
+
+        // before any details row is presented, pressing BACK will quit the activity
+        sendKeys(KeyEvent.KEYCODE_BACK);
+        PollingCheck.waitFor(4000, new PollingCheck.ActivityDestroy(mActivity));
+    }
+
+    public static class DetailsFragmentSwitchToVideoAndPrepareEntranceTransition
+            extends DetailsTestFragment {
+
+        final DetailsFragmentBackgroundController mDetailsBackground =
+                new DetailsFragmentBackgroundController(this);
+
+        public DetailsFragmentSwitchToVideoAndPrepareEntranceTransition() {
+            mTimeToLoadOverviewRow = mTimeToLoadRelatedRow = 100;
+        }
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            mDetailsBackground.enableParallax();
+            mDetailsBackground.switchToVideo();
+            prepareEntranceTransition();
+        }
+
+        @Override
+        public void onViewCreated(View view, Bundle savedInstanceState) {
+            super.onViewCreated(view, savedInstanceState);
+        }
+
+        @Override
+        public void onStart() {
+            super.onStart();
+            Bitmap bitmap = BitmapFactory.decodeResource(getActivity().getResources(),
+                    android.support.v17.leanback.test.R.drawable.spiderman);
+            mDetailsBackground.setCoverBitmap(bitmap);
+        }
+
+        @Override
+        public void onStop() {
+            mDetailsBackground.setCoverBitmap(null);
+            super.onStop();
+        }
+    }
+
+    @Test
+    public void switchToVideoInOnCreateAndPrepareEntranceTransition() {
+        launchAndWaitActivity(DetailsFragmentSwitchToVideoAndPrepareEntranceTransition.class,
+                new Options().uiVisibility(
+                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN), 0);
+        final DetailsFragmentSwitchToVideoAndPrepareEntranceTransition detailsFragment =
+                (DetailsFragmentSwitchToVideoAndPrepareEntranceTransition)
+                        mActivity.getTestFragment();
+
+        assertEquals(StateMachine.STATUS_INVOKED,
+                detailsFragment.STATE_ENTRANCE_COMPLETE.getStatus());
+    }
+
+    public static class DetailsFragmentEntranceTransition
+            extends DetailsTestFragment {
+
+        final DetailsFragmentBackgroundController mDetailsBackground =
+                new DetailsFragmentBackgroundController(this);
+
+        public DetailsFragmentEntranceTransition() {
+            mTimeToLoadOverviewRow = mTimeToLoadRelatedRow = 100;
+        }
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            mDetailsBackground.enableParallax();
+            prepareEntranceTransition();
+        }
+
+        @Override
+        public void onStart() {
+            super.onStart();
+            Bitmap bitmap = BitmapFactory.decodeResource(getActivity().getResources(),
+                    android.support.v17.leanback.test.R.drawable.spiderman);
+            mDetailsBackground.setCoverBitmap(bitmap);
+        }
+
+        @Override
+        public void onStop() {
+            mDetailsBackground.setCoverBitmap(null);
+            super.onStop();
+        }
+    }
+
+    @Test
+    public void entranceTransitionBlocksSwitchToVideo() {
+        launchAndWaitActivity(DetailsFragmentEntranceTransition.class,
+                new Options().uiVisibility(
+                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN), 0);
+        final DetailsFragmentEntranceTransition detailsFragment =
+                (DetailsFragmentEntranceTransition)
+                        mActivity.getTestFragment();
+
+        if (Build.VERSION.SDK_INT < 21) {
+            // when enter transition is not supported, mCanUseHost is immmediately true
+            assertTrue(detailsFragment.mDetailsBackgroundController.mCanUseHost);
+        } else {
+            // calling switchToVideo() between prepareEntranceTransition and entrance transition
+            // finishes will be ignored.
+            InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
+                @Override
+                public void run() {
+                    detailsFragment.mDetailsBackgroundController.switchToVideo();
+                }
+            });
+            assertFalse(detailsFragment.mDetailsBackgroundController.mCanUseHost);
+        }
+        assertEquals(255, getCoverDrawableAlpha(detailsFragment.mDetailsBackgroundController));
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
+            @Override
+            public void run() {
+                detailsFragment.setItem(new PhotoItem("Hello world", "Fake content goes here",
+                        android.support.v17.leanback.test.R.drawable.spiderman));
+                detailsFragment.startEntranceTransition();
+            }
+        });
+        // once Entrance transition is finished, mCanUseHost will be true
+        // and we can switchToVideo and fade out the background.
+        PollingCheck.waitFor(4000, new PollingCheck.PollingCheckCondition() {
+            @Override
+            public boolean canProceed() {
+                return detailsFragment.mDetailsBackgroundController.mCanUseHost;
+            }
+        });
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
+            @Override
+            public void run() {
+                detailsFragment.mDetailsBackgroundController.switchToVideo();
+            }
+        });
+        PollingCheck.waitFor(4000, new PollingCheck.PollingCheckCondition() {
+            @Override
+            public boolean canProceed() {
+                return 0 == getCoverDrawableAlpha(detailsFragment.mDetailsBackgroundController);
+            }
+        });
+    }
+
 }

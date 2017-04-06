@@ -1286,9 +1286,7 @@ public final class TvContractCompat {
          *
          * <p>Type: INTEGER (boolean)
          * @see Channels#COLUMN_TRANSIENT
-         * @hide
          */
-        @RestrictTo(LIBRARY_GROUP)
         String COLUMN_TRANSIENT = "transient";
 
         /**
@@ -1937,10 +1935,11 @@ public final class TvContractCompat {
          * channel is not locked thus the user is not prompted to enter passcode If not specified,
          * this value is set to 0 (not locked) by default.
          *
+         * <p>This column can only be set by applications having proper system permission to
+         * modify parental control settings.
+         *
          * <p>Type: INTEGER (boolean)
-         * @hide
          */
-        @RestrictTo(LIBRARY_GROUP)
         public static final String COLUMN_LOCKED = "locked";
 
         /**
@@ -2130,9 +2129,8 @@ public final class TvContractCompat {
          *
          * <p>Type: INTEGER (boolean)
          * @see PreviewPrograms#COLUMN_TRANSIENT
-         * @hide
+         * @see WatchNextPrograms#COLUMN_TRANSIENT
          */
-        @RestrictTo(LIBRARY_GROUP)
         public static final String COLUMN_TRANSIENT = "transient";
 
         /**

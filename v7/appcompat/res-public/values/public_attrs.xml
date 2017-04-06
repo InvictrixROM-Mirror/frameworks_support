@@ -54,6 +54,11 @@
      <public type="attr" name="arrowHeadLength"/>
      <public type="attr" name="arrowShaftLength"/>
      <public type="attr" name="autoCompleteTextViewStyle"/>
+     <public type="attr" name="autoSizeTextType"/>
+     <public type="attr" name="autoSizeStepGranularity"/>
+     <public type="attr" name="autoSizePresetSizes"/>
+     <public type="attr" name="autoSizeMinTextSize"/>
+     <public type="attr" name="autoSizeMaxTextSize"/>
      <public type="attr" name="background"/>
      <public type="attr" name="backgroundSplit"/>
      <public type="attr" name="backgroundStacked"/>
@@ -195,6 +200,8 @@
      <public type="attr" name="tickMark"/>
      <public type="attr" name="tickMarkTint"/>
      <public type="attr" name="tickMarkTintMode"/>
+     <public type="attr" name="tint"/>
+     <public type="attr" name="tintMode"/>
      <public type="attr" name="title"/>
      <public type="attr" name="titleMargin"/>
      <public type="attr" name="titleMarginBottom"/>

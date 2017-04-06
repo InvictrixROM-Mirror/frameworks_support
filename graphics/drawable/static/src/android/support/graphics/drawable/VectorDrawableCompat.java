@@ -44,6 +44,7 @@ import android.support.annotation.RequiresApi;
 import android.support.annotation.RestrictTo;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v4.content.res.TypedArrayUtils;
+import android.support.v4.graphics.PathParser;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.util.ArrayMap;
 import android.util.AttributeSet;
@@ -519,11 +520,11 @@ public class VectorDrawableCompat extends VectorDrawableCommon {
      */
     @RestrictTo(LIBRARY_GROUP)
     public float getPixelSize() {
-        if (mVectorState == null && mVectorState.mVPathRenderer == null ||
-                mVectorState.mVPathRenderer.mBaseWidth == 0 ||
-                mVectorState.mVPathRenderer.mBaseHeight == 0 ||
-                mVectorState.mVPathRenderer.mViewportHeight == 0 ||
-                mVectorState.mVPathRenderer.mViewportWidth == 0) {
+        if ((mVectorState == null && mVectorState.mVPathRenderer == null)
+                || mVectorState.mVPathRenderer.mBaseWidth == 0
+                || mVectorState.mVPathRenderer.mBaseHeight == 0
+                || mVectorState.mVPathRenderer.mViewportHeight == 0
+                || mVectorState.mVPathRenderer.mViewportWidth == 0) {
             return 1; // fall back to 1:1 pixel mapping.
         }
         float intrinsicWidth = mVectorState.mVPathRenderer.mBaseWidth;

@@ -36,6 +36,7 @@ import android.support.test.runner.AndroidJUnit4;
 import android.support.text.emoji.EmojiCompat;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.widget.TextView;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -45,16 +46,16 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class EmojiInputFilterTest {
 
-    private android.widget.TextView mTextView;
+    private TextView mTextView;
     private EmojiInputFilter mInputFilter;
     private EmojiCompat mEmojiCompat;
 
     @Before
     public void setup() {
-        mTextView = mock(android.widget.TextView.class);
+        mTextView = mock(TextView.class);
         mEmojiCompat = mock(EmojiCompat.class);
         EmojiCompat.reset(mEmojiCompat);
-        when(mEmojiCompat.isInitialized()).thenReturn(true);
+        when(mEmojiCompat.getLoadState()).thenReturn(EmojiCompat.LOAD_STATE_SUCCESS);
         mInputFilter = new EmojiInputFilter(mTextView);
     }
 
@@ -88,5 +89,30 @@ public class EmojiInputFilterTest {
         assertSame(result, testString);
         verify(mEmojiCompat, times(1)).process(sameCharSequence(testString.subSequence(0, 1)),
                 eq(0), eq(1));
+    }
+
+    @Test
+    public void testFilter_whenEmojiCompatLoading() {
+        final Spannable testString = new SpannableString("abc");
+        when(mEmojiCompat.getLoadState()).thenReturn(EmojiCompat.LOAD_STATE_LOADING);
+
+        final CharSequence result = mInputFilter.filter(testString, 0, 1, null, 0, 1);
+
+        assertNotNull(result);
+        assertSame(result, testString);
+        verify(mEmojiCompat, times(0)).process(any(Spannable.class), anyInt(), anyInt());
+        verify(mEmojiCompat, times(1)).registerInitCallback(any(EmojiCompat.InitCallback.class));
+    }
+
+    @Test
+    public void testFilter_whenEmojiCompatLoadFailed() {
+        final Spannable testString = new SpannableString("abc");
+        when(mEmojiCompat.getLoadState()).thenReturn(EmojiCompat.LOAD_STATE_FAILURE);
+
+        final CharSequence result = mInputFilter.filter(testString, 0, 1, null, 0, 1);
+
+        assertNotNull(result);
+        verify(mEmojiCompat, times(0)).process(any(Spannable.class), anyInt(), anyInt());
+        verify(mEmojiCompat, times(0)).registerInitCallback(any(EmojiCompat.InitCallback.class));
     }
 }

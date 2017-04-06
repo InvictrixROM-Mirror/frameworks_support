@@ -1154,34 +1154,6 @@ package android.support.media {
 
 }
 
-package android.support.media.instantvideo.preload {
-
-  public class InstantVideoPreloadManager {
-    method public void clearCache();
-    method public static synchronized android.support.media.instantvideo.preload.InstantVideoPreloadManager getInstance(android.content.Context);
-    method public void preload(android.net.Uri);
-    method public void setMaxCacheSize(int);
-    method public void setMaxPreloadVideoCount(int);
-  }
-
-}
-
-package android.support.media.instantvideo.widget {
-
-  public class InstantVideoView extends android.widget.FrameLayout {
-    ctor public InstantVideoView(android.content.Context);
-    ctor public InstantVideoView(android.content.Context, android.util.AttributeSet);
-    ctor public InstantVideoView(android.content.Context, android.util.AttributeSet, int);
-    method public int getCurrentPosition();
-    method public void seekTo(int);
-    method public void setImageDrawable(android.graphics.drawable.Drawable);
-    method public void setVideoUri(android.net.Uri);
-    method public void start();
-    method public void stop();
-  }
-
-}
-
 package android.support.media.tv {
 
   public abstract class BasePreviewProgram extends android.support.media.tv.BaseProgram {
@@ -1208,6 +1180,7 @@ package android.support.media.tv {
     method public java.lang.String getType();
     method public boolean isBrowsable();
     method public boolean isLive();
+    method public boolean isTransient();
   }
 
   public static abstract class BasePreviewProgram.Builder<T extends android.support.media.tv.BasePreviewProgram.Builder> extends android.support.media.tv.BaseProgram.Builder {
@@ -1235,6 +1208,7 @@ package android.support.media.tv {
     method public T setReviewRatingStyle(java.lang.String);
     method public T setStartingPrice(java.lang.String);
     method public T setThumbnailAspectRatio(java.lang.String);
+    method public T setTransient(boolean);
     method public T setType(java.lang.String);
   }
 
@@ -1318,7 +1292,9 @@ package android.support.media.tv {
     method public java.lang.String getType();
     method public java.lang.String getVideoFormat();
     method public boolean isBrowsable();
+    method public boolean isLocked();
     method public boolean isSearchable();
+    method public boolean isTransient();
     method public android.content.ContentValues toContentValues();
   }
 
@@ -1347,6 +1323,7 @@ package android.support.media.tv {
     method public android.support.media.tv.Channel.Builder setSearchable(boolean);
     method public android.support.media.tv.Channel.Builder setServiceId(int);
     method public android.support.media.tv.Channel.Builder setServiceType(java.lang.String);
+    method public android.support.media.tv.Channel.Builder setTransient(boolean);
     method public android.support.media.tv.Channel.Builder setTransportStreamId(int);
     method public android.support.media.tv.Channel.Builder setType(java.lang.String);
     method public android.support.media.tv.Channel.Builder setVideoFormat(java.lang.String);
@@ -1455,6 +1432,7 @@ package android.support.media.tv {
     field public static final java.lang.String COLUMN_REVIEW_RATING_STYLE = "review_rating_style";
     field public static final java.lang.String COLUMN_STARTING_PRICE = "starting_price";
     field public static final java.lang.String COLUMN_THUMBNAIL_ASPECT_RATIO = "poster_thumbnail_aspect_ratio";
+    field public static final java.lang.String COLUMN_TRANSIENT = "transient";
     field public static final java.lang.String COLUMN_TYPE = "type";
     field public static final java.lang.String INTERACTION_TYPE_FANS = "INTERACTION_TYPE_FANS";
     field public static final java.lang.String INTERACTION_TYPE_FOLLOWERS = "INTERACTION_TYPE_FOLLOWERS";
@@ -1526,11 +1504,13 @@ package android.support.media.tv {
     field public static final java.lang.String COLUMN_INTERNAL_PROVIDER_FLAG3 = "internal_provider_flag3";
     field public static final java.lang.String COLUMN_INTERNAL_PROVIDER_FLAG4 = "internal_provider_flag4";
     field public static final java.lang.String COLUMN_INTERNAL_PROVIDER_ID = "internal_provider_id";
+    field public static final java.lang.String COLUMN_LOCKED = "locked";
     field public static final java.lang.String COLUMN_NETWORK_AFFILIATION = "network_affiliation";
     field public static final java.lang.String COLUMN_ORIGINAL_NETWORK_ID = "original_network_id";
     field public static final java.lang.String COLUMN_SEARCHABLE = "searchable";
     field public static final java.lang.String COLUMN_SERVICE_ID = "service_id";
     field public static final java.lang.String COLUMN_SERVICE_TYPE = "service_type";
+    field public static final java.lang.String COLUMN_TRANSIENT = "transient";
     field public static final java.lang.String COLUMN_TRANSPORT_STREAM_ID = "transport_stream_id";
     field public static final java.lang.String COLUMN_TYPE = "type";
     field public static final java.lang.String COLUMN_VERSION_NUMBER = "version_number";
@@ -1746,23 +1726,28 @@ package android.support.text.emoji {
 
   public class EmojiCompat {
     method public static android.support.text.emoji.EmojiCompat get();
+    method public int getLoadState();
     method public static boolean handleDeleteSurroundingText(android.view.inputmethod.InputConnection, android.text.Editable, int, int, boolean);
     method public static boolean handleOnKeyDown(android.text.Editable, int, android.view.KeyEvent);
     method public boolean hasEmojiGlyph(java.lang.CharSequence);
     method public boolean hasEmojiGlyph(java.lang.CharSequence, int);
     method public static android.support.text.emoji.EmojiCompat init(android.support.text.emoji.EmojiCompat.Config);
-    method public boolean isInitialized();
     method public java.lang.CharSequence process(java.lang.CharSequence);
     method public java.lang.CharSequence process(java.lang.CharSequence, int, int);
     method public void registerInitCallback(android.support.text.emoji.EmojiCompat.InitCallback);
     method public void unregisterInitCallback(android.support.text.emoji.EmojiCompat.InitCallback);
     field public static final java.lang.String EDITOR_INFO_METAVERSION_KEY = "android.support.text.emoji.emojiCompat_metadataVersion";
     field public static final java.lang.String EDITOR_INFO_REPLACE_ALL_KEY = "android.support.text.emoji.emojiCompat_replaceAll";
+    field public static final int LOAD_STATE_FAILURE = 2; // 0x2
+    field public static final int LOAD_STATE_LOADING = 0; // 0x0
+    field public static final int LOAD_STATE_SUCCESS = 1; // 0x1
   }
 
   public static abstract class EmojiCompat.Config {
     ctor protected EmojiCompat.Config(android.support.text.emoji.EmojiCompat.MetadataLoader);
     method public android.support.text.emoji.EmojiCompat.Config registerInitCallback(android.support.text.emoji.EmojiCompat.InitCallback);
+    method public android.support.text.emoji.EmojiCompat.Config setEmojiSpanIndicatorColor(int);
+    method public android.support.text.emoji.EmojiCompat.Config setEmojiSpanIndicatorEnabled(boolean);
     method public android.support.text.emoji.EmojiCompat.Config setMaxEmojiPerText(int);
     method public android.support.text.emoji.EmojiCompat.Config setReplaceAll(boolean);
     method public android.support.text.emoji.EmojiCompat.Config unregisterInitCallback(android.support.text.emoji.EmojiCompat.InitCallback);
@@ -1854,9 +1839,9 @@ package android.support.text.emoji.widget {
   public final class EmojiTextViewHelper {
     ctor public EmojiTextViewHelper(android.widget.TextView);
     method public android.text.InputFilter[] getFilters(android.text.InputFilter[]);
-    method public android.text.method.TransformationMethod getTransformationMethod(android.text.method.TransformationMethod);
     method public void setAllCaps(boolean);
     method public void updateTransformationMethod();
+    method public android.text.method.TransformationMethod wrapTransformationMethod(android.text.method.TransformationMethod);
   }
 
 }
@@ -1865,6 +1850,7 @@ package android.support.transition {
 
   public class ArcMotion extends android.support.transition.PathMotion {
     ctor public ArcMotion();
+    ctor public ArcMotion(android.content.Context, android.util.AttributeSet);
     method public float getMaximumAngle();
     method public float getMinimumHorizontalAngle();
     method public float getMinimumVerticalAngle();
@@ -1933,11 +1919,13 @@ package android.support.transition {
 
   public abstract class PathMotion {
     ctor public PathMotion();
+    ctor public PathMotion(android.content.Context, android.util.AttributeSet);
     method public abstract android.graphics.Path getPath(float, float, float, float);
   }
 
   public class PatternPathMotion extends android.support.transition.PathMotion {
     ctor public PatternPathMotion();
+    ctor public PatternPathMotion(android.content.Context, android.util.AttributeSet);
     ctor public PatternPathMotion(android.graphics.Path);
     method public android.graphics.Path getPath(float, float, float, float);
     method public android.graphics.Path getPatternPath();
@@ -1953,6 +1941,21 @@ package android.support.transition {
     method public android.view.ViewGroup getSceneRoot();
     method public void setEnterAction(java.lang.Runnable);
     method public void setExitAction(java.lang.Runnable);
+  }
+
+  public class SidePropagation extends android.support.transition.VisibilityPropagation {
+    ctor public SidePropagation();
+    method public long getStartDelay(android.view.ViewGroup, android.support.transition.Transition, android.support.transition.TransitionValues, android.support.transition.TransitionValues);
+    method public void setPropagationSpeed(float);
+    method public void setSide(int);
+  }
+
+  public class Slide extends android.support.transition.Visibility {
+    ctor public Slide();
+    ctor public Slide(int);
+    ctor public Slide(android.content.Context, android.util.AttributeSet);
+    method public int getSlideEdge();
+    method public void setSlideEdge(int);
   }
 
   public abstract class Transition {
@@ -2619,6 +2622,7 @@ package android.support.v17.leanback.app {
 
   public class DetailsFragmentBackgroundController {
     ctor public DetailsFragmentBackgroundController(android.support.v17.leanback.app.DetailsFragment);
+    method public boolean canNavigateToVideoFragment();
     method public void enableParallax();
     method public void enableParallax(android.graphics.drawable.Drawable, android.graphics.drawable.Drawable, android.support.v17.leanback.widget.ParallaxTarget.PropertyValuesHolderTarget);
     method public final android.app.Fragment findOrCreateVideoFragment();
@@ -2626,6 +2630,7 @@ package android.support.v17.leanback.app {
     method public final android.graphics.Bitmap getCoverBitmap();
     method public final android.graphics.drawable.Drawable getCoverDrawable();
     method public final int getParallaxDrawableMaxOffset();
+    method public final android.support.v17.leanback.media.PlaybackGlue getPlaybackGlue();
     method public final int getSolidColor();
     method public android.support.v17.leanback.media.PlaybackGlueHost onCreateGlueHost();
     method public android.app.Fragment onCreateVideoFragment();
@@ -2633,6 +2638,8 @@ package android.support.v17.leanback.app {
     method public final void setParallaxDrawableMaxOffset(int);
     method public final void setSolidColor(int);
     method public void setupVideoPlayback(android.support.v17.leanback.media.PlaybackGlue);
+    method public final void switchToRows();
+    method public final void switchToVideo();
   }
 
   public class DetailsSupportFragment extends android.support.v17.leanback.app.BrandedSupportFragment {
@@ -2660,6 +2667,7 @@ package android.support.v17.leanback.app {
 
   public class DetailsSupportFragmentBackgroundController {
     ctor public DetailsSupportFragmentBackgroundController(android.support.v17.leanback.app.DetailsSupportFragment);
+    method public boolean canNavigateToVideoSupportFragment();
     method public void enableParallax();
     method public void enableParallax(android.graphics.drawable.Drawable, android.graphics.drawable.Drawable, android.support.v17.leanback.widget.ParallaxTarget.PropertyValuesHolderTarget);
     method public final android.support.v4.app.Fragment findOrCreateVideoSupportFragment();
@@ -2667,6 +2675,7 @@ package android.support.v17.leanback.app {
     method public final android.graphics.Bitmap getCoverBitmap();
     method public final android.graphics.drawable.Drawable getCoverDrawable();
     method public final int getParallaxDrawableMaxOffset();
+    method public final android.support.v17.leanback.media.PlaybackGlue getPlaybackGlue();
     method public final int getSolidColor();
     method public android.support.v17.leanback.media.PlaybackGlueHost onCreateGlueHost();
     method public android.support.v4.app.Fragment onCreateVideoSupportFragment();
@@ -2674,6 +2683,8 @@ package android.support.v17.leanback.app {
     method public final void setParallaxDrawableMaxOffset(int);
     method public final void setSolidColor(int);
     method public void setupVideoPlayback(android.support.v17.leanback.media.PlaybackGlue);
+    method public final void switchToRows();
+    method public final void switchToVideo();
   }
 
   public class ErrorFragment extends android.support.v17.leanback.app.BrandedFragment {
@@ -3396,7 +3407,7 @@ package android.support.v17.leanback.media {
     ctor public PlaybackControlGlue(android.content.Context, int[], int[]);
     method public void enableProgressUpdating(boolean);
     method public android.support.v17.leanback.widget.PlaybackControlsRow getControlsRow();
-    method public android.support.v17.leanback.widget.PlaybackControlsRowPresenter getControlsRowPresenter();
+    method public deprecated android.support.v17.leanback.widget.PlaybackControlsRowPresenter getControlsRowPresenter();
     method public abstract int getCurrentPosition();
     method public abstract int getCurrentSpeedId();
     method public int[] getFastForwardSpeeds();
@@ -3404,6 +3415,7 @@ package android.support.v17.leanback.media {
     method public abstract int getMediaDuration();
     method public abstract java.lang.CharSequence getMediaSubtitle();
     method public abstract java.lang.CharSequence getMediaTitle();
+    method public android.support.v17.leanback.widget.PlaybackRowPresenter getPlaybackRowPresenter();
     method public int[] getRewindSpeeds();
     method public abstract long getSupportedActions();
     method public int getUpdatePeriod();
@@ -3420,8 +3432,9 @@ package android.support.v17.leanback.media {
     method public void play(int);
     method public final void play();
     method public void setControlsRow(android.support.v17.leanback.widget.PlaybackControlsRow);
-    method public void setControlsRowPresenter(android.support.v17.leanback.widget.PlaybackControlsRowPresenter);
+    method public deprecated void setControlsRowPresenter(android.support.v17.leanback.widget.PlaybackControlsRowPresenter);
     method public void setFadingEnabled(boolean);
+    method public void setPlaybackRowPresenter(android.support.v17.leanback.widget.PlaybackRowPresenter);
     method public void updateProgress();
     field public static final int ACTION_CUSTOM_LEFT_FIRST = 1; // 0x1
     field public static final int ACTION_CUSTOM_RIGHT_FIRST = 4096; // 0x1000
@@ -5342,7 +5355,6 @@ package android.support.v4.app {
     method public final android.support.v4.app.FragmentManager getFragmentManager();
     method public final java.lang.Object getHost();
     method public final int getId();
-    method public android.view.LayoutInflater getLayoutInflater(android.os.Bundle);
     method public android.support.v4.app.LoaderManager getLoaderManager();
     method public final android.support.v4.app.Fragment getParentFragment();
     method public java.lang.Object getReenterTransition();
@@ -5386,6 +5398,7 @@ package android.support.v4.app {
     method public void onDestroyOptionsMenu();
     method public void onDestroyView();
     method public void onDetach();
+    method public android.view.LayoutInflater onGetLayoutInflater(android.os.Bundle);
     method public void onHiddenChanged(boolean);
     method public void onInflate(android.content.Context, android.util.AttributeSet, android.os.Bundle);
     method public deprecated void onInflate(android.app.Activity, android.util.AttributeSet, android.os.Bundle);
@@ -5545,7 +5558,7 @@ package android.support.v4.app {
     method public abstract android.support.v4.app.FragmentManager.BackStackEntry getBackStackEntryAt(int);
     method public abstract int getBackStackEntryCount();
     method public abstract android.support.v4.app.Fragment getFragment(android.os.Bundle, java.lang.String);
-    method public abstract java.util.List<android.support.v4.app.Fragment> getFragments();
+    method public abstract java.util.Collection<android.support.v4.app.Fragment> getFragments();
     method public abstract android.support.v4.app.Fragment getPrimaryNavigationFragment();
     method public abstract boolean isDestroyed();
     method public abstract boolean isStateSaved();
@@ -5847,7 +5860,8 @@ package android.support.v4.app {
   }
 
   public static class NotificationCompat.Builder {
-    ctor public NotificationCompat.Builder(android.content.Context);
+    ctor public NotificationCompat.Builder(android.content.Context, java.lang.String);
+    ctor public deprecated NotificationCompat.Builder(android.content.Context);
     method public android.support.v4.app.NotificationCompat.Builder addAction(int, java.lang.CharSequence, android.app.PendingIntent);
     method public android.support.v4.app.NotificationCompat.Builder addAction(android.support.v4.app.NotificationCompat.Action);
     method public android.support.v4.app.NotificationCompat.Builder addExtras(android.os.Bundle);
@@ -6598,6 +6612,49 @@ package android.support.v4.math {
 
 package android.support.v4.media {
 
+  public class AudioAttributesCompat {
+    method public int getContentType();
+    method public int getFlags();
+    method public int getLegacyStreamType();
+    method public int getUsage();
+    method public int getVolumeControlStream();
+    method public java.lang.Object unwrap();
+    method public static android.support.v4.media.AudioAttributesCompat wrap(java.lang.Object);
+    field public static final int CONTENT_TYPE_MOVIE = 3; // 0x3
+    field public static final int CONTENT_TYPE_MUSIC = 2; // 0x2
+    field public static final int CONTENT_TYPE_SONIFICATION = 4; // 0x4
+    field public static final int CONTENT_TYPE_SPEECH = 1; // 0x1
+    field public static final int CONTENT_TYPE_UNKNOWN = 0; // 0x0
+    field public static final int FLAG_AUDIBILITY_ENFORCED = 1; // 0x1
+    field public static final int FLAG_HW_AV_SYNC = 16; // 0x10
+    field public static final int USAGE_ALARM = 4; // 0x4
+    field public static final int USAGE_ASSISTANCE_ACCESSIBILITY = 11; // 0xb
+    field public static final int USAGE_ASSISTANCE_NAVIGATION_GUIDANCE = 12; // 0xc
+    field public static final int USAGE_ASSISTANCE_SONIFICATION = 13; // 0xd
+    field public static final int USAGE_ASSISTANT = 16; // 0x10
+    field public static final int USAGE_GAME = 14; // 0xe
+    field public static final int USAGE_MEDIA = 1; // 0x1
+    field public static final int USAGE_NOTIFICATION = 5; // 0x5
+    field public static final int USAGE_NOTIFICATION_COMMUNICATION_DELAYED = 9; // 0x9
+    field public static final int USAGE_NOTIFICATION_COMMUNICATION_INSTANT = 8; // 0x8
+    field public static final int USAGE_NOTIFICATION_COMMUNICATION_REQUEST = 7; // 0x7
+    field public static final int USAGE_NOTIFICATION_EVENT = 10; // 0xa
+    field public static final int USAGE_NOTIFICATION_RINGTONE = 6; // 0x6
+    field public static final int USAGE_UNKNOWN = 0; // 0x0
+    field public static final int USAGE_VOICE_COMMUNICATION = 2; // 0x2
+    field public static final int USAGE_VOICE_COMMUNICATION_SIGNALLING = 3; // 0x3
+  }
+
+  public static class AudioAttributesCompat.Builder {
+    ctor public AudioAttributesCompat.Builder();
+    ctor public AudioAttributesCompat.Builder(android.support.v4.media.AudioAttributesCompat);
+    method public android.support.v4.media.AudioAttributesCompat build();
+    method public android.support.v4.media.AudioAttributesCompat.Builder setContentType(int);
+    method public android.support.v4.media.AudioAttributesCompat.Builder setFlags(int);
+    method public android.support.v4.media.AudioAttributesCompat.Builder setLegacyStreamType(int);
+    method public android.support.v4.media.AudioAttributesCompat.Builder setUsage(int);
+  }
+
   public final class MediaBrowserCompat {
     ctor public MediaBrowserCompat(android.content.Context, android.content.ComponentName, android.support.v4.media.MediaBrowserCompat.ConnectionCallback, android.os.Bundle);
     method public void connect();
@@ -6812,74 +6869,6 @@ package android.support.v4.media {
     field public static final int RATING_NONE = 0; // 0x0
     field public static final int RATING_PERCENTAGE = 6; // 0x6
     field public static final int RATING_THUMB_UP_DOWN = 2; // 0x2
-  }
-
-  public abstract deprecated class TransportController {
-    ctor public deprecated TransportController();
-    method public abstract deprecated int getBufferPercentage();
-    method public abstract deprecated long getCurrentPosition();
-    method public abstract deprecated long getDuration();
-    method public abstract deprecated int getTransportControlFlags();
-    method public abstract deprecated boolean isPlaying();
-    method public abstract deprecated void pausePlaying();
-    method public abstract deprecated void registerStateListener(android.support.v4.media.TransportStateListener);
-    method public abstract deprecated void seekTo(long);
-    method public abstract deprecated void startPlaying();
-    method public abstract deprecated void stopPlaying();
-    method public abstract deprecated void unregisterStateListener(android.support.v4.media.TransportStateListener);
-  }
-
-  public deprecated class TransportMediator extends android.support.v4.media.TransportController {
-    ctor public deprecated TransportMediator(android.app.Activity, android.support.v4.media.TransportPerformer);
-    ctor public deprecated TransportMediator(android.view.View, android.support.v4.media.TransportPerformer);
-    method public deprecated void destroy();
-    method public deprecated boolean dispatchKeyEvent(android.view.KeyEvent);
-    method public deprecated int getBufferPercentage();
-    method public deprecated long getCurrentPosition();
-    method public deprecated long getDuration();
-    method public deprecated java.lang.Object getRemoteControlClient();
-    method public deprecated int getTransportControlFlags();
-    method public deprecated boolean isPlaying();
-    method public deprecated void pausePlaying();
-    method public deprecated void refreshState();
-    method public deprecated void registerStateListener(android.support.v4.media.TransportStateListener);
-    method public deprecated void seekTo(long);
-    method public deprecated void startPlaying();
-    method public deprecated void stopPlaying();
-    method public deprecated void unregisterStateListener(android.support.v4.media.TransportStateListener);
-    field public static final deprecated int FLAG_KEY_MEDIA_FAST_FORWARD = 64; // 0x40
-    field public static final deprecated int FLAG_KEY_MEDIA_NEXT = 128; // 0x80
-    field public static final deprecated int FLAG_KEY_MEDIA_PAUSE = 16; // 0x10
-    field public static final deprecated int FLAG_KEY_MEDIA_PLAY = 4; // 0x4
-    field public static final deprecated int FLAG_KEY_MEDIA_PLAY_PAUSE = 8; // 0x8
-    field public static final deprecated int FLAG_KEY_MEDIA_PREVIOUS = 1; // 0x1
-    field public static final deprecated int FLAG_KEY_MEDIA_REWIND = 2; // 0x2
-    field public static final deprecated int FLAG_KEY_MEDIA_STOP = 32; // 0x20
-    field public static final deprecated int KEYCODE_MEDIA_PAUSE = 127; // 0x7f
-    field public static final deprecated int KEYCODE_MEDIA_PLAY = 126; // 0x7e
-    field public static final deprecated int KEYCODE_MEDIA_RECORD = 130; // 0x82
-  }
-
-  public abstract deprecated class TransportPerformer {
-    ctor public deprecated TransportPerformer();
-    method public deprecated void onAudioFocusChange(int);
-    method public deprecated int onGetBufferPercentage();
-    method public abstract deprecated long onGetCurrentPosition();
-    method public abstract deprecated long onGetDuration();
-    method public deprecated int onGetTransportControlFlags();
-    method public abstract deprecated boolean onIsPlaying();
-    method public deprecated boolean onMediaButtonDown(int, android.view.KeyEvent);
-    method public deprecated boolean onMediaButtonUp(int, android.view.KeyEvent);
-    method public abstract deprecated void onPause();
-    method public abstract deprecated void onSeekTo(long);
-    method public abstract deprecated void onStart();
-    method public abstract deprecated void onStop();
-  }
-
-  public deprecated class TransportStateListener {
-    ctor public deprecated TransportStateListener();
-    method public deprecated void onPlayingChanged(android.support.v4.media.TransportController);
-    method public deprecated void onTransportControlsChanged(android.support.v4.media.TransportController);
   }
 
   public abstract class VolumeProviderCompat {
@@ -7398,7 +7387,7 @@ package android.support.v4.text {
   public final class TextUtilsCompat {
     method public static int getLayoutDirectionFromLocale(java.util.Locale);
     method public static java.lang.String htmlEncode(java.lang.String);
-    field public static final java.util.Locale ROOT;
+    field public static final deprecated java.util.Locale ROOT;
   }
 
 }
@@ -8957,6 +8946,13 @@ package android.support.v4.widget {
     field public static final int INVALID_ID = -2147483648; // 0x80000000
   }
 
+  public class ImageViewCompat {
+    method public static android.content.res.ColorStateList getImageTintList(android.widget.ImageView);
+    method public static android.graphics.PorterDuff.Mode getImageTintMode(android.widget.ImageView);
+    method public static void setImageTintList(android.widget.ImageView, android.content.res.ColorStateList);
+    method public static void setImageTintMode(android.widget.ImageView, android.graphics.PorterDuff.Mode);
+  }
+
   public final class ListPopupWindowCompat {
     method public static android.view.View.OnTouchListener createDragToOpenListener(java.lang.Object, android.view.View);
   }
@@ -9196,13 +9192,23 @@ package android.support.v4.widget {
   }
 
   public final class TextViewCompat {
+    method public static int getAutoSizeMaxTextSize(android.widget.TextView);
+    method public static int getAutoSizeMinTextSize(android.widget.TextView);
+    method public static int getAutoSizeStepGranularity(android.widget.TextView);
+    method public static int[] getAutoSizeTextAvailableSizes(android.widget.TextView);
+    method public static int getAutoSizeTextType(android.widget.TextView);
     method public static android.graphics.drawable.Drawable[] getCompoundDrawablesRelative(android.widget.TextView);
     method public static int getMaxLines(android.widget.TextView);
     method public static int getMinLines(android.widget.TextView);
+    method public static void setAutoSizeTextTypeUniformWithConfiguration(android.widget.TextView, int, int, int, int) throws java.lang.IllegalArgumentException;
+    method public static void setAutoSizeTextTypeUniformWithPresetSizes(android.widget.TextView, int[], int) throws java.lang.IllegalArgumentException;
+    method public static void setAutoSizeTextTypeWithDefaults(android.widget.TextView, int);
     method public static void setCompoundDrawablesRelative(android.widget.TextView, android.graphics.drawable.Drawable, android.graphics.drawable.Drawable, android.graphics.drawable.Drawable, android.graphics.drawable.Drawable);
     method public static void setCompoundDrawablesRelativeWithIntrinsicBounds(android.widget.TextView, android.graphics.drawable.Drawable, android.graphics.drawable.Drawable, android.graphics.drawable.Drawable, android.graphics.drawable.Drawable);
     method public static void setCompoundDrawablesRelativeWithIntrinsicBounds(android.widget.TextView, int, int, int, int);
     method public static void setTextAppearance(android.widget.TextView, int);
+    field public static final int AUTO_SIZE_TEXT_TYPE_NONE = 0; // 0x0
+    field public static final int AUTO_SIZE_TEXT_TYPE_UNIFORM = 1; // 0x1
   }
 
   public abstract interface TintableCompoundButton {
