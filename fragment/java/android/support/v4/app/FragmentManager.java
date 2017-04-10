@@ -60,7 +60,6 @@ import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -327,14 +326,17 @@ public abstract class FragmentManager {
     public abstract Fragment getFragment(Bundle bundle, String key);
 
     /**
-     * Get a collection of all fragments that are currently added to the FragmentManager.
+     * Get a list of all fragments that are currently added to the FragmentManager.
      * This may include those that are hidden as well as those that are shown.
      * This will not include any fragments only in the back stack, or fragments that
      * are detached or removed.
+     * <p>
+     * The order of the fragments in the list is the order in which they were
+     * added or attached.
      *
-     * @return A collection of all fragments that are added to the FragmentManager.
+     * @return A list of all fragments that are added to the FragmentManager.
      */
-    public abstract Collection<Fragment> getFragments();
+    public abstract List<Fragment> getFragments();
 
     /**
      * Save the current instance state of the given Fragment.  This can be
@@ -735,6 +737,9 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
     // Postponed transactions.
     ArrayList<StartEnterTransitionListener> mPostponedTransactions;
 
+    // Saved FragmentManagerNonConfig during saveAllState() and cleared in noteStateNotSaved()
+    FragmentManagerNonConfig mSavedNonConfig;
+
     Runnable mExecCommit = new Runnable() {
         @Override
         public void run() {
@@ -921,12 +926,12 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
     }
 
     @Override
-    public Collection<Fragment> getFragments() {
+    public List<Fragment> getFragments() {
         if (mAdded == null) {
             return Collections.EMPTY_LIST;
         }
         synchronized (mAdded) {
-            return (Collection<Fragment>) mAdded.clone();
+            return (List<Fragment>) mAdded.clone();
         }
     }
 
@@ -1246,8 +1251,13 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             newState = Fragment.CREATED;
         }
         if (f.mRemoving && newState > f.mState) {
-            // While removing a fragment, we can't change it to a higher state.
-            newState = f.mState;
+            if (f.mState == Fragment.INITIALIZING && f.isInBackStack()) {
+                // Allow the fragment to be created so that it can be saved later.
+                newState = Fragment.CREATED;
+            } else {
+                // While removing a fragment, we can't change it to a higher state.
+                newState = f.mState;
+            }
         }
         // Defer start if requested; don't allow it to move to STARTED or higher
         // if it's not already started.
@@ -2638,6 +2648,35 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
     }
 
     FragmentManagerNonConfig retainNonConfig() {
+        setRetaining(mSavedNonConfig);
+        return mSavedNonConfig;
+    }
+
+    /**
+     * Recurse the FragmentManagerNonConfig fragments and set the mRetaining to true. This
+     * was previously done while saving the non-config state, but that has been moved to
+     * {@link #saveNonConfig()} called from {@link #saveAllState()}. If mRetaining is set too
+     * early, the fragment won't be destroyed when the FragmentManager is destroyed.
+     */
+    private static void setRetaining(FragmentManagerNonConfig nonConfig) {
+        if (nonConfig == null) {
+            return;
+        }
+        List<Fragment> fragments = nonConfig.getFragments();
+        if (fragments != null) {
+            for (Fragment fragment : fragments) {
+                fragment.mRetaining = true;
+            }
+        }
+        List<FragmentManagerNonConfig> children = nonConfig.getChildNonConfigs();
+        if (children != null) {
+            for (FragmentManagerNonConfig child : children) {
+                setRetaining(child);
+            }
+        }
+    }
+
+    void saveNonConfig() {
         ArrayList<Fragment> fragments = null;
         ArrayList<FragmentManagerNonConfig> childFragments = null;
         if (mActive != null) {
@@ -2649,13 +2688,13 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                             fragments = new ArrayList<Fragment>();
                         }
                         fragments.add(f);
-                        f.mRetaining = true;
                         f.mTargetIndex = f.mTarget != null ? f.mTarget.mIndex : -1;
                         if (DEBUG) Log.v(TAG, "retainNonConfig: keeping retained " + f);
                     }
                     boolean addedChild = false;
                     if (f.mChildFragmentManager != null) {
-                        FragmentManagerNonConfig child = f.mChildFragmentManager.retainNonConfig();
+                        f.mChildFragmentManager.saveNonConfig();
+                        FragmentManagerNonConfig child = f.mChildFragmentManager.mSavedNonConfig;
                         if (child != null) {
                             if (childFragments == null) {
                                 childFragments = new ArrayList<FragmentManagerNonConfig>();
@@ -2674,9 +2713,10 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             }
         }
         if (fragments == null && childFragments == null) {
-            return null;
+            mSavedNonConfig = null;
+        } else {
+            mSavedNonConfig = new FragmentManagerNonConfig(fragments, childFragments);
         }
-        return new FragmentManagerNonConfig(fragments, childFragments);
     }
 
     void saveFragmentViewState(Fragment f) {
@@ -2737,6 +2777,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         execPendingActions();
 
         mStateSaved = true;
+        mSavedNonConfig = null;
 
         if (mActive == null || mActive.size() <= 0) {
             return null;
@@ -2837,6 +2878,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             fms.mPrimaryNavActiveIndex = mPrimaryNav.mIndex;
         }
         fms.mNextFragmentIndex = mNextFragmentIndex;
+        saveNonConfig();
         return fms;
     }
 
@@ -2992,7 +3034,15 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
     }
 
     public void noteStateNotSaved() {
+        mSavedNonConfig = null;
         mStateSaved = false;
+        final int addedCount = mAdded == null ? 0 : mAdded.size();
+        for (int i = 0; i < addedCount; i++) {
+            Fragment fragment = mAdded.get(i);
+            if (fragment != null) {
+                fragment.noteStateNotSaved();
+            }
+        }
     }
 
     public void dispatchCreate() {

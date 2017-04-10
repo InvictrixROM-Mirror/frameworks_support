@@ -39,7 +39,7 @@ was added (compatAdded). Updated when the script is executed.
 After execution the following files are generated if they don't exist otherwise, they are updated:
 
 - ../tests/assets/NotoColorEmojiCompat.ttf
-- ../../bundled-typeface/assets/NotoColorEmojiCompat.ttf
+- ../../bundled/assets/NotoColorEmojiCompat.ttf
 - ../src/android/support/text/emoji/flatbuffer/*
 - data/emoji_metadata.txt
 """
@@ -83,7 +83,7 @@ NEW_FONT_NAME = 'NotoColorEmojiCompat.ttf'
 # main directories where output files are created
 EMOJI_CORE_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, os.pardir))
 BUNDLED_MODULE_DIR = os.path.abspath(
-    os.path.join(SCRIPT_DIR, os.pardir, os.pardir, 'bundled-typeface'))
+    os.path.join(SCRIPT_DIR, os.pardir, os.pardir, 'bundled'))
 SUPPORT_ROOT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, os.pardir, os.pardir, os.pardir))
 
 # remapped font output file under test directory
@@ -536,10 +536,10 @@ class EmojiFontCreator(object):
         # returned is either default or 1 greater than the largest id in previous data
         self.emoji_id = load_previous_metadata(self.emoji_data_map)
 
-        with contextlib.closing(ttLib.TTFont(self.font_path)) as ttf:
-            # set the font revision to be the METADATA_VERSION
-            ttf['head'].fontRevision = METADATA_VERSION
-
+        # recalcTimestamp parameter will keep the modified field same as the original font. Changing
+        # the modified field in the font causes the font ttf file to change, which makes it harder
+        # to understand if something really changed in the font.
+        with contextlib.closing(ttLib.TTFont(self.font_path, recalcTimestamp=False)) as ttf:
             # read image size data
             self.read_cbdt(ttf)
 
@@ -572,7 +572,7 @@ class EmojiFontCreator(object):
             # save the new font
             ttf.save(TEST_FONT_FILE_PATH)
 
-            # copy to bundled-typeface project
+            # copy to bundled project
             makedirs_if_not_exists(BUNDLED_ASSET_DIR)
             shutil.copy(TEST_FONT_FILE_PATH, BUNDLED_ASSET_PATH)
 

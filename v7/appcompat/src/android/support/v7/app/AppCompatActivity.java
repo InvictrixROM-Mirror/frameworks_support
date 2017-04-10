@@ -31,6 +31,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
+import android.support.v4.os.BuildCompat;
 import android.support.v7.view.ActionMode;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.VectorEnabledTintResources;
@@ -63,7 +64,6 @@ public class AppCompatActivity extends FragmentActivity implements AppCompatCall
 
     private AppCompatDelegate mDelegate;
     private int mThemeId = 0;
-    private boolean mEatKeyUpEvent;
     private Resources mResources;
 
     @Override
@@ -186,7 +186,7 @@ public class AppCompatActivity extends FragmentActivity implements AppCompatCall
     }
 
     @Override
-    public View findViewById(@IdRes int id) {
+    public <T extends View> T findViewById(@IdRes int id) {
         return getDelegate().findViewById(id);
     }
 
@@ -523,20 +523,8 @@ public class AppCompatActivity extends FragmentActivity implements AppCompatCall
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        if (event.isCtrlPressed()
-                && event.getUnicodeChar(event.getMetaState() & ~KeyEvent.META_CTRL_MASK) == '<') {
-            // Capture the Control-< and send focus to the ActionBar
-            final int action = event.getAction();
-            if (action == KeyEvent.ACTION_DOWN) {
-                final ActionBar actionBar = getSupportActionBar();
-                if (actionBar != null && actionBar.isShowing() && actionBar.requestFocus()) {
-                    mEatKeyUpEvent = true;
-                    return true;
-                }
-            } else if (action == KeyEvent.ACTION_UP && mEatKeyUpEvent) {
-                mEatKeyUpEvent = false;
-                return true;
-            }
+        if (getDelegate().checkActionBarFocusKey(event)) {
+            return true;
         }
         // Let support action bars open menus in response to the menu key prioritized over
         // the window handling it
@@ -558,12 +546,13 @@ public class AppCompatActivity extends FragmentActivity implements AppCompatCall
     }
 
     /**
-     * KeyEvents with non-default modifiers are not dispatched to menu's performShortcut in API 24
+     * KeyEvents with non-default modifiers are not dispatched to menu's performShortcut in API 25
      * or lower. Here, we check if the keypress corresponds to a menuitem's shortcut combination
      * and perform the corresponding action.
      */
     private boolean performMenuItemShortcut(int keycode, KeyEvent event) {
-        if (!KeyEvent.metaStateHasNoModifiers(event.getMetaState())
+        if (!BuildCompat.isAtLeastO() && !event.isCtrlPressed()
+                && !KeyEvent.metaStateHasNoModifiers(event.getMetaState())
                 && event.getRepeatCount() == 0
                 && !KeyEvent.isModifierKey(event.getKeyCode())) {
             final Window currentWindow = getWindow();

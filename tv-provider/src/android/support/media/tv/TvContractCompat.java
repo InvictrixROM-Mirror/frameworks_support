@@ -27,6 +27,7 @@ import android.media.tv.TvContract;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.BaseColumns;
+import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RestrictTo;
@@ -529,9 +530,11 @@ public final class TvContractCompat {
     }
 
     /**
-     * Common base for the tables of TV programs.
+     * Common columns for the tables of TV programs.
+     * @hide
      */
-    public interface BaseProgramColumns extends BaseTvColumns {
+    @RestrictTo(LIBRARY_GROUP)
+    interface ProgramColumns {
         /**
          * The title of this TV program.
          *
@@ -797,12 +800,14 @@ public final class TvContractCompat {
     }
 
     /**
-     * Common base for the tables of preview programs.
+     * Common columns for the tables of preview programs.
+     * @hide
      */
-    public interface BasePreviewProgramColumns extends BaseProgramColumns {
+    @RestrictTo(LIBRARY_GROUP)
+    public interface PreviewProgramColumns {
 
         /** @hide */
-        @StringDef({
+        @IntDef({
                 TYPE_MOVIE,
                 TYPE_TV_SERIES,
                 TYPE_TV_SEASON,
@@ -825,93 +830,94 @@ public final class TvContractCompat {
          *
          * @see #COLUMN_TYPE
          */
-        String TYPE_MOVIE = "TYPE_MOVIE";
+        int TYPE_MOVIE = 0;
 
         /**
          * The program type for TV series.
          *
          * @see #COLUMN_TYPE
          */
-        String TYPE_TV_SERIES = "TYPE_TV_SERIES";
+        int TYPE_TV_SERIES = 1;
 
         /**
          * The program type for TV season.
          *
          * @see #COLUMN_TYPE
          */
-        String TYPE_TV_SEASON = "TYPE_TV_SEASON";
+        int TYPE_TV_SEASON = 2;
 
         /**
          * The program type for TV episode.
          *
          * @see #COLUMN_TYPE
          */
-        String TYPE_TV_EPISODE = "TYPE_TV_EPISODE";
+        int TYPE_TV_EPISODE = 3;
 
         /**
          * The program type for clip.
          *
          * @see #COLUMN_TYPE
          */
-        String TYPE_CLIP = "TYPE_CLIP";
+        int TYPE_CLIP = 4;
 
         /**
          * The program type for event.
          *
          * @see #COLUMN_TYPE
          */
-        String TYPE_EVENT = "TYPE_EVENT";
+        int TYPE_EVENT = 5;
 
         /**
          * The program type for channel.
          *
          * @see #COLUMN_TYPE
          */
-        String TYPE_CHANNEL = "TYPE_CHANNEL";
+        int TYPE_CHANNEL = 6;
 
         /**
          * The program type for track.
          *
          * @see #COLUMN_TYPE
          */
-        String TYPE_TRACK = "TYPE_TRACK";
+        int TYPE_TRACK = 7;
 
         /**
          * The program type for album.
          *
          * @see #COLUMN_TYPE
          */
-        String TYPE_ALBUM = "TYPE_ALBUM";
+        int TYPE_ALBUM = 8;
 
         /**
          * The program type for artist.
          *
          * @see #COLUMN_TYPE
          */
-        String TYPE_ARTIST = "TYPE_ARTIST";
+        int TYPE_ARTIST = 9;
 
         /**
          * The program type for playlist.
          *
          * @see #COLUMN_TYPE
          */
-        String TYPE_PLAYLIST = "TYPE_PLAYLIST";
+        int TYPE_PLAYLIST = 10;
 
         /**
          * The program type for station.
          *
          * @see #COLUMN_TYPE
          */
-        String TYPE_STATION = "TYPE_STATION";
+        int TYPE_STATION = 11;
 
         /** @hide */
-        @StringDef({
+        @IntDef({
                 ASPECT_RATIO_16_9,
                 ASPECT_RATIO_3_2,
                 ASPECT_RATIO_1_1,
                 ASPECT_RATIO_2_3,
         })
         @Retention(RetentionPolicy.SOURCE)
+        @RestrictTo(LIBRARY_GROUP)
         public @interface AspectRatio {}
 
         /**
@@ -920,7 +926,7 @@ public final class TvContractCompat {
          * @see #COLUMN_POSTER_ART_ASPECT_RATIO
          * @see #COLUMN_THUMBNAIL_ASPECT_RATIO
          */
-        String ASPECT_RATIO_16_9 = "ASPECT_RATIO_16_9";
+        int ASPECT_RATIO_16_9 = 0;
 
         /**
          * The aspect ratio for 3:2.
@@ -928,7 +934,7 @@ public final class TvContractCompat {
          * @see #COLUMN_POSTER_ART_ASPECT_RATIO
          * @see #COLUMN_THUMBNAIL_ASPECT_RATIO
          */
-        String ASPECT_RATIO_3_2 = "ASPECT_RATIO_3_2";
+        int ASPECT_RATIO_3_2 = 1;
 
         /**
          * The aspect ratio for 1:1.
@@ -936,7 +942,7 @@ public final class TvContractCompat {
          * @see #COLUMN_POSTER_ART_ASPECT_RATIO
          * @see #COLUMN_THUMBNAIL_ASPECT_RATIO
          */
-        String ASPECT_RATIO_1_1 = "ASPECT_RATIO_1_1";
+        int ASPECT_RATIO_1_1 = 2;
 
         /**
          * The aspect ratio for 2:3.
@@ -944,15 +950,16 @@ public final class TvContractCompat {
          * @see #COLUMN_POSTER_ART_ASPECT_RATIO
          * @see #COLUMN_THUMBNAIL_ASPECT_RATIO
          */
-        String ASPECT_RATIO_2_3 = "ASPECT_RATIO_2_3";
+        int ASPECT_RATIO_2_3 = 3;
 
         /** @hide */
-        @StringDef({
+        @IntDef({
                 AVAILABILITY_AVAILABLE,
                 AVAILABILITY_FREE_WITH_SUBSCRIPTION,
                 AVAILABILITY_PAID_CONTENT,
         })
         @Retention(RetentionPolicy.SOURCE)
+        @RestrictTo(LIBRARY_GROUP)
         public @interface Availability {}
 
         /**
@@ -960,15 +967,14 @@ public final class TvContractCompat {
          *
          * @see #COLUMN_AVAILABILITY
          */
-        String AVAILABILITY_AVAILABLE = "AVAILABILITY_AVAILABLE";
+        int AVAILABILITY_AVAILABLE = 0;
 
         /**
          * The availability for "free with subscription".
          *
          * @see #COLUMN_AVAILABILITY
          */
-        String AVAILABILITY_FREE_WITH_SUBSCRIPTION =
-                "AVAILABILITY_FREE_WITH_SUBSCRIPTION";
+        int AVAILABILITY_FREE_WITH_SUBSCRIPTION = 1;
 
         /**
          * The availability for "paid content, either to-own or rental
@@ -976,16 +982,16 @@ public final class TvContractCompat {
          *
          * @see #COLUMN_AVAILABILITY
          */
-        String AVAILABILITY_PAID_CONTENT = "AVAILABILITY_PAID_CONTENT";
+        int AVAILABILITY_PAID_CONTENT = 2;
 
         /** @hide */
-        @StringDef({
+        @IntDef({
+                INTERACTION_TYPE_VIEWS,
                 INTERACTION_TYPE_LISTENS,
                 INTERACTION_TYPE_FOLLOWERS,
                 INTERACTION_TYPE_FANS,
                 INTERACTION_TYPE_LIKES,
                 INTERACTION_TYPE_THUMBS,
-                INTERACTION_TYPE_VIEWS,
                 INTERACTION_TYPE_VIEWERS,
         })
         @Retention(RetentionPolicy.SOURCE)
@@ -993,56 +999,56 @@ public final class TvContractCompat {
         public @interface InteractionType {}
 
         /**
+         * The interaction type for "views".
+         *
+         * @see #COLUMN_INTERACTION_TYPE
+         */
+        int INTERACTION_TYPE_VIEWS = 0;
+
+        /**
          * The interaction type for "listens".
          *
          * @see #COLUMN_INTERACTION_TYPE
          */
-        String INTERACTION_TYPE_LISTENS = "INTERACTION_TYPE_LISTENS";
+        int INTERACTION_TYPE_LISTENS = 1;
 
         /**
          * The interaction type for "followers".
          *
          * @see #COLUMN_INTERACTION_TYPE
          */
-        String INTERACTION_TYPE_FOLLOWERS = "INTERACTION_TYPE_FOLLOWERS";
+        int INTERACTION_TYPE_FOLLOWERS = 2;
 
         /**
          * The interaction type for "fans".
          *
          * @see #COLUMN_INTERACTION_TYPE
          */
-        String INTERACTION_TYPE_FANS = "INTERACTION_TYPE_FANS";
+        int INTERACTION_TYPE_FANS = 3;
 
         /**
          * The interaction type for "likes".
          *
          * @see #COLUMN_INTERACTION_TYPE
          */
-        String INTERACTION_TYPE_LIKES = "INTERACTION_TYPE_LIKES";
+        int INTERACTION_TYPE_LIKES = 4;
 
         /**
          * The interaction type for "thumbs".
          *
          * @see #COLUMN_INTERACTION_TYPE
          */
-        String INTERACTION_TYPE_THUMBS = "INTERACTION_TYPE_THUMBS";
-
-        /**
-         * The interaction type for "views".
-         *
-         * @see #COLUMN_INTERACTION_TYPE
-         */
-        String INTERACTION_TYPE_VIEWS = "INTERACTION_TYPE_VIEWS";
+        int INTERACTION_TYPE_THUMBS = 5;
 
         /**
          * The interaction type for "viewers".
          *
          * @see #COLUMN_INTERACTION_TYPE
          */
-        String INTERACTION_TYPE_VIEWERS = "INTERACTION_TYPE_VIEWERS";
+        int INTERACTION_TYPE_VIEWERS = 6;
 
         /** @hide */
-        @StringDef({
+        @IntDef({
                 REVIEW_RATING_STYLE_STARS,
                 REVIEW_RATING_STYLE_THUMBS_UP_DOWN,
                 REVIEW_RATING_STYLE_PERCENTAGE,
@@ -1056,23 +1062,21 @@ public final class TvContractCompat {
          *
          * @see #COLUMN_REVIEW_RATING_STYLE
          */
-        String REVIEW_RATING_STYLE_STARS = "REVIEW_RATING_STYLE_STARS";
+        int REVIEW_RATING_STYLE_STARS = 0;
 
         /**
          * The review rating style for thumbs-up and thumbs-down rating.
          *
          * @see #COLUMN_REVIEW_RATING_STYLE
          */
-        String REVIEW_RATING_STYLE_THUMBS_UP_DOWN =
-                "REVIEW_RATING_STYLE_THUMBS_UP_DOWN";
+        int REVIEW_RATING_STYLE_THUMBS_UP_DOWN = 1;
 
         /**
          * The review rating style for 0 to 100 point system.
          *
          * @see #COLUMN_REVIEW_RATING_STYLE
          */
-        String REVIEW_RATING_STYLE_PERCENTAGE =
-                "REVIEW_RATING_STYLE_PERCENTAGE";
+        int REVIEW_RATING_STYLE_PERCENTAGE = 2;
 
         /**
          * The type of this program content.
@@ -1094,7 +1098,7 @@ public final class TvContractCompat {
          * <p>This is a required field if the program is from a {@link Channels#TYPE_PREVIEW}
          * channel.
          *
-         * <p>Type: TEXT
+         * <p>Type: INTEGER
          */
         String COLUMN_TYPE = "type";
 
@@ -1107,7 +1111,7 @@ public final class TvContractCompat {
          * {@link #ASPECT_RATIO_1_1}, and
          * {@link #ASPECT_RATIO_2_3}.
          *
-         * <p>Type: TEXT
+         * <p>Type: INTEGER
          */
         String COLUMN_POSTER_ART_ASPECT_RATIO = "poster_art_aspect_ratio";
 
@@ -1120,7 +1124,7 @@ public final class TvContractCompat {
          * {@link #ASPECT_RATIO_1_1}, and
          * {@link #ASPECT_RATIO_2_3}.
          *
-         * <p>Type: TEXT
+         * <p>Type: INTEGER
          */
         String COLUMN_THUMBNAIL_ASPECT_RATIO = "poster_thumbnail_aspect_ratio";
 
@@ -1153,7 +1157,7 @@ public final class TvContractCompat {
          * {@link #AVAILABILITY_FREE_WITH_SUBSCRIPTION}, and
          * {@link #AVAILABILITY_PAID_CONTENT}.
          *
-         * <p>Type: TEXT
+         * <p>Type: INTEGER
          */
         String COLUMN_AVAILABILITY = "availability";
 
@@ -1264,18 +1268,17 @@ public final class TvContractCompat {
         String COLUMN_DURATION_MILLIS = "duration_millis";
 
         /**
-         * The intent URI which is launched when the preview video is selected.
+         * The intent URI which is launched when the preview program is selected.
          *
          * <p>The URI is created using {@link Intent#toUri} with {@link Intent#URI_INTENT_SCHEME}
          * and converted back to the original intent with {@link Intent#parseUri}. The intent is
-         * launched when the user selects the preview video item.
+         * launched when the user selects the preview program item.
          *
          * <p>Can be empty.
          *
          * <p>Type: TEXT
          */
-        String COLUMN_APP_LINK_INTENT_URI =
-                "app_link_intent_uri";
+        String COLUMN_INTENT_URI = "intent_uri";
 
         /**
          * The flag indicating whether this program is transient or not.
@@ -1301,7 +1304,7 @@ public final class TvContractCompat {
          * {@link #INTERACTION_TYPE_VIEWS}, and
          * {@link #INTERACTION_TYPE_VIEWERS}.
          *
-         * <p>Type: TEXT
+         * <p>Type: INTEGER
          * @see #COLUMN_INTERACTION_COUNT
          */
         String COLUMN_INTERACTION_TYPE = "interaction_type";
@@ -1329,7 +1332,7 @@ public final class TvContractCompat {
          * <p> The value should match one of the followings: {@link #REVIEW_RATING_STYLE_STARS},
          * {@link #REVIEW_RATING_STYLE_THUMBS_UP_DOWN}, and {@link #REVIEW_RATING_STYLE_PERCENTAGE}.
          *
-         * <p>Type: TEXT
+         * <p>Type: INTEGER
          * @see #COLUMN_REVIEW_RATING
          */
         String COLUMN_REVIEW_RATING_STYLE = "review_rating_style";
@@ -2195,7 +2198,7 @@ public final class TvContractCompat {
      * <p>By default, the query results will be sorted by
      * {@link Programs#COLUMN_START_TIME_UTC_MILLIS} in ascending order.
      */
-    public static final class Programs implements BaseProgramColumns {
+    public static final class Programs implements BaseTvColumns, ProgramColumns {
 
         /** The content:// style URI for this table. */
         public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/"
@@ -2509,7 +2512,7 @@ public final class TvContractCompat {
      * <p>By default, the query results will be sorted by {@link #COLUMN_START_TIME_UTC_MILLIS} in
      * ascending order.
      */
-    public static final class RecordedPrograms implements BaseProgramColumns {
+    public static final class RecordedPrograms implements BaseTvColumns, ProgramColumns {
 
         /** The content:// style URI for this table. */
         public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/"
@@ -2631,7 +2634,8 @@ public final class TvContractCompat {
     /**
      * Column definitions for the preview TV programs table.
      */
-    public static final class PreviewPrograms implements BasePreviewProgramColumns {
+    public static final class PreviewPrograms implements BaseTvColumns, ProgramColumns,
+            PreviewProgramColumns {
 
         /** The content:// style URI for this table. */
         public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/"
@@ -2674,7 +2678,8 @@ public final class TvContractCompat {
     /**
      * Column definitions for the "watch next" TV programs table.
      */
-    public static final class WatchNextPrograms implements BasePreviewProgramColumns {
+    public static final class WatchNextPrograms implements BaseTvColumns, ProgramColumns,
+            PreviewProgramColumns {
 
         /** The content:// style URI for this table. */
         public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/"
@@ -2687,7 +2692,7 @@ public final class TvContractCompat {
         public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/watch_next_program";
 
         /** @hide */
-        @StringDef({
+        @IntDef({
                 WATCH_NEXT_TYPE_CONTINUE,
                 WATCH_NEXT_TYPE_NEXT,
                 WATCH_NEXT_TYPE_NEW,
@@ -2703,7 +2708,7 @@ public final class TvContractCompat {
          *
          * @see #COLUMN_WATCH_NEXT_TYPE
          */
-        public static final String WATCH_NEXT_TYPE_CONTINUE = "WATCH_NEXT_TYPE_CONTINUE";
+        public static final int WATCH_NEXT_TYPE_CONTINUE = 0;
 
         /**
          * The watch next type for NEXT. Use this type when the user has watched one or more
@@ -2713,7 +2718,7 @@ public final class TvContractCompat {
          *
          * @see #COLUMN_WATCH_NEXT_TYPE
          */
-        public static final String WATCH_NEXT_TYPE_NEXT = "WATCH_NEXT_TYPE_NEXT";
+        public static final int WATCH_NEXT_TYPE_NEXT = 1;
 
         /**
          * The watch next type for NEW. Use this type when the user had watched all of the available
@@ -2723,7 +2728,7 @@ public final class TvContractCompat {
          *
          * @see #COLUMN_WATCH_NEXT_TYPE
          */
-        public static final String WATCH_NEXT_TYPE_NEW = "WATCH_NEXT_TYPE_NEW";
+        public static final int WATCH_NEXT_TYPE_NEW = 2;
 
         /**
          * The watch next type for WATCHLIST. Use this type when the user has elected to explicitly
@@ -2732,7 +2737,7 @@ public final class TvContractCompat {
          *
          * @see #COLUMN_WATCH_NEXT_TYPE
          */
-        public static final String WATCH_NEXT_TYPE_WATCHLIST = "WATCH_NEXT_TYPE_WATCHLIST";
+        public static final int WATCH_NEXT_TYPE_WATCHLIST = 3;
 
         /**
          * The "watch next" type of this program content.
@@ -2745,7 +2750,7 @@ public final class TvContractCompat {
          *
          * <p>This is a required field.
          *
-         * <p>Type: TEXT
+         * <p>Type: INTEGER
          */
         public static final String COLUMN_WATCH_NEXT_TYPE = "watch_next_type";
 

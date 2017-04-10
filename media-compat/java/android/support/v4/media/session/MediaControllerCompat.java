@@ -38,7 +38,6 @@ import android.support.v4.media.RatingCompat;
 import android.support.v4.media.VolumeProviderCompat;
 import android.support.v4.media.session.MediaSessionCompat.QueueItem;
 import android.support.v4.media.session.PlaybackStateCompat.CustomAction;
-import android.support.v4.os.BuildCompat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -60,6 +59,17 @@ import java.util.List;
  * <p>
  * This is a helper for accessing features in {@link android.media.session.MediaSession}
  * introduced after API level 4 in a backwards compatible fashion.
+ * <p class="note">
+ * If MediaControllerCompat is created with a {@link MediaSessionCompat.Token session token}
+ * from another process, following methods will not work directly after the creation if the
+ * {@link MediaSessionCompat.Token session token} is not passed through a
+ * {@link android.support.v4.media.MediaBrowserCompat}:
+ * <ul>
+ * <li>{@link #getPlaybackState()}.{@link PlaybackStateCompat#getExtras() getExtras()}</li>
+ * <li>{@link #isCaptioningEnabled()}</li>
+ * <li>{@link #getRepeatMode()}</li>
+ * <li>{@link #isShuffleModeEnabled()}</li>
+ * </ul></p>
  */
 public final class MediaControllerCompat {
     static final String TAG = "MediaControllerCompat";
@@ -167,7 +177,7 @@ public final class MediaControllerCompat {
         }
         mToken = session.getSessionToken();
 
-        if (BuildCompat.isAtLeastO()) {
+        if (MediaSessionCompat.isAtLeastO()) {
             mImpl = new MediaControllerImplApi26(context, session);
         } else if (android.os.Build.VERSION.SDK_INT >= 24) {
             mImpl = new MediaControllerImplApi24(context, session);
@@ -195,7 +205,7 @@ public final class MediaControllerCompat {
         }
         mToken = sessionToken;
 
-        if (BuildCompat.isAtLeastO()) {
+        if (MediaSessionCompat.isAtLeastO()) {
             mImpl = new MediaControllerImplApi26(context, sessionToken);
         } else if (android.os.Build.VERSION.SDK_INT >= 24) {
             mImpl = new MediaControllerImplApi24(context, sessionToken);
@@ -550,7 +560,7 @@ public final class MediaControllerCompat {
 
         @SuppressLint("NewApi")
         public Callback() {
-            if (BuildCompat.isAtLeastO()) {
+            if (MediaSessionCompat.isAtLeastO()) {
                 mCallbackObj = MediaControllerCompatApi26.createCallback(new StubApi26());
             } else if (android.os.Build.VERSION.SDK_INT >= 21) {
                 mCallbackObj = MediaControllerCompatApi21.createCallback(new StubApi21());
