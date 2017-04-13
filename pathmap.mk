@@ -27,7 +27,6 @@ FRAMEWORKS_SUPPORT_SUBDIRS := \
     dynamic-animation \
     exifinterface \
     fragment \
-    instantvideo \
     media-compat \
     percent \
     recommendation \
@@ -56,7 +55,7 @@ FRAMEWORKS_SUPPORT_JAVA_SRC_DIRS := \
     frameworks/support/v7/recyclerview/src \
     frameworks/support/emoji/core/src \
     frameworks/support/emoji/appcompat/src \
-    frameworks/support/emoji/bundled-typeface/src
+    frameworks/support/emoji/bundled/src
 
 #
 # A list of support library modules.
