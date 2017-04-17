@@ -134,6 +134,23 @@ public final class TvContractCompat {
     public static final String ACTION_PREVIEW_PROGRAM_ADDED_TO_WATCH_NEXT =
             "android.media.tv.action.PREVIEW_PROGRAM_ADDED_TO_WATCH_NEXT";
 
+    /**
+     * Broadcast Action: sent to the target TV input after it is first installed to notify the input
+     * to initialize its channels and programs to the system content provider.
+     *
+     * <p>Note that this intent is sent only on devices with
+     * {@link android.content.pm.PackageManager#FEATURE_LEANBACK} enabled. Besides that, in order
+     * to receive this intent, the target TV input must:
+     * <ul>
+     *     <li>Declare a broadcast receiver for this intent in its
+     *         <code>AndroidManifest.xml</code>.</li>
+     *     <li>Declare appropriate permissions to write channel and program data in its
+     *         <code>AndroidManifest.xml</code>.</li>
+     * </ul>
+     */
+    public static final String ACTION_INITIALIZE_PROGRAMS =
+            "android.media.tv.action.INITIALIZE_PROGRAMS";
+
     /** The key for a bundle parameter containing a channel ID as a long integer */
     public static final String EXTRA_CHANNEL_ID = "android.media.tv.extra.CHANNEL_ID";
 
@@ -535,6 +552,37 @@ public final class TvContractCompat {
      */
     @RestrictTo(LIBRARY_GROUP)
     interface ProgramColumns {
+        /** @hide */
+        @IntDef({
+                REVIEW_RATING_STYLE_STARS,
+                REVIEW_RATING_STYLE_THUMBS_UP_DOWN,
+                REVIEW_RATING_STYLE_PERCENTAGE,
+        })
+        @Retention(RetentionPolicy.SOURCE)
+        @RestrictTo(LIBRARY_GROUP)
+        @interface ReviewRatingStyle {}
+
+        /**
+         * The review rating style for five star rating.
+         *
+         * @see #COLUMN_REVIEW_RATING_STYLE
+         */
+        int REVIEW_RATING_STYLE_STARS = 0;
+
+        /**
+         * The review rating style for thumbs-up and thumbs-down rating.
+         *
+         * @see #COLUMN_REVIEW_RATING_STYLE
+         */
+        int REVIEW_RATING_STYLE_THUMBS_UP_DOWN = 1;
+
+        /**
+         * The review rating style for 0 to 100 point system.
+         *
+         * @see #COLUMN_REVIEW_RATING_STYLE
+         */
+        int REVIEW_RATING_STYLE_PERCENTAGE = 2;
+
         /**
          * The title of this TV program.
          *
@@ -797,6 +845,33 @@ public final class TvContractCompat {
          * <p>Type: INTEGER
          */
         String COLUMN_VERSION_NUMBER = "version_number";
+
+        /**
+         * The review rating score style used for {@link #COLUMN_REVIEW_RATING}.
+         *
+         * <p> The value should match one of the followings: {@link #REVIEW_RATING_STYLE_STARS},
+         * {@link #REVIEW_RATING_STYLE_THUMBS_UP_DOWN}, and {@link #REVIEW_RATING_STYLE_PERCENTAGE}.
+         *
+         * <p>Type: INTEGER
+         * @see #COLUMN_REVIEW_RATING
+         */
+        String COLUMN_REVIEW_RATING_STYLE = "review_rating_style";
+
+        /**
+         * The review rating score for this program.
+         *
+         * <p>The format of the value is dependent on {@link #COLUMN_REVIEW_RATING_STYLE}. If the
+         * style is {@link #REVIEW_RATING_STYLE_STARS}, the value should be a real number between
+         * 0.0 and 5.0. (e.g. "4.5") If the style is {@link #REVIEW_RATING_STYLE_THUMBS_UP_DOWN},
+         * the value should be two integers, one for thumbs-up count and the other for thumbs-down
+         * count, with a comma between them. (e.g. "200,40") If the style is
+         * {@link #REVIEW_RATING_STYLE_PERCENTAGE}, the value shoule be a real number between 0 and
+         * 100. (e.g. "99.9")
+         *
+         * <p>Type: TEXT
+         * @see #COLUMN_REVIEW_RATING_STYLE
+         */
+        String COLUMN_REVIEW_RATING = "review_rating";
     }
 
     /**
@@ -913,6 +988,7 @@ public final class TvContractCompat {
         @IntDef({
                 ASPECT_RATIO_16_9,
                 ASPECT_RATIO_3_2,
+                ASPECT_RATIO_4_3,
                 ASPECT_RATIO_1_1,
                 ASPECT_RATIO_2_3,
         })
@@ -937,12 +1013,20 @@ public final class TvContractCompat {
         int ASPECT_RATIO_3_2 = 1;
 
         /**
+         * The aspect ratio for 4:3.
+         *
+         * @see #COLUMN_POSTER_ART_ASPECT_RATIO
+         * @see #COLUMN_THUMBNAIL_ASPECT_RATIO
+         */
+        int ASPECT_RATIO_4_3 = 2;
+
+        /**
          * The aspect ratio for 1:1.
          *
          * @see #COLUMN_POSTER_ART_ASPECT_RATIO
          * @see #COLUMN_THUMBNAIL_ASPECT_RATIO
          */
-        int ASPECT_RATIO_1_1 = 2;
+        int ASPECT_RATIO_1_1 = 3;
 
         /**
          * The aspect ratio for 2:3.
@@ -950,7 +1034,7 @@ public final class TvContractCompat {
          * @see #COLUMN_POSTER_ART_ASPECT_RATIO
          * @see #COLUMN_THUMBNAIL_ASPECT_RATIO
          */
-        int ASPECT_RATIO_2_3 = 3;
+        int ASPECT_RATIO_2_3 = 4;
 
         /** @hide */
         @IntDef({
@@ -1047,37 +1131,6 @@ public final class TvContractCompat {
          */
         int INTERACTION_TYPE_VIEWERS = 6;
 
-        /** @hide */
-        @IntDef({
-                REVIEW_RATING_STYLE_STARS,
-                REVIEW_RATING_STYLE_THUMBS_UP_DOWN,
-                REVIEW_RATING_STYLE_PERCENTAGE,
-        })
-        @Retention(RetentionPolicy.SOURCE)
-        @RestrictTo(LIBRARY_GROUP)
-        public @interface ReviewRatingStyle {}
-
-        /**
-         * The review rating style for five star rating.
-         *
-         * @see #COLUMN_REVIEW_RATING_STYLE
-         */
-        int REVIEW_RATING_STYLE_STARS = 0;
-
-        /**
-         * The review rating style for thumbs-up and thumbs-down rating.
-         *
-         * @see #COLUMN_REVIEW_RATING_STYLE
-         */
-        int REVIEW_RATING_STYLE_THUMBS_UP_DOWN = 1;
-
-        /**
-         * The review rating style for 0 to 100 point system.
-         *
-         * @see #COLUMN_REVIEW_RATING_STYLE
-         */
-        int REVIEW_RATING_STYLE_PERCENTAGE = 2;
-
         /**
          * The type of this program content.
          *
@@ -1108,6 +1161,7 @@ public final class TvContractCompat {
          * <p>The value should match one of the followings:
          * {@link #ASPECT_RATIO_16_9},
          * {@link #ASPECT_RATIO_3_2},
+         * {@link #ASPECT_RATIO_4_3},
          * {@link #ASPECT_RATIO_1_1}, and
          * {@link #ASPECT_RATIO_2_3}.
          *
@@ -1121,6 +1175,7 @@ public final class TvContractCompat {
          * <p>The value should match one of the followings:
          * {@link #ASPECT_RATIO_16_9},
          * {@link #ASPECT_RATIO_3_2},
+         * {@link #ASPECT_RATIO_4_3},
          * {@link #ASPECT_RATIO_1_1}, and
          * {@link #ASPECT_RATIO_2_3}.
          *
@@ -1325,33 +1380,6 @@ public final class TvContractCompat {
          * <p>Type: TEXT
          */
         String COLUMN_AUTHOR = "author";
-
-        /**
-         * The review rating score style used for {@link #COLUMN_REVIEW_RATING}.
-         *
-         * <p> The value should match one of the followings: {@link #REVIEW_RATING_STYLE_STARS},
-         * {@link #REVIEW_RATING_STYLE_THUMBS_UP_DOWN}, and {@link #REVIEW_RATING_STYLE_PERCENTAGE}.
-         *
-         * <p>Type: INTEGER
-         * @see #COLUMN_REVIEW_RATING
-         */
-        String COLUMN_REVIEW_RATING_STYLE = "review_rating_style";
-
-        /**
-         * The review rating score for this program.
-         *
-         * <p>The format of the value is dependent on {@link #COLUMN_REVIEW_RATING_STYLE}. If the
-         * style is {@link #REVIEW_RATING_STYLE_STARS}, the value should be a real number between
-         * 0.0 and 5.0. (e.g. "4.5") If the style is {@link #REVIEW_RATING_STYLE_THUMBS_UP_DOWN},
-         * the value should be two integers, one for thumbs-up count and the other for thumbs-down
-         * count, with a comma between them. (e.g. "200,40") If the style is
-         * {@link #REVIEW_RATING_STYLE_PERCENTAGE}, the value shoule be a real number between 0 and
-         * 100. (e.g. "99.9")
-         *
-         * <p>Type: TEXT
-         * @see #COLUMN_REVIEW_RATING_STYLE
-         */
-        String COLUMN_REVIEW_RATING = "review_rating";
 
         /**
          * The flag indicating whether this TV program is browsable or not.

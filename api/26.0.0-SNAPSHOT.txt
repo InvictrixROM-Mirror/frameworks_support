@@ -1173,8 +1173,6 @@ package android.support.media.tv {
     method public int getPosterArtAspectRatio();
     method public android.net.Uri getPreviewVideoUri();
     method public java.lang.String getReleaseDate();
-    method public java.lang.String getReviewRating();
-    method public int getReviewRatingStyle();
     method public java.lang.String getStartingPrice();
     method public int getThumbnailAspectRatio();
     method public int getType();
@@ -1204,8 +1202,6 @@ package android.support.media.tv {
     method public T setPreviewVideoUri(android.net.Uri);
     method public T setReleaseDate(java.lang.String);
     method public T setReleaseDate(java.util.Date);
-    method public T setReviewRating(java.lang.String);
-    method public T setReviewRatingStyle(int);
     method public T setStartingPrice(java.lang.String);
     method public T setThumbnailAspectRatio(int);
     method public T setTransient(boolean);
@@ -1227,6 +1223,8 @@ package android.support.media.tv {
     method public java.lang.Long getInternalProviderFlag4();
     method public java.lang.String getLongDescription();
     method public android.net.Uri getPosterArtUri();
+    method public java.lang.String getReviewRating();
+    method public int getReviewRatingStyle();
     method public java.lang.String getSeasonNumber();
     method public java.lang.String getSeasonTitle();
     method public android.net.Uri getThumbnailUri();
@@ -1255,6 +1253,8 @@ package android.support.media.tv {
     method public T setInternalProviderFlag4(long);
     method public T setLongDescription(java.lang.String);
     method public T setPosterArtUri(android.net.Uri);
+    method public T setReviewRating(java.lang.String);
+    method public T setReviewRatingStyle(int);
     method public T setSearchable(boolean);
     method public T setSeasonNumber(int);
     method public T setSeasonNumber(java.lang.String, int);
@@ -1394,6 +1394,7 @@ package android.support.media.tv {
     method public static boolean isChannelUriForPassthroughInput(android.net.Uri);
     method public static boolean isChannelUriForTunerInput(android.net.Uri);
     method public static boolean isProgramUri(android.net.Uri);
+    field public static final java.lang.String ACTION_INITIALIZE_PROGRAMS = "android.media.tv.action.INITIALIZE_PROGRAMS";
     field public static final java.lang.String ACTION_MAKE_CHANNEL_BROWSABLE = "android.media.tv.action.MAKE_CHANNEL_BROWSABLE";
     field public static final java.lang.String ACTION_PREVIEW_PROGRAM_ADDED_TO_WATCH_NEXT = "android.media.tv.action.PREVIEW_PROGRAM_ADDED_TO_WATCH_NEXT";
     field public static final java.lang.String ACTION_PREVIEW_PROGRAM_BROWSABLE_DISABLED = "android.media.tv.action.PREVIEW_PROGRAM_BROWSABLE_DISABLED";
@@ -1493,9 +1494,10 @@ package android.support.media.tv {
 
   public static final class TvContractCompat.PreviewPrograms implements android.support.media.tv.TvContractCompat.BaseTvColumns {
     field public static final int ASPECT_RATIO_16_9 = 0; // 0x0
-    field public static final int ASPECT_RATIO_1_1 = 2; // 0x2
-    field public static final int ASPECT_RATIO_2_3 = 3; // 0x3
+    field public static final int ASPECT_RATIO_1_1 = 3; // 0x3
+    field public static final int ASPECT_RATIO_2_3 = 4; // 0x4
     field public static final int ASPECT_RATIO_3_2 = 1; // 0x1
+    field public static final int ASPECT_RATIO_4_3 = 2; // 0x2
     field public static final int AVAILABILITY_AVAILABLE = 0; // 0x0
     field public static final int AVAILABILITY_FREE_WITH_SUBSCRIPTION = 1; // 0x1
     field public static final int AVAILABILITY_PAID_CONTENT = 2; // 0x2
@@ -1590,6 +1592,8 @@ package android.support.media.tv {
     field public static final java.lang.String COLUMN_LONG_DESCRIPTION = "long_description";
     field public static final java.lang.String COLUMN_POSTER_ART_URI = "poster_art_uri";
     field public static final java.lang.String COLUMN_RECORDING_PROHIBITED = "recording_prohibited";
+    field public static final java.lang.String COLUMN_REVIEW_RATING = "review_rating";
+    field public static final java.lang.String COLUMN_REVIEW_RATING_STYLE = "review_rating_style";
     field public static final java.lang.String COLUMN_SEARCHABLE = "searchable";
     field public static final java.lang.String COLUMN_SEASON_DISPLAY_NUMBER = "season_display_number";
     field public static final deprecated java.lang.String COLUMN_SEASON_NUMBER = "season_number";
@@ -1604,6 +1608,9 @@ package android.support.media.tv {
     field public static final java.lang.String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/program";
     field public static final java.lang.String CONTENT_TYPE = "vnd.android.cursor.dir/program";
     field public static final android.net.Uri CONTENT_URI;
+    field public static final int REVIEW_RATING_STYLE_PERCENTAGE = 2; // 0x2
+    field public static final int REVIEW_RATING_STYLE_STARS = 0; // 0x0
+    field public static final int REVIEW_RATING_STYLE_THUMBS_UP_DOWN = 1; // 0x1
   }
 
   public static final class TvContractCompat.Programs.Genres {
@@ -1650,6 +1657,8 @@ package android.support.media.tv {
     field public static final java.lang.String COLUMN_RECORDING_DATA_URI = "recording_data_uri";
     field public static final java.lang.String COLUMN_RECORDING_DURATION_MILLIS = "recording_duration_millis";
     field public static final java.lang.String COLUMN_RECORDING_EXPIRE_TIME_UTC_MILLIS = "recording_expire_time_utc_millis";
+    field public static final java.lang.String COLUMN_REVIEW_RATING = "review_rating";
+    field public static final java.lang.String COLUMN_REVIEW_RATING_STYLE = "review_rating_style";
     field public static final java.lang.String COLUMN_SEARCHABLE = "searchable";
     field public static final java.lang.String COLUMN_SEASON_DISPLAY_NUMBER = "season_display_number";
     field public static final java.lang.String COLUMN_SEASON_TITLE = "season_title";
@@ -1663,14 +1672,18 @@ package android.support.media.tv {
     field public static final java.lang.String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/recorded_program";
     field public static final java.lang.String CONTENT_TYPE = "vnd.android.cursor.dir/recorded_program";
     field public static final android.net.Uri CONTENT_URI;
+    field public static final int REVIEW_RATING_STYLE_PERCENTAGE = 2; // 0x2
+    field public static final int REVIEW_RATING_STYLE_STARS = 0; // 0x0
+    field public static final int REVIEW_RATING_STYLE_THUMBS_UP_DOWN = 1; // 0x1
   }
 
   public static final class TvContractCompat.WatchNextPrograms implements android.support.media.tv.TvContractCompat.BaseTvColumns {
     ctor public TvContractCompat.WatchNextPrograms();
     field public static final int ASPECT_RATIO_16_9 = 0; // 0x0
-    field public static final int ASPECT_RATIO_1_1 = 2; // 0x2
-    field public static final int ASPECT_RATIO_2_3 = 3; // 0x3
+    field public static final int ASPECT_RATIO_1_1 = 3; // 0x3
+    field public static final int ASPECT_RATIO_2_3 = 4; // 0x4
     field public static final int ASPECT_RATIO_3_2 = 1; // 0x1
+    field public static final int ASPECT_RATIO_4_3 = 2; // 0x2
     field public static final int AVAILABILITY_AVAILABLE = 0; // 0x0
     field public static final int AVAILABILITY_FREE_WITH_SUBSCRIPTION = 1; // 0x1
     field public static final int AVAILABILITY_PAID_CONTENT = 2; // 0x2
@@ -2999,12 +3012,16 @@ package android.support.v17.leanback.app {
 
   public abstract class OnboardingFragment extends android.app.Fragment {
     ctor public OnboardingFragment();
+    method public final int getArrowBackgroundColor();
     method protected final int getCurrentPageIndex();
+    method public final int getDescriptionViewTextColor();
+    method public final int getDotBackgroundColor();
     method public final int getIconResourceId();
     method public final int getLogoResourceId();
     method protected abstract int getPageCount();
     method protected abstract java.lang.CharSequence getPageDescription(int);
     method protected abstract java.lang.CharSequence getPageTitle(int);
+    method public final int getTitleViewTextColor();
     method protected final boolean isLogoAnimationFinished();
     method protected void moveToNextPage();
     method protected void moveToPreviousPage();
@@ -3019,18 +3036,27 @@ package android.support.v17.leanback.app {
     method protected void onLogoAnimationFinished();
     method protected void onPageChanged(int, int);
     method public int onProvideTheme();
+    method public void setArrowBackgroundColor(int);
+    method public void setDescriptionViewTextColor(int);
+    method public void setDotBackgroundColor(int);
     method public final void setIconResouceId(int);
     method public final void setLogoResourceId(int);
+    method public void setTitleViewTextColor(int);
+    method protected final void startEnterAnimation(boolean);
   }
 
   public abstract class OnboardingSupportFragment extends android.support.v4.app.Fragment {
     ctor public OnboardingSupportFragment();
+    method public final int getArrowBackgroundColor();
     method protected final int getCurrentPageIndex();
+    method public final int getDescriptionViewTextColor();
+    method public final int getDotBackgroundColor();
     method public final int getIconResourceId();
     method public final int getLogoResourceId();
     method protected abstract int getPageCount();
     method protected abstract java.lang.CharSequence getPageDescription(int);
     method protected abstract java.lang.CharSequence getPageTitle(int);
+    method public final int getTitleViewTextColor();
     method protected final boolean isLogoAnimationFinished();
     method protected void moveToNextPage();
     method protected void moveToPreviousPage();
@@ -3045,8 +3071,13 @@ package android.support.v17.leanback.app {
     method protected void onLogoAnimationFinished();
     method protected void onPageChanged(int, int);
     method public int onProvideTheme();
+    method public void setArrowBackgroundColor(int);
+    method public void setDescriptionViewTextColor(int);
+    method public void setDotBackgroundColor(int);
     method public final void setIconResouceId(int);
     method public final void setLogoResourceId(int);
+    method public void setTitleViewTextColor(int);
+    method protected final void startEnterAnimation(boolean);
   }
 
   public abstract deprecated class PlaybackControlGlue extends android.support.v17.leanback.media.PlaybackControlGlue {
@@ -5830,13 +5861,19 @@ package android.support.v4.app {
     ctor public NotificationCompat();
     method public static android.support.v4.app.NotificationCompat.Action getAction(android.app.Notification, int);
     method public static int getActionCount(android.app.Notification);
+    method public static int getBadgeIconType(android.app.Notification);
     method public static java.lang.String getCategory(android.app.Notification);
     method public static java.lang.String getChannel(android.app.Notification);
     method public static android.os.Bundle getExtras(android.app.Notification);
     method public static java.lang.String getGroup(android.app.Notification);
     method public static boolean getLocalOnly(android.app.Notification);
+    method public static java.lang.String getShortcutId(android.app.Notification);
     method public static java.lang.String getSortKey(android.app.Notification);
+    method public static long getTimeout(android.app.Notification);
     method public static boolean isGroupSummary(android.app.Notification);
+    field public static final int BADGE_ICON_LARGE = 2; // 0x2
+    field public static final int BADGE_ICON_NONE = 0; // 0x0
+    field public static final int BADGE_ICON_SMALL = 1; // 0x1
     field public static final java.lang.String CATEGORY_ALARM = "alarm";
     field public static final java.lang.String CATEGORY_CALL = "call";
     field public static final java.lang.String CATEGORY_EMAIL = "email";
@@ -5983,6 +6020,7 @@ package android.support.v4.app {
     method public deprecated android.app.Notification getNotification();
     method protected static java.lang.CharSequence limitCharSequenceLength(java.lang.CharSequence);
     method public android.support.v4.app.NotificationCompat.Builder setAutoCancel(boolean);
+    method public android.support.v4.app.NotificationCompat.Builder setBadgeIconType(int);
     method public android.support.v4.app.NotificationCompat.Builder setCategory(java.lang.String);
     method public android.support.v4.app.NotificationCompat.Builder setChannel(java.lang.String);
     method public android.support.v4.app.NotificationCompat.Builder setColor(int);
@@ -6010,6 +6048,7 @@ package android.support.v4.app {
     method public android.support.v4.app.NotificationCompat.Builder setProgress(int, int, boolean);
     method public android.support.v4.app.NotificationCompat.Builder setPublicVersion(android.app.Notification);
     method public android.support.v4.app.NotificationCompat.Builder setRemoteInputHistory(java.lang.CharSequence[]);
+    method public android.support.v4.app.NotificationCompat.Builder setShortcutId(java.lang.String);
     method public android.support.v4.app.NotificationCompat.Builder setShowWhen(boolean);
     method public android.support.v4.app.NotificationCompat.Builder setSmallIcon(int);
     method public android.support.v4.app.NotificationCompat.Builder setSmallIcon(int, int);
@@ -6020,6 +6059,7 @@ package android.support.v4.app {
     method public android.support.v4.app.NotificationCompat.Builder setSubText(java.lang.CharSequence);
     method public android.support.v4.app.NotificationCompat.Builder setTicker(java.lang.CharSequence);
     method public android.support.v4.app.NotificationCompat.Builder setTicker(java.lang.CharSequence, android.widget.RemoteViews);
+    method public android.support.v4.app.NotificationCompat.Builder setTimeout(long);
     method public android.support.v4.app.NotificationCompat.Builder setUsesChronometer(boolean);
     method public android.support.v4.app.NotificationCompat.Builder setVibrate(long[]);
     method public android.support.v4.app.NotificationCompat.Builder setVisibility(int);
@@ -6504,7 +6544,7 @@ package android.support.v4.content {
     method public static android.support.v4.content.SharedPreferencesCompat.EditorCompat getInstance();
   }
 
-  public abstract class WakefulBroadcastReceiver extends android.content.BroadcastReceiver {
+  public abstract deprecated class WakefulBroadcastReceiver extends android.content.BroadcastReceiver {
     ctor public WakefulBroadcastReceiver();
     method public static boolean completeWakefulIntent(android.content.Intent);
     method public static android.content.ComponentName startWakefulService(android.content.Context, android.content.Intent);
@@ -7383,9 +7423,11 @@ package android.support.v4.os {
   }
 
   public class BuildCompat {
-    method public static boolean isAtLeastN();
-    method public static boolean isAtLeastNMR1();
+    method public static deprecated boolean isAtLeastN();
+    method public static deprecated boolean isAtLeastNMR1();
     method public static boolean isAtLeastO();
+    method public static boolean isAtLeastOMR1();
+    method public static boolean isAtLeastP();
   }
 
   public final class CancellationSignal {
@@ -7920,9 +7962,11 @@ package android.support.v4.view {
     method public static deprecated boolean expandActionView(android.view.MenuItem);
     method public static android.support.v4.view.ActionProvider getActionProvider(android.view.MenuItem);
     method public static deprecated android.view.View getActionView(android.view.MenuItem);
-    method public int getAlphabeticModifiers(android.view.MenuItem);
+    method public static int getAlphabeticModifiers(android.view.MenuItem);
     method public static java.lang.CharSequence getContentDescription(android.view.MenuItem);
-    method public int getNumericModifiers(android.view.MenuItem);
+    method public static android.content.res.ColorStateList getIconTintList(android.view.MenuItem);
+    method public static android.graphics.PorterDuff.Mode getIconTintMode(android.view.MenuItem);
+    method public static int getNumericModifiers(android.view.MenuItem);
     method public static java.lang.CharSequence getTooltipText(android.view.MenuItem);
     method public static deprecated boolean isActionViewExpanded(android.view.MenuItem);
     method public static android.view.MenuItem setActionProvider(android.view.MenuItem, android.support.v4.view.ActionProvider);
@@ -7930,6 +7974,8 @@ package android.support.v4.view {
     method public static deprecated android.view.MenuItem setActionView(android.view.MenuItem, int);
     method public static void setAlphabeticShortcut(android.view.MenuItem, char, int);
     method public static void setContentDescription(android.view.MenuItem, java.lang.CharSequence);
+    method public static void setIconTintList(android.view.MenuItem, android.content.res.ColorStateList);
+    method public static void setIconTintMode(android.view.MenuItem, android.graphics.PorterDuff.Mode);
     method public static void setNumericShortcut(android.view.MenuItem, char, int);
     method public static deprecated android.view.MenuItem setOnActionExpandListener(android.view.MenuItem, android.support.v4.view.MenuItemCompat.OnActionExpandListener);
     method public static void setShortcut(android.view.MenuItem, char, char, int, int);
@@ -10537,6 +10583,7 @@ package android.support.v7.preference {
     method public final int getWidgetLayoutResource();
     method public boolean hasKey();
     method public boolean isEnabled();
+    method public boolean isIconSpaceReserved();
     method public boolean isPersistent();
     method public boolean isSelectable();
     method public boolean isSingleLineTitle();
@@ -10571,6 +10618,7 @@ package android.support.v7.preference {
     method public void setFragment(java.lang.String);
     method public void setIcon(android.graphics.drawable.Drawable);
     method public void setIcon(int);
+    method public void setIconSpaceReserved(boolean);
     method public void setIntent(android.content.Intent);
     method public void setKey(java.lang.String);
     method public void setLayoutResource(int);
@@ -12388,8 +12436,8 @@ package android.support.wearable.widget {
   public static abstract class SwipeDismissFrameLayout.Callback {
     ctor public SwipeDismissFrameLayout.Callback();
     method public void onDismissed(android.support.wearable.widget.SwipeDismissFrameLayout);
-    method public void onSwipeCancelled();
-    method public void onSwipeStarted();
+    method public void onSwipeCanceled(android.support.wearable.widget.SwipeDismissFrameLayout);
+    method public void onSwipeStarted(android.support.wearable.widget.SwipeDismissFrameLayout);
   }
 
   public class WearableLinearLayoutManager extends android.support.v7.widget.LinearLayoutManager {

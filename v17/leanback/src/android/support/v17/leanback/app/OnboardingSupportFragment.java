@@ -27,7 +27,9 @@ import android.animation.ObjectAnimator;
 import android.animation.TimeInterpolator;
 import android.support.v4.app.Fragment;
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.support.annotation.ColorInt;
 import android.support.annotation.Nullable;
 import android.support.v17.leanback.R;
 import android.support.v17.leanback.widget.PagingIndicator;
@@ -170,6 +172,10 @@ abstract public class OnboardingSupportFragment extends Fragment {
 
     // Keys used to save and restore the states.
     private static final String KEY_CURRENT_PAGE_INDEX = "leanback.onboarding.current_page_index";
+    private static final String KEY_LOGO_ANIMATION_FINISHED =
+            "leanback.onboarding.logo_animation_finished";
+    private static final String KEY_ENTER_ANIMATION_FINISHED =
+            "leanback.onboarding.enter_animation_finished";
 
     private ContextThemeWrapper mThemeWrapper;
 
@@ -189,7 +195,24 @@ abstract public class OnboardingSupportFragment extends Fragment {
     // the fragment is restored.
     private int mLogoResourceId;
     boolean mLogoAnimationFinished;
+    boolean mEnterAnimationFinished;
     int mCurrentPageIndex;
+
+    @ColorInt
+    int mTitleViewTextColor = Color.TRANSPARENT;
+    boolean mTitleViewTextColorSet;
+
+    @ColorInt
+    int mDescriptionViewTextColor = Color.TRANSPARENT;
+    boolean mDescriptionViewTextColorSet;
+
+    @ColorInt
+    int mDotBackgroundColor = Color.TRANSPARENT;
+    boolean mDotBackgroundColorSet;
+
+    @ColorInt
+    int mArrowBackgroundColor = Color.TRANSPARENT;
+    boolean mArrowBackgroundColorSet;
 
     private AnimatorSet mAnimator;
 
@@ -292,38 +315,153 @@ abstract public class OnboardingSupportFragment extends Fragment {
         mLogoView = (ImageView) view.findViewById(R.id.logo);
         mTitleView = (TextView) view.findViewById(R.id.title);
         mDescriptionView = (TextView) view.findViewById(R.id.description);
+
+        if (mTitleViewTextColorSet) {
+            mTitleView.setTextColor(mTitleViewTextColor);
+        }
+        if (mDescriptionViewTextColorSet) {
+            mDescriptionView.setTextColor(mDescriptionViewTextColor);
+        }
+        if (mDotBackgroundColorSet) {
+            mPageIndicator.setDotBackgroundColor(mDotBackgroundColor);
+        }
+        if (mArrowBackgroundColorSet) {
+            mPageIndicator.setDotBackgroundColor(mArrowBackgroundColor);
+        }
         final Context context = getContext();
         if (sSlideDistance == 0) {
             sSlideDistance = (int) (SLIDE_DISTANCE * context.getResources()
                     .getDisplayMetrics().scaledDensity);
-        }
-        if (savedInstanceState == null) {
-            mCurrentPageIndex = 0;
-            mLogoAnimationFinished = false;
-            mPageIndicator.onPageSelected(0, false);
-            view.getViewTreeObserver().addOnPreDrawListener(new OnPreDrawListener() {
-                @Override
-                public boolean onPreDraw() {
-                    view.getViewTreeObserver().removeOnPreDrawListener(this);
-                    if (!startLogoAnimation()) {
-                        startEnterAnimation();
-                    }
-                    return true;
-                }
-            });
-        } else {
-            mLogoAnimationFinished = true;
-            mCurrentPageIndex = savedInstanceState.getInt(KEY_CURRENT_PAGE_INDEX);
-            initializeViews(view);
         }
         view.requestFocus();
         return view;
     }
 
     @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        if (savedInstanceState == null) {
+            mCurrentPageIndex = 0;
+            mLogoAnimationFinished = false;
+            mEnterAnimationFinished = false;
+            mPageIndicator.onPageSelected(0, false);
+            view.getViewTreeObserver().addOnPreDrawListener(new OnPreDrawListener() {
+                @Override
+                public boolean onPreDraw() {
+                    getView().getViewTreeObserver().removeOnPreDrawListener(this);
+                    if (!startLogoAnimation()) {
+                        mLogoAnimationFinished = true;
+                        onLogoAnimationFinished();
+                    }
+                    return true;
+                }
+            });
+        } else {
+            mCurrentPageIndex = savedInstanceState.getInt(KEY_CURRENT_PAGE_INDEX);
+            mLogoAnimationFinished = savedInstanceState.getBoolean(KEY_LOGO_ANIMATION_FINISHED);
+            mEnterAnimationFinished = savedInstanceState.getBoolean(KEY_ENTER_ANIMATION_FINISHED);
+            if (!mLogoAnimationFinished) {
+                // logo animation wasn't started or was interrupted when the activity was destroyed;
+                // restart it againl
+                if (!startLogoAnimation()) {
+                    mLogoAnimationFinished = true;
+                    onLogoAnimationFinished();
+                }
+            } else {
+                onLogoAnimationFinished();
+            }
+        }
+    }
+
+    @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt(KEY_CURRENT_PAGE_INDEX, mCurrentPageIndex);
+        outState.putBoolean(KEY_LOGO_ANIMATION_FINISHED, mLogoAnimationFinished);
+        outState.putBoolean(KEY_ENTER_ANIMATION_FINISHED, mEnterAnimationFinished);
+    }
+
+    /**
+     * Sets the text color for TitleView. If not set, the default textColor set in style
+     * referenced by attr {@link R.attr#onboardingTitleStyle} will be used.
+     * @param color the color to use as the text color for TitleView
+     */
+    public void setTitleViewTextColor(@ColorInt int color) {
+        mTitleViewTextColor = color;
+        mTitleViewTextColorSet = true;
+        if (mTitleView != null) {
+            mTitleView.setTextColor(color);
+        }
+    }
+
+    /**
+     * Returns the text color of TitleView if it's set through
+     * {@link #setTitleViewTextColor(int)}. If no color was set, transparent is returned.
+     */
+    public final int getTitleViewTextColor() {
+        return mTitleViewTextColor;
+    }
+
+    /**
+     * Sets the text color for DescriptionView. If not set, the default textColor set in style
+     * referenced by attr {@link R.attr#onboardingDescriptionStyle} will be used.
+     * @param color the color to use as the text color for DescriptionView
+     */
+    public void setDescriptionViewTextColor(@ColorInt int color) {
+        mDescriptionViewTextColor = color;
+        mDescriptionViewTextColorSet = true;
+        if (mDescriptionView != null) {
+            mDescriptionView.setTextColor(color);
+        }
+    }
+
+    /**
+     * Returns the text color of DescriptionView if it's set through
+     * {@link #setDescriptionViewTextColor(int)}. If no color was set, transparent is returned.
+     */
+    public final int getDescriptionViewTextColor() {
+        return mDescriptionViewTextColor;
+    }
+    /**
+     * Sets the background color of the dots. If not set, the default color from attr
+     * {@link R.styleable#PagingIndicator_dotBgColor} in the theme will be used.
+     * @param color the color to use for dot backgrounds
+     */
+    public void setDotBackgroundColor(@ColorInt int color) {
+        mDotBackgroundColor = color;
+        mDotBackgroundColorSet = true;
+        if (mPageIndicator != null) {
+            mPageIndicator.setDotBackgroundColor(color);
+        }
+    }
+
+    /**
+     * Returns the background color of the dot if it's set through
+     * {@link #setDotBackgroundColor(int)}. If no color was set, transparent is returned.
+     */
+    public final int getDotBackgroundColor() {
+        return mDotBackgroundColor;
+    }
+
+    /**
+     * Sets the background color of the arrow. If not set, the default color from attr
+     * {@link R.styleable#PagingIndicator_arrowBgColor} in the theme will be used.
+     * @param color the color to use for arrow background
+     */
+    public void setArrowBackgroundColor(@ColorInt int color) {
+        mArrowBackgroundColor = color;
+        mArrowBackgroundColorSet = true;
+        if (mPageIndicator != null) {
+            mPageIndicator.setArrowBackgroundColor(color);
+        }
+    }
+
+    /**
+     * Returns the background color of the arrow if it's set through
+     * {@link #setArrowBackgroundColor(int)}. If no color was set, transparent is returned.
+     */
+    public final int getArrowBackgroundColor() {
+        return mArrowBackgroundColor;
     }
 
     /**
@@ -414,7 +552,8 @@ abstract public class OnboardingSupportFragment extends Fragment {
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     if (context != null) {
-                        startEnterAnimation();
+                        mLogoAnimationFinished = true;
+                        onLogoAnimationFinished();
                     }
                 }
             });
@@ -435,7 +574,12 @@ abstract public class OnboardingSupportFragment extends Fragment {
         return null;
     }
 
-    private void initializeViews(View container) {
+
+    /**
+     * Hides the logo view and makes other fragment views visible. Also initializes the texts for
+     * Title and Description views.
+     */
+    void hideLogoView() {
         mLogoView.setVisibility(View.GONE);
 
         if (mIconResourceId != 0) {
@@ -443,6 +587,7 @@ abstract public class OnboardingSupportFragment extends Fragment {
             mMainIconView.setVisibility(View.VISIBLE);
         }
 
+        View container = getView();
         // Create custom views.
         LayoutInflater inflater = getThemeInflater(LayoutInflater.from(
                 getContext()));
@@ -481,20 +626,35 @@ abstract public class OnboardingSupportFragment extends Fragment {
         // Header views.
         mTitleView.setText(getPageTitle(mCurrentPageIndex));
         mDescriptionView.setText(getPageDescription(mCurrentPageIndex));
-        onLogoAnimationFinished();
     }
 
     /**
-     * Called immediately after fragment views become visible. This method gives subclasses a chance
-     * to initialize themselves. If a logo animation is specified, calling this method is delayed
-     * until after the logo animation is complete.
+     * Called immediately after the logo animation is complete or no logo animation is specified.
+     * This method can also be called when the activity is recreated, i.e. when no logo animation
+     * are performed.
+     * By default, this method will hide the logo view and start the entrance animation for this
+     * fragment.
+     * Overriding subclasses can provide their own data loading logic as to when the entrance
+     * animation should be executed.
      */
     protected void onLogoAnimationFinished() {
+        startEnterAnimation(false);
     }
 
-    void startEnterAnimation() {
-        mLogoAnimationFinished = true;
-        initializeViews(getView());
+    /**
+     * Called to start entrance transition. This can be called by subclasses when the logo animation
+     * and data loading is complete. If force flag is set to false, it will only start the animation
+     * if it's not already done yet. Otherwise, it will always start the enter animation. In both
+     * cases, the logo view will hide and the rest of fragment views become visible after this call.
+     *
+     * @param force {@code true} if enter animation has to be performed regardless of whether it's
+     *                          been done in the past, {@code false} otherwise
+     */
+    protected final void startEnterAnimation(boolean force) {
+        hideLogoView();
+        if (mEnterAnimationFinished && !force) {
+            return;
+        }
         List<Animator> animators = new ArrayList<>();
         final Context context = getContext();
         Animator animator = AnimatorInflater.loadAnimator(context,
@@ -529,6 +689,12 @@ abstract public class OnboardingSupportFragment extends Fragment {
         mAnimator = new AnimatorSet();
         mAnimator.playTogether(animators);
         mAnimator.start();
+        mAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mEnterAnimationFinished = true;
+            }
+        });
         // Search focus and give the focus to the appropriate child which has become visible.
         getView().requestFocus();
     }
@@ -552,7 +718,7 @@ abstract public class OnboardingSupportFragment extends Fragment {
     }
 
     /**
-     * Returns whether the logo enter transition is finished.
+     * Returns whether the logo enter animation is finished.
      *
      * @return {@code true} if the logo enter transition is finished, {@code false} otherwise
      */
