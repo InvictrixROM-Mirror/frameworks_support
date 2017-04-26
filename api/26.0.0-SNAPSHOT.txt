@@ -36,12 +36,31 @@ package android.support.animation {
     method public abstract void onAnimationUpdate(android.support.animation.DynamicAnimation, float, float);
   }
 
-  public static abstract class DynamicAnimation.ViewProperty {
+  public static abstract class DynamicAnimation.ViewProperty extends android.support.animation.FloatPropertyCompat {
+  }
+
+  public final class FlingAnimation extends android.support.animation.DynamicAnimation {
+    ctor public FlingAnimation(android.support.animation.FloatPropertyCompat<K>);
+    ctor public FlingAnimation(K, android.support.animation.FloatPropertyCompat<K>);
+    method public float getFriction();
+    method public float getVelocityThreshold();
+    method public android.support.animation.FlingAnimation setFriction(float);
+    method public android.support.animation.FlingAnimation setVelocityThreshold(float);
+  }
+
+  public abstract class FloatPropertyCompat<T> {
+    ctor public FloatPropertyCompat(java.lang.String);
+    method public static <T> android.support.animation.FloatPropertyCompat<T> createFloatPropertyCompat(android.util.FloatProperty<T>);
+    method public abstract float getValue(T);
+    method public abstract void setValue(T, float);
   }
 
   public final class SpringAnimation extends android.support.animation.DynamicAnimation {
-    ctor public SpringAnimation(android.view.View, android.support.animation.DynamicAnimation.ViewProperty);
-    ctor public SpringAnimation(android.view.View, android.support.animation.DynamicAnimation.ViewProperty, float);
+    ctor public SpringAnimation(android.support.animation.FloatPropertyCompat<K>);
+    ctor public SpringAnimation(K, android.support.animation.FloatPropertyCompat<K>);
+    ctor public SpringAnimation(K, android.support.animation.FloatPropertyCompat<K>, float);
+    ctor public deprecated SpringAnimation(android.view.View, android.support.animation.DynamicAnimation.ViewProperty);
+    ctor public deprecated SpringAnimation(android.view.View, android.support.animation.DynamicAnimation.ViewProperty, float);
     method public void animateToFinalPosition(float);
     method public boolean canSkipToEnd();
     method public android.support.animation.SpringForce getSpring();
@@ -1394,14 +1413,14 @@ package android.support.media.tv {
     method public static boolean isChannelUriForPassthroughInput(android.net.Uri);
     method public static boolean isChannelUriForTunerInput(android.net.Uri);
     method public static boolean isProgramUri(android.net.Uri);
+    method public static void requestChannelBrowsable(android.content.Context, long);
     field public static final java.lang.String ACTION_INITIALIZE_PROGRAMS = "android.media.tv.action.INITIALIZE_PROGRAMS";
-    field public static final java.lang.String ACTION_MAKE_CHANNEL_BROWSABLE = "android.media.tv.action.MAKE_CHANNEL_BROWSABLE";
     field public static final java.lang.String ACTION_PREVIEW_PROGRAM_ADDED_TO_WATCH_NEXT = "android.media.tv.action.PREVIEW_PROGRAM_ADDED_TO_WATCH_NEXT";
     field public static final java.lang.String ACTION_PREVIEW_PROGRAM_BROWSABLE_DISABLED = "android.media.tv.action.PREVIEW_PROGRAM_BROWSABLE_DISABLED";
+    field public static final java.lang.String ACTION_REQUEST_CHANNEL_BROWSABLE = "android.media.tv.action.REQUEST_CHANNEL_BROWSABLE";
     field public static final java.lang.String ACTION_WATCH_NEXT_PROGRAM_BROWSABLE_DISABLED = "android.media.tv.action.WATCH_NEXT_PROGRAM_BROWSABLE_DISABLED";
     field public static final java.lang.String AUTHORITY = "android.media.tv";
     field public static final java.lang.String EXTRA_CHANNEL_ID = "android.media.tv.extra.CHANNEL_ID";
-    field public static final java.lang.String EXTRA_PACKAGE_NAME = "android.media.tv.extra.PACKAGE_NAME";
     field public static final java.lang.String EXTRA_PREVIEW_PROGRAM_ID = "android.media.tv.extra.PREVIEW_PROGRAM_ID";
     field public static final java.lang.String EXTRA_WATCH_NEXT_PROGRAM_ID = "android.media.tv.extra.WATCH_NEXT_PROGRAM_ID";
   }
@@ -1678,7 +1697,6 @@ package android.support.media.tv {
   }
 
   public static final class TvContractCompat.WatchNextPrograms implements android.support.media.tv.TvContractCompat.BaseTvColumns {
-    ctor public TvContractCompat.WatchNextPrograms();
     field public static final int ASPECT_RATIO_16_9 = 0; // 0x0
     field public static final int ASPECT_RATIO_1_1 = 3; // 0x3
     field public static final int ASPECT_RATIO_2_3 = 4; // 0x4
@@ -1895,6 +1913,10 @@ package android.support.text.emoji {
 
   public abstract class EmojiSpan extends android.text.style.ReplacementSpan {
     method public int getSize(android.graphics.Paint, java.lang.CharSequence, int, int, android.graphics.Paint.FontMetricsInt);
+  }
+
+  public class FontRequestEmojiCompatConfig extends android.support.text.emoji.EmojiCompat.Config {
+    ctor public FontRequestEmojiCompatConfig(android.content.Context, android.support.v4.graphics.fonts.FontRequest);
   }
 
   public final class MetadataRepo {
@@ -2439,8 +2461,20 @@ package android.support.v17.leanback.app {
     method public void setThemeDrawableResourceId(int);
   }
 
+  public class BaseFragment extends android.support.v17.leanback.app.BrandedFragment {
+    method protected java.lang.Object createEntranceTransition();
+    method public final android.support.v17.leanback.app.ProgressBarManager getProgressBarManager();
+    method protected void onEntranceTransitionEnd();
+    method protected void onEntranceTransitionPrepare();
+    method protected void onEntranceTransitionStart();
+    method public void prepareEntranceTransition();
+    method protected void runEntranceTransition(java.lang.Object);
+    method public void startEntranceTransition();
+  }
+
    abstract class BaseRowFragment extends android.app.Fragment {
     method public final android.support.v17.leanback.widget.ObjectAdapter getAdapter();
+    method public final android.support.v17.leanback.widget.ItemBridgeAdapter getBridgeAdapter();
     method public final android.support.v17.leanback.widget.PresenterSelector getPresenterSelector();
     method public int getSelectedPosition();
     method public final android.support.v17.leanback.widget.VerticalGridView getVerticalGridView();
@@ -2456,6 +2490,7 @@ package android.support.v17.leanback.app {
 
    abstract class BaseRowSupportFragment extends android.support.v4.app.Fragment {
     method public final android.support.v17.leanback.widget.ObjectAdapter getAdapter();
+    method public final android.support.v17.leanback.widget.ItemBridgeAdapter getBridgeAdapter();
     method public final android.support.v17.leanback.widget.PresenterSelector getPresenterSelector();
     method public int getSelectedPosition();
     method public final android.support.v17.leanback.widget.VerticalGridView getVerticalGridView();
@@ -2467,6 +2502,17 @@ package android.support.v17.leanback.app {
     method public final void setPresenterSelector(android.support.v17.leanback.widget.PresenterSelector);
     method public void setSelectedPosition(int);
     method public void setSelectedPosition(int, boolean);
+  }
+
+  public class BaseSupportFragment extends android.support.v17.leanback.app.BrandedSupportFragment {
+    method protected java.lang.Object createEntranceTransition();
+    method public final android.support.v17.leanback.app.ProgressBarManager getProgressBarManager();
+    method protected void onEntranceTransitionEnd();
+    method protected void onEntranceTransitionPrepare();
+    method protected void onEntranceTransitionStart();
+    method public void prepareEntranceTransition();
+    method protected void runEntranceTransition(java.lang.Object);
+    method public void startEntranceTransition();
   }
 
   public class BrandedFragment extends android.app.Fragment {
@@ -2511,10 +2557,9 @@ package android.support.v17.leanback.app {
     method public void showTitle(int);
   }
 
-  public class BrowseFragment extends android.support.v17.leanback.app.BrandedFragment {
+  public class BrowseFragment extends android.support.v17.leanback.app.BaseFragment {
     ctor public BrowseFragment();
     method public static android.os.Bundle createArgs(android.os.Bundle, java.lang.String, int);
-    method protected java.lang.Object createEntranceTransition();
     method public void enableMainFragmentScaling(boolean);
     method public deprecated void enableRowScaling(boolean);
     method public android.support.v17.leanback.widget.ObjectAdapter getAdapter();
@@ -2532,10 +2577,6 @@ package android.support.v17.leanback.app {
     method public boolean isInHeadersTransition();
     method public boolean isShowingHeaders();
     method public android.support.v17.leanback.app.HeadersFragment onCreateHeadersFragment();
-    method protected void onEntranceTransitionEnd();
-    method protected void onEntranceTransitionPrepare();
-    method protected void onEntranceTransitionStart();
-    method protected void runEntranceTransition(java.lang.Object);
     method public void setAdapter(android.support.v17.leanback.widget.ObjectAdapter);
     method public void setBrandColor(int);
     method public void setBrowseTransitionListener(android.support.v17.leanback.app.BrowseFragment.BrowseTransitionListener);
@@ -2616,10 +2657,9 @@ package android.support.v17.leanback.app {
     method public abstract android.support.v17.leanback.app.BrowseFragment.MainFragmentRowsAdapter getMainFragmentRowsAdapter();
   }
 
-  public class BrowseSupportFragment extends android.support.v17.leanback.app.BrandedSupportFragment {
+  public class BrowseSupportFragment extends android.support.v17.leanback.app.BaseSupportFragment {
     ctor public BrowseSupportFragment();
     method public static android.os.Bundle createArgs(android.os.Bundle, java.lang.String, int);
-    method protected java.lang.Object createEntranceTransition();
     method public void enableMainFragmentScaling(boolean);
     method public deprecated void enableRowScaling(boolean);
     method public android.support.v17.leanback.widget.ObjectAdapter getAdapter();
@@ -2637,10 +2677,6 @@ package android.support.v17.leanback.app {
     method public boolean isInHeadersTransition();
     method public boolean isShowingHeaders();
     method public android.support.v17.leanback.app.HeadersSupportFragment onCreateHeadersSupportFragment();
-    method protected void onEntranceTransitionEnd();
-    method protected void onEntranceTransitionPrepare();
-    method protected void onEntranceTransitionStart();
-    method protected void runEntranceTransition(java.lang.Object);
     method public void setAdapter(android.support.v17.leanback.widget.ObjectAdapter);
     method public void setBrandColor(int);
     method public void setBrowseTransitionListener(android.support.v17.leanback.app.BrowseSupportFragment.BrowseTransitionListener);
@@ -2721,20 +2757,15 @@ package android.support.v17.leanback.app {
     method public abstract android.support.v17.leanback.app.BrowseSupportFragment.MainFragmentRowsAdapter getMainFragmentRowsAdapter();
   }
 
-  public class DetailsFragment extends android.support.v17.leanback.app.BrandedFragment {
+  public class DetailsFragment extends android.support.v17.leanback.app.BaseFragment {
     ctor public DetailsFragment();
-    method protected java.lang.Object createEntranceTransition();
     method public android.support.v17.leanback.widget.ObjectAdapter getAdapter();
     method public android.support.v17.leanback.widget.BaseOnItemViewClickedListener getOnItemViewClickedListener();
     method public android.support.v17.leanback.widget.DetailsParallax getParallax();
     method public android.support.v17.leanback.app.RowsFragment getRowsFragment();
     method protected deprecated android.view.View inflateTitle(android.view.LayoutInflater, android.view.ViewGroup, android.os.Bundle);
-    method protected void onEntranceTransitionEnd();
-    method protected void onEntranceTransitionPrepare();
-    method protected void onEntranceTransitionStart();
     method protected void onSetDetailsOverviewRowStatus(android.support.v17.leanback.widget.FullWidthDetailsOverviewRowPresenter, android.support.v17.leanback.widget.FullWidthDetailsOverviewRowPresenter.ViewHolder, int, int, int);
     method protected void onSetRowStatus(android.support.v17.leanback.widget.RowPresenter, android.support.v17.leanback.widget.RowPresenter.ViewHolder, int, int, int);
-    method protected void runEntranceTransition(java.lang.Object);
     method public void setAdapter(android.support.v17.leanback.widget.ObjectAdapter);
     method public void setOnItemViewClickedListener(android.support.v17.leanback.widget.BaseOnItemViewClickedListener);
     method public void setOnItemViewSelectedListener(android.support.v17.leanback.widget.BaseOnItemViewSelectedListener);
@@ -2766,20 +2797,15 @@ package android.support.v17.leanback.app {
     method public final void switchToVideo();
   }
 
-  public class DetailsSupportFragment extends android.support.v17.leanback.app.BrandedSupportFragment {
+  public class DetailsSupportFragment extends android.support.v17.leanback.app.BaseSupportFragment {
     ctor public DetailsSupportFragment();
-    method protected java.lang.Object createEntranceTransition();
     method public android.support.v17.leanback.widget.ObjectAdapter getAdapter();
     method public android.support.v17.leanback.widget.BaseOnItemViewClickedListener getOnItemViewClickedListener();
     method public android.support.v17.leanback.widget.DetailsParallax getParallax();
     method public android.support.v17.leanback.app.RowsSupportFragment getRowsSupportFragment();
     method protected deprecated android.view.View inflateTitle(android.view.LayoutInflater, android.view.ViewGroup, android.os.Bundle);
-    method protected void onEntranceTransitionEnd();
-    method protected void onEntranceTransitionPrepare();
-    method protected void onEntranceTransitionStart();
     method protected void onSetDetailsOverviewRowStatus(android.support.v17.leanback.widget.FullWidthDetailsOverviewRowPresenter, android.support.v17.leanback.widget.FullWidthDetailsOverviewRowPresenter.ViewHolder, int, int, int);
     method protected void onSetRowStatus(android.support.v17.leanback.widget.RowPresenter, android.support.v17.leanback.widget.RowPresenter.ViewHolder, int, int, int);
-    method protected void runEntranceTransition(java.lang.Object);
     method public void setAdapter(android.support.v17.leanback.widget.ObjectAdapter);
     method public void setOnItemViewClickedListener(android.support.v17.leanback.widget.BaseOnItemViewClickedListener);
     method public void setOnItemViewSelectedListener(android.support.v17.leanback.widget.BaseOnItemViewSelectedListener);
@@ -3129,14 +3155,22 @@ package android.support.v17.leanback.app {
 
   public class PlaybackFragment extends android.app.Fragment {
     ctor public PlaybackFragment();
-    method public void fadeOut();
+    method public deprecated void fadeOut();
     method public android.support.v17.leanback.widget.ObjectAdapter getAdapter();
     method public int getBackgroundType();
-    method public boolean isFadingEnabled();
+    method public android.support.v17.leanback.app.ProgressBarManager getProgressBarManager();
+    method public void hideControlsOverlay(boolean);
+    method public boolean isControlsOverlayAutoHideEnabled();
+    method public boolean isControlsOverlayVisible();
+    method public deprecated boolean isFadingEnabled();
     method public void notifyPlaybackRowChanged();
+    method protected void onBufferingStateChanged(boolean);
+    method protected void onError(int, java.lang.CharSequence);
+    method protected void onVideoSizeChanged(int, int);
     method public void setAdapter(android.support.v17.leanback.widget.ObjectAdapter);
     method public void setBackgroundType(int);
-    method public void setFadingEnabled(boolean);
+    method public void setControlsOverlayAutoHideEnabled(boolean);
+    method public deprecated void setFadingEnabled(boolean);
     method public void setHostCallback(android.support.v17.leanback.media.PlaybackGlueHost.HostCallback);
     method public void setOnItemViewClickedListener(android.support.v17.leanback.widget.BaseOnItemViewClickedListener);
     method public void setOnItemViewSelectedListener(android.support.v17.leanback.widget.BaseOnItemViewSelectedListener);
@@ -3144,16 +3178,19 @@ package android.support.v17.leanback.app {
     method public void setOnPlaybackItemViewClickedListener(android.support.v17.leanback.widget.BaseOnItemViewClickedListener);
     method public void setPlaybackRow(android.support.v17.leanback.widget.Row);
     method public void setPlaybackRowPresenter(android.support.v17.leanback.widget.PlaybackRowPresenter);
+    method public void setPlaybackSeekUiClient(android.support.v17.leanback.widget.PlaybackSeekUi.Client);
     method public void setSelectedPosition(int);
     method public void setSelectedPosition(int, boolean);
+    method public void showControlsOverlay(boolean);
     method public void tickle();
     field public static final int BG_DARK = 1; // 0x1
     field public static final int BG_LIGHT = 2; // 0x2
     field public static final int BG_NONE = 0; // 0x0
   }
 
-  public class PlaybackFragmentGlueHost extends android.support.v17.leanback.media.PlaybackGlueHost {
+  public class PlaybackFragmentGlueHost extends android.support.v17.leanback.media.PlaybackGlueHost implements android.support.v17.leanback.widget.PlaybackSeekUi {
     ctor public PlaybackFragmentGlueHost(android.support.v17.leanback.app.PlaybackFragment);
+    method public void setPlaybackSeekUiClient(android.support.v17.leanback.widget.PlaybackSeekUi.Client);
   }
 
   public deprecated class PlaybackOverlayFragment extends android.support.v17.leanback.app.DetailsFragment {
@@ -3214,14 +3251,22 @@ package android.support.v17.leanback.app {
 
   public class PlaybackSupportFragment extends android.support.v4.app.Fragment {
     ctor public PlaybackSupportFragment();
-    method public void fadeOut();
+    method public deprecated void fadeOut();
     method public android.support.v17.leanback.widget.ObjectAdapter getAdapter();
     method public int getBackgroundType();
-    method public boolean isFadingEnabled();
+    method public android.support.v17.leanback.app.ProgressBarManager getProgressBarManager();
+    method public void hideControlsOverlay(boolean);
+    method public boolean isControlsOverlayAutoHideEnabled();
+    method public boolean isControlsOverlayVisible();
+    method public deprecated boolean isFadingEnabled();
     method public void notifyPlaybackRowChanged();
+    method protected void onBufferingStateChanged(boolean);
+    method protected void onError(int, java.lang.CharSequence);
+    method protected void onVideoSizeChanged(int, int);
     method public void setAdapter(android.support.v17.leanback.widget.ObjectAdapter);
     method public void setBackgroundType(int);
-    method public void setFadingEnabled(boolean);
+    method public void setControlsOverlayAutoHideEnabled(boolean);
+    method public deprecated void setFadingEnabled(boolean);
     method public void setHostCallback(android.support.v17.leanback.media.PlaybackGlueHost.HostCallback);
     method public void setOnItemViewClickedListener(android.support.v17.leanback.widget.BaseOnItemViewClickedListener);
     method public void setOnItemViewSelectedListener(android.support.v17.leanback.widget.BaseOnItemViewSelectedListener);
@@ -3229,16 +3274,19 @@ package android.support.v17.leanback.app {
     method public void setOnPlaybackItemViewClickedListener(android.support.v17.leanback.widget.BaseOnItemViewClickedListener);
     method public void setPlaybackRow(android.support.v17.leanback.widget.Row);
     method public void setPlaybackRowPresenter(android.support.v17.leanback.widget.PlaybackRowPresenter);
+    method public void setPlaybackSeekUiClient(android.support.v17.leanback.widget.PlaybackSeekUi.Client);
     method public void setSelectedPosition(int);
     method public void setSelectedPosition(int, boolean);
+    method public void showControlsOverlay(boolean);
     method public void tickle();
     field public static final int BG_DARK = 1; // 0x1
     field public static final int BG_LIGHT = 2; // 0x2
     field public static final int BG_NONE = 0; // 0x0
   }
 
-  public class PlaybackSupportFragmentGlueHost extends android.support.v17.leanback.media.PlaybackGlueHost {
+  public class PlaybackSupportFragmentGlueHost extends android.support.v17.leanback.media.PlaybackGlueHost implements android.support.v17.leanback.widget.PlaybackSeekUi {
     ctor public PlaybackSupportFragmentGlueHost(android.support.v17.leanback.app.PlaybackSupportFragment);
+    method public void setPlaybackSeekUiClient(android.support.v17.leanback.widget.PlaybackSeekUi.Client);
   }
 
   public final class ProgressBarManager {
@@ -3365,13 +3413,11 @@ package android.support.v17.leanback.app {
     method public abstract boolean onQueryTextSubmit(java.lang.String);
   }
 
-  public class VerticalGridFragment extends android.support.v17.leanback.app.BrandedFragment {
+  public class VerticalGridFragment extends android.support.v17.leanback.app.BaseFragment {
     ctor public VerticalGridFragment();
-    method protected java.lang.Object createEntranceTransition();
     method public android.support.v17.leanback.widget.ObjectAdapter getAdapter();
     method public android.support.v17.leanback.widget.VerticalGridPresenter getGridPresenter();
     method public android.support.v17.leanback.widget.OnItemViewClickedListener getOnItemViewClickedListener();
-    method protected void runEntranceTransition(java.lang.Object);
     method public void setAdapter(android.support.v17.leanback.widget.ObjectAdapter);
     method public void setGridPresenter(android.support.v17.leanback.widget.VerticalGridPresenter);
     method public void setOnItemViewClickedListener(android.support.v17.leanback.widget.OnItemViewClickedListener);
@@ -3379,13 +3425,11 @@ package android.support.v17.leanback.app {
     method public void setSelectedPosition(int);
   }
 
-  public class VerticalGridSupportFragment extends android.support.v17.leanback.app.BrandedSupportFragment {
+  public class VerticalGridSupportFragment extends android.support.v17.leanback.app.BaseSupportFragment {
     ctor public VerticalGridSupportFragment();
-    method protected java.lang.Object createEntranceTransition();
     method public android.support.v17.leanback.widget.ObjectAdapter getAdapter();
     method public android.support.v17.leanback.widget.VerticalGridPresenter getGridPresenter();
     method public android.support.v17.leanback.widget.OnItemViewClickedListener getOnItemViewClickedListener();
-    method protected void runEntranceTransition(java.lang.Object);
     method public void setAdapter(android.support.v17.leanback.widget.ObjectAdapter);
     method public void setGridPresenter(android.support.v17.leanback.widget.VerticalGridPresenter);
     method public void setOnItemViewClickedListener(android.support.v17.leanback.widget.OnItemViewClickedListener);
@@ -3544,6 +3588,18 @@ package android.support.v17.leanback.media {
     method public boolean isMediaPlaying();
   }
 
+  public class MediaPlayerAdapter extends android.support.v17.leanback.media.PlayerAdapter {
+    ctor public MediaPlayerAdapter(android.content.Context);
+    method protected boolean onError(int, int);
+    method protected boolean onInfo(int, int);
+    method protected void onSeekComplete();
+    method public void pause();
+    method public void play();
+    method public void release();
+    method public void reset();
+    method public boolean setDataSource(android.net.Uri);
+  }
+
   public abstract class PlaybackControlGlue extends android.support.v17.leanback.media.PlaybackGlue implements android.support.v17.leanback.widget.OnActionClickedListener android.view.View.OnKeyListener {
     ctor public PlaybackControlGlue(android.content.Context, int[]);
     ctor public PlaybackControlGlue(android.content.Context, int[], int[]);
@@ -3597,9 +3653,13 @@ package android.support.v17.leanback.media {
 
   public abstract class PlaybackGlue {
     ctor public PlaybackGlue(android.content.Context);
+    method public void addPlayerCallback(android.support.v17.leanback.media.PlaybackGlue.PlayerCallback);
     method public android.content.Context getContext();
     method public android.support.v17.leanback.media.PlaybackGlueHost getHost();
-    method public boolean isReadyForPlayback();
+    method protected java.util.List<android.support.v17.leanback.media.PlaybackGlue.PlayerCallback> getPlayerCallbacks();
+    method public boolean isPlaying();
+    method public boolean isPrepared();
+    method public deprecated boolean isReadyForPlayback();
     method public void next();
     method protected void onAttachedToHost(android.support.v17.leanback.media.PlaybackGlueHost);
     method protected void onDetachedFromHost();
@@ -3610,25 +3670,35 @@ package android.support.v17.leanback.media {
     method public void pause();
     method public void play();
     method public void previous();
+    method public void removePlayerCallback(android.support.v17.leanback.media.PlaybackGlue.PlayerCallback);
     method public final void setHost(android.support.v17.leanback.media.PlaybackGlueHost);
-    method public void setPlayerCallback(android.support.v17.leanback.media.PlaybackGlue.PlayerCallback);
+    method public deprecated void setPlayerCallback(android.support.v17.leanback.media.PlaybackGlue.PlayerCallback);
   }
 
   public static abstract class PlaybackGlue.PlayerCallback {
     ctor public PlaybackGlue.PlayerCallback();
-    method public abstract void onReadyForPlayback();
+    method public void onPlayCompleted(android.support.v17.leanback.media.PlaybackGlue);
+    method public void onPlayStateChanged(android.support.v17.leanback.media.PlaybackGlue);
+    method public void onPreparedStateChanged(android.support.v17.leanback.media.PlaybackGlue);
+    method public deprecated void onReadyForPlayback();
   }
 
   public abstract class PlaybackGlueHost {
     ctor public PlaybackGlueHost();
-    method public void fadeOut();
+    method public deprecated void fadeOut();
+    method public android.support.v17.leanback.media.PlaybackGlueHost.PlayerCallback getPlayerCallback();
+    method public void hideControlsOverlay(boolean);
+    method public boolean isControlsOverlayAutoHideEnabled();
+    method public boolean isControlsOverlayVisible();
     method public void notifyPlaybackRowChanged();
-    method public void setFadingEnabled(boolean);
+    method public void setControlsOverlayAutoHideEnabled(boolean);
+    method public deprecated void setFadingEnabled(boolean);
     method public void setHostCallback(android.support.v17.leanback.media.PlaybackGlueHost.HostCallback);
     method public void setOnActionClickedListener(android.support.v17.leanback.widget.OnActionClickedListener);
     method public void setOnKeyInterceptListener(android.view.View.OnKeyListener);
     method public void setPlaybackRow(android.support.v17.leanback.widget.Row);
     method public void setPlaybackRowPresenter(android.support.v17.leanback.widget.PlaybackRowPresenter);
+    method public void showControlsOverlay(boolean);
   }
 
   public static abstract class PlaybackGlueHost.HostCallback {
@@ -3638,6 +3708,78 @@ package android.support.v17.leanback.media {
     method public void onHostResume();
     method public void onHostStart();
     method public void onHostStop();
+  }
+
+  public static class PlaybackGlueHost.PlayerCallback {
+    ctor public PlaybackGlueHost.PlayerCallback();
+    method public void onBufferingStateChanged(boolean);
+    method public void onError(int, java.lang.CharSequence);
+    method public void onVideoSizeChanged(int, int);
+  }
+
+  public class PlaybackTransportControlGlue<T extends android.support.v17.leanback.media.PlayerAdapter> extends android.support.v17.leanback.media.PlaybackGlue implements android.support.v17.leanback.widget.OnActionClickedListener android.view.View.OnKeyListener {
+    ctor public PlaybackTransportControlGlue(android.content.Context, T);
+    method public android.graphics.drawable.Drawable getArt();
+    method public final long getBufferedPosition();
+    method public android.support.v17.leanback.widget.PlaybackControlsRow getControlsRow();
+    method public final long getCurrentPosition();
+    method public final long getDuration();
+    method public android.support.v17.leanback.widget.PlaybackRowPresenter getPlaybackRowPresenter();
+    method public final T getPlayerAdapter();
+    method public final android.support.v17.leanback.widget.PlaybackSeekDataProvider getSeekProvider();
+    method public java.lang.CharSequence getSubtitle();
+    method public java.lang.CharSequence getTitle();
+    method public boolean isControlsOverlayAutoHideEnabled();
+    method public final boolean isPlaying();
+    method public final boolean isPrepared();
+    method public final boolean isSeekEnabled();
+    method public void onActionClicked(android.support.v17.leanback.widget.Action);
+    method protected void onCreatePrimaryActions(android.support.v17.leanback.widget.ArrayObjectAdapter);
+    method protected void onCreateSecondaryActions(android.support.v17.leanback.widget.ArrayObjectAdapter);
+    method public boolean onKey(android.view.View, int, android.view.KeyEvent);
+    method protected void onPlayCompleted();
+    method protected void onPlayStateChanged();
+    method protected void onPreparedStateChanged();
+    method public final void play();
+    method public final void seekTo(long);
+    method public void setArt(android.graphics.drawable.Drawable);
+    method public void setControlsOverlayAutoHideEnabled(boolean);
+    method public void setControlsRow(android.support.v17.leanback.widget.PlaybackControlsRow);
+    method public void setPlaybackRowPresenter(android.support.v17.leanback.widget.PlaybackRowPresenter);
+    method public final void setSeekEnabled(boolean);
+    method public final void setSeekProvider(android.support.v17.leanback.widget.PlaybackSeekDataProvider);
+    method public void setSubtitle(java.lang.CharSequence);
+    method public void setTitle(java.lang.CharSequence);
+  }
+
+  public abstract class PlayerAdapter {
+    ctor public PlayerAdapter();
+    method public long getBufferedPosition();
+    method public final android.support.v17.leanback.media.PlayerAdapter.Callback getCallback();
+    method public long getCurrentPosition();
+    method public long getDuration();
+    method public boolean isPlaying();
+    method public boolean isPrepared();
+    method public void onAttachedToHost(android.support.v17.leanback.media.PlaybackGlueHost);
+    method public void onDetachedFromHost();
+    method public abstract void pause();
+    method public abstract void play();
+    method public void seekTo(long);
+    method public final void setCallback(android.support.v17.leanback.media.PlayerAdapter.Callback);
+    method public void setProgressUpdatingEnabled(boolean);
+  }
+
+  public static class PlayerAdapter.Callback {
+    ctor public PlayerAdapter.Callback();
+    method public void onBufferedPositionChanged(android.support.v17.leanback.media.PlayerAdapter);
+    method public void onBufferingStateChanged(android.support.v17.leanback.media.PlayerAdapter, boolean);
+    method public void onCurrentPositionChanged(android.support.v17.leanback.media.PlayerAdapter);
+    method public void onDurationChanged(android.support.v17.leanback.media.PlayerAdapter);
+    method public void onError(android.support.v17.leanback.media.PlayerAdapter, int, java.lang.String);
+    method public void onPlayCompleted(android.support.v17.leanback.media.PlayerAdapter);
+    method public void onPlayStateChanged(android.support.v17.leanback.media.PlayerAdapter);
+    method public void onPreparedStateChanged(android.support.v17.leanback.media.PlayerAdapter);
+    method public void onVideoSizeChanged(android.support.v17.leanback.media.PlayerAdapter, int, int);
   }
 
   public abstract interface SurfaceHolderGlueHost {
@@ -3796,6 +3938,100 @@ package android.support.v17.leanback.widget {
     field public static final int VIEW_TYPE_INFO = 1; // 0x1
     field public static final int VIEW_TYPE_MAIN = 0; // 0x0
     field public int viewType;
+  }
+
+  public abstract class BaseGridView extends android.support.v7.widget.RecyclerView {
+    method public void addOnChildViewHolderSelectedListener(android.support.v17.leanback.widget.OnChildViewHolderSelectedListener);
+    method public void animateIn();
+    method public void animateOut();
+    method public int getChildDrawingOrder(int, int);
+    method public deprecated int getHorizontalMargin();
+    method public int getHorizontalSpacing();
+    method public int getInitialPrefetchItemCount();
+    method public int getItemAlignmentOffset();
+    method public float getItemAlignmentOffsetPercent();
+    method public int getItemAlignmentViewId();
+    method public android.support.v17.leanback.widget.BaseGridView.OnUnhandledKeyListener getOnUnhandledKeyListener();
+    method public final int getSaveChildrenLimitNumber();
+    method public final int getSaveChildrenPolicy();
+    method public int getSelectedPosition();
+    method public deprecated int getVerticalMargin();
+    method public int getVerticalSpacing();
+    method public void getViewSelectedOffsets(android.view.View, int[]);
+    method public int getWindowAlignment();
+    method public int getWindowAlignmentOffset();
+    method public float getWindowAlignmentOffsetPercent();
+    method public boolean hasPreviousViewInSameRow(int);
+    method public boolean isChildLayoutAnimated();
+    method public boolean isFocusDrawingOrderEnabled();
+    method public final boolean isFocusSearchDisabled();
+    method public boolean isItemAlignmentOffsetWithPadding();
+    method public boolean isScrollEnabled();
+    method public boolean onRequestFocusInDescendants(int, android.graphics.Rect);
+    method public void removeOnChildViewHolderSelectedListener(android.support.v17.leanback.widget.OnChildViewHolderSelectedListener);
+    method public void setAnimateChildLayout(boolean);
+    method public void setChildrenVisibility(int);
+    method public void setFocusDrawingOrderEnabled(boolean);
+    method public final void setFocusSearchDisabled(boolean);
+    method public void setGravity(int);
+    method public void setHasOverlappingRendering(boolean);
+    method public deprecated void setHorizontalMargin(int);
+    method public void setHorizontalSpacing(int);
+    method public void setInitialPrefetchItemCount(int);
+    method public void setItemAlignmentOffset(int);
+    method public void setItemAlignmentOffsetPercent(float);
+    method public void setItemAlignmentOffsetWithPadding(boolean);
+    method public void setItemAlignmentViewId(int);
+    method public deprecated void setItemMargin(int);
+    method public void setItemSpacing(int);
+    method public void setLayoutEnabled(boolean);
+    method public void setOnChildLaidOutListener(android.support.v17.leanback.widget.OnChildLaidOutListener);
+    method public void setOnChildSelectedListener(android.support.v17.leanback.widget.OnChildSelectedListener);
+    method public void setOnChildViewHolderSelectedListener(android.support.v17.leanback.widget.OnChildViewHolderSelectedListener);
+    method public void setOnKeyInterceptListener(android.support.v17.leanback.widget.BaseGridView.OnKeyInterceptListener);
+    method public void setOnMotionInterceptListener(android.support.v17.leanback.widget.BaseGridView.OnMotionInterceptListener);
+    method public void setOnTouchInterceptListener(android.support.v17.leanback.widget.BaseGridView.OnTouchInterceptListener);
+    method public void setOnUnhandledKeyListener(android.support.v17.leanback.widget.BaseGridView.OnUnhandledKeyListener);
+    method public void setPruneChild(boolean);
+    method public final void setSaveChildrenLimitNumber(int);
+    method public final void setSaveChildrenPolicy(int);
+    method public void setScrollEnabled(boolean);
+    method public void setSelectedPosition(int);
+    method public void setSelectedPosition(int, int);
+    method public void setSelectedPosition(int, android.support.v17.leanback.widget.ViewHolderTask);
+    method public void setSelectedPositionSmooth(int);
+    method public void setSelectedPositionSmooth(int, android.support.v17.leanback.widget.ViewHolderTask);
+    method public deprecated void setVerticalMargin(int);
+    method public void setVerticalSpacing(int);
+    method public void setWindowAlignment(int);
+    method public void setWindowAlignmentOffset(int);
+    method public void setWindowAlignmentOffsetPercent(float);
+    field public static final float ITEM_ALIGN_OFFSET_PERCENT_DISABLED = -1.0f;
+    field public static final int SAVE_ALL_CHILD = 3; // 0x3
+    field public static final int SAVE_LIMITED_CHILD = 2; // 0x2
+    field public static final int SAVE_NO_CHILD = 0; // 0x0
+    field public static final int SAVE_ON_SCREEN_CHILD = 1; // 0x1
+    field public static final int WINDOW_ALIGN_BOTH_EDGE = 3; // 0x3
+    field public static final int WINDOW_ALIGN_HIGH_EDGE = 2; // 0x2
+    field public static final int WINDOW_ALIGN_LOW_EDGE = 1; // 0x1
+    field public static final int WINDOW_ALIGN_NO_EDGE = 0; // 0x0
+    field public static final float WINDOW_ALIGN_OFFSET_PERCENT_DISABLED = -1.0f;
+  }
+
+  public static abstract interface BaseGridView.OnKeyInterceptListener {
+    method public abstract boolean onInterceptKeyEvent(android.view.KeyEvent);
+  }
+
+  public static abstract interface BaseGridView.OnMotionInterceptListener {
+    method public abstract boolean onInterceptMotionEvent(android.view.MotionEvent);
+  }
+
+  public static abstract interface BaseGridView.OnTouchInterceptListener {
+    method public abstract boolean onInterceptTouchEvent(android.view.MotionEvent);
+  }
+
+  public static abstract interface BaseGridView.OnUnhandledKeyListener {
+    method public abstract boolean onUnhandledKey(android.view.KeyEvent);
   }
 
   public abstract interface BaseOnItemViewClickedListener<T> {
@@ -3960,8 +4196,10 @@ package android.support.v17.leanback.widget {
   public class FocusHighlightHelper {
     ctor public FocusHighlightHelper();
     method public static void setupBrowseItemFocusHighlight(android.support.v17.leanback.widget.ItemBridgeAdapter, int, boolean);
-    method public static void setupHeaderItemFocusHighlight(android.support.v17.leanback.widget.VerticalGridView);
-    method public static void setupHeaderItemFocusHighlight(android.support.v17.leanback.widget.VerticalGridView, boolean);
+    method public static deprecated void setupHeaderItemFocusHighlight(android.support.v17.leanback.widget.VerticalGridView);
+    method public static deprecated void setupHeaderItemFocusHighlight(android.support.v17.leanback.widget.VerticalGridView, boolean);
+    method public static void setupHeaderItemFocusHighlight(android.support.v17.leanback.widget.ItemBridgeAdapter);
+    method public static void setupHeaderItemFocusHighlight(android.support.v17.leanback.widget.ItemBridgeAdapter, boolean);
   }
 
   public abstract interface FragmentAnimationProvider {
@@ -4254,7 +4492,7 @@ package android.support.v17.leanback.widget {
     method public void setDescription(java.lang.CharSequence);
   }
 
-  public class HorizontalGridView extends android.support.v7.widget.RecyclerView {
+  public class HorizontalGridView extends android.support.v17.leanback.widget.BaseGridView {
     ctor public HorizontalGridView(android.content.Context);
     ctor public HorizontalGridView(android.content.Context, android.util.AttributeSet);
     ctor public HorizontalGridView(android.content.Context, android.util.AttributeSet, int);
@@ -4422,6 +4660,7 @@ package android.support.v17.leanback.widget {
     ctor public ListRowPresenter();
     ctor public ListRowPresenter(int);
     ctor public ListRowPresenter(int, boolean);
+    method protected void applySelectLevelToChild(android.support.v17.leanback.widget.ListRowPresenter.ViewHolder, android.view.View);
     method public final boolean areChildRoundedCornersEnabled();
     method protected android.support.v17.leanback.widget.RowPresenter.ViewHolder createRowViewHolder(android.view.ViewGroup);
     method protected android.support.v17.leanback.widget.ShadowOverlayHelper.Options createShadowOverlayOptions();
@@ -4633,26 +4872,33 @@ package android.support.v17.leanback.widget {
     ctor public PlaybackControlsRow();
     method public android.support.v17.leanback.widget.Action getActionForKeyCode(int);
     method public android.support.v17.leanback.widget.Action getActionForKeyCode(android.support.v17.leanback.widget.ObjectAdapter, int);
-    method public int getBufferedProgress();
-    method public long getBufferedProgressLong();
-    method public int getCurrentTime();
-    method public long getCurrentTimeLong();
+    method public long getBufferedPosition();
+    method public deprecated int getBufferedProgress();
+    method public deprecated long getBufferedProgressLong();
+    method public long getCurrentPosition();
+    method public deprecated int getCurrentTime();
+    method public deprecated long getCurrentTimeLong();
+    method public long getDuration();
     method public final android.graphics.drawable.Drawable getImageDrawable();
     method public final java.lang.Object getItem();
     method public final android.support.v17.leanback.widget.ObjectAdapter getPrimaryActionsAdapter();
     method public final android.support.v17.leanback.widget.ObjectAdapter getSecondaryActionsAdapter();
-    method public int getTotalTime();
-    method public long getTotalTimeLong();
-    method public void setBufferedProgress(int);
-    method public void setBufferedProgressLong(long);
-    method public void setCurrentTime(int);
-    method public void setCurrentTimeLong(long);
+    method public deprecated int getTotalTime();
+    method public deprecated long getTotalTimeLong();
+    method public void setBufferedPosition(long);
+    method public deprecated void setBufferedProgress(int);
+    method public deprecated void setBufferedProgressLong(long);
+    method public void setCurrentPosition(long);
+    method public deprecated void setCurrentTime(int);
+    method public deprecated void setCurrentTimeLong(long);
+    method public void setDuration(long);
     method public final void setImageBitmap(android.content.Context, android.graphics.Bitmap);
     method public final void setImageDrawable(android.graphics.drawable.Drawable);
+    method public void setOnPlaybackProgressChangedListener(android.support.v17.leanback.widget.PlaybackControlsRow.OnPlaybackProgressCallback);
     method public final void setPrimaryActionsAdapter(android.support.v17.leanback.widget.ObjectAdapter);
     method public final void setSecondaryActionsAdapter(android.support.v17.leanback.widget.ObjectAdapter);
-    method public void setTotalTime(int);
-    method public void setTotalTimeLong(long);
+    method public deprecated void setTotalTime(int);
+    method public deprecated void setTotalTimeLong(long);
   }
 
   public static class PlaybackControlsRow.ClosedCaptioningAction extends android.support.v17.leanback.widget.PlaybackControlsRow.MultiAction {
@@ -4690,6 +4936,13 @@ package android.support.v17.leanback.widget {
     method public void setIndex(int);
     method public void setLabels(java.lang.String[]);
     method public void setSecondaryLabels(java.lang.String[]);
+  }
+
+  public static class PlaybackControlsRow.OnPlaybackProgressCallback {
+    ctor public PlaybackControlsRow.OnPlaybackProgressCallback();
+    method public void onBufferedPositionChanged(android.support.v17.leanback.widget.PlaybackControlsRow, long);
+    method public void onCurrentPositionChanged(android.support.v17.leanback.widget.PlaybackControlsRow, long);
+    method public void onDurationChanged(android.support.v17.leanback.widget.PlaybackControlsRow, long);
   }
 
   public static class PlaybackControlsRow.PictureInPictureAction extends android.support.v17.leanback.widget.Action {
@@ -4772,6 +5025,54 @@ package android.support.v17.leanback.widget {
 
   public static class PlaybackRowPresenter.ViewHolder extends android.support.v17.leanback.widget.RowPresenter.ViewHolder {
     ctor public PlaybackRowPresenter.ViewHolder(android.view.View);
+  }
+
+  public class PlaybackSeekDataProvider {
+    ctor public PlaybackSeekDataProvider();
+    method public long[] getSeekPositions();
+    method public void getThumbnail(int, android.support.v17.leanback.widget.PlaybackSeekDataProvider.ResultCallback);
+    method public void reset();
+  }
+
+  public static class PlaybackSeekDataProvider.ResultCallback {
+    ctor public PlaybackSeekDataProvider.ResultCallback();
+    method public void onThumbnailLoaded(android.graphics.Bitmap, int);
+  }
+
+  public abstract interface PlaybackSeekUi {
+    method public abstract void setPlaybackSeekUiClient(android.support.v17.leanback.widget.PlaybackSeekUi.Client);
+  }
+
+  public static class PlaybackSeekUi.Client {
+    ctor public PlaybackSeekUi.Client();
+    method public android.support.v17.leanback.widget.PlaybackSeekDataProvider getPlaybackSeekDataProvider();
+    method public boolean isSeekEnabled();
+    method public void onSeekFinished(boolean);
+    method public void onSeekPositionChanged(long);
+    method public void onSeekStarted();
+  }
+
+  public class PlaybackTransportRowPresenter extends android.support.v17.leanback.widget.PlaybackRowPresenter {
+    ctor public PlaybackTransportRowPresenter();
+    method protected android.support.v17.leanback.widget.RowPresenter.ViewHolder createRowViewHolder(android.view.ViewGroup);
+    method public float getDefaultSeekIncrement();
+    method public android.support.v17.leanback.widget.OnActionClickedListener getOnActionClickedListener();
+    method public int getProgressColor();
+    method protected void onProgressBarClicked(android.support.v17.leanback.widget.PlaybackTransportRowPresenter.ViewHolder);
+    method public void setDefaultSeekIncrement(float);
+    method public void setDescriptionPresenter(android.support.v17.leanback.widget.Presenter);
+    method public void setOnActionClickedListener(android.support.v17.leanback.widget.OnActionClickedListener);
+    method public void setProgressColor(int);
+  }
+
+  public class PlaybackTransportRowPresenter.ViewHolder extends android.support.v17.leanback.widget.PlaybackRowPresenter.ViewHolder implements android.support.v17.leanback.widget.PlaybackSeekUi {
+    ctor public PlaybackTransportRowPresenter.ViewHolder(android.view.View, android.support.v17.leanback.widget.Presenter);
+    method public final android.widget.TextView getCurrentPositionView();
+    method public final android.support.v17.leanback.widget.Presenter.ViewHolder getDescriptionViewHolder();
+    method public final android.widget.TextView getDurationView();
+    method protected void onSetCurrentPositionLabel(long);
+    method protected void onSetDurationLabel(long);
+    method public void setPlaybackSeekUiClient(android.support.v17.leanback.widget.PlaybackSeekUi.Client);
   }
 
   public abstract class Presenter implements android.support.v17.leanback.widget.FacetProvider {
@@ -5196,7 +5497,7 @@ package android.support.v17.leanback.widget {
     method public android.support.v17.leanback.widget.VerticalGridView getGridView();
   }
 
-  public class VerticalGridView extends android.support.v7.widget.RecyclerView {
+  public class VerticalGridView extends android.support.v17.leanback.widget.BaseGridView {
     ctor public VerticalGridView(android.content.Context);
     ctor public VerticalGridView(android.content.Context, android.util.AttributeSet);
     ctor public VerticalGridView(android.content.Context, android.util.AttributeSet, int);
@@ -5497,6 +5798,7 @@ package android.support.v4.app {
     method public final android.support.v4.app.FragmentManager getFragmentManager();
     method public final java.lang.Object getHost();
     method public final int getId();
+    method public final android.view.LayoutInflater getLayoutInflater();
     method public android.support.v4.app.LoaderManager getLoaderManager();
     method public final android.support.v4.app.Fragment getParentFragment();
     method public java.lang.Object getReenterTransition();
@@ -5533,6 +5835,7 @@ package android.support.v4.app {
     method public boolean onContextItemSelected(android.view.MenuItem);
     method public void onCreate(android.os.Bundle);
     method public android.view.animation.Animation onCreateAnimation(int, boolean, int);
+    method public android.animation.Animator onCreateAnimator(int, boolean, int);
     method public void onCreateContextMenu(android.view.ContextMenu, android.view.View, android.view.ContextMenu.ContextMenuInfo);
     method public void onCreateOptionsMenu(android.view.Menu, android.view.MenuInflater);
     method public android.view.View onCreateView(android.view.LayoutInflater, android.view.ViewGroup, android.os.Bundle);
@@ -5814,6 +6117,35 @@ package android.support.v4.app {
     field public static final int TRANSIT_UNSET = -1; // 0xffffffff
   }
 
+  public class FrameMetricsAggregator {
+    ctor public FrameMetricsAggregator();
+    ctor public FrameMetricsAggregator(int);
+    method public void add(android.app.Activity);
+    method public android.util.SparseIntArray[] getMetrics();
+    method public android.util.SparseIntArray[] remove(android.app.Activity);
+    method public android.util.SparseIntArray[] reset();
+    method public android.util.SparseIntArray[] stop();
+    field public static final int ANIMATION_DURATION = 256; // 0x100
+    field public static final int ANIMATION_INDEX = 8; // 0x8
+    field public static final int COMMAND_DURATION = 32; // 0x20
+    field public static final int COMMAND_INDEX = 5; // 0x5
+    field public static final int DELAY_DURATION = 128; // 0x80
+    field public static final int DELAY_INDEX = 7; // 0x7
+    field public static final int DRAW_DURATION = 8; // 0x8
+    field public static final int DRAW_INDEX = 3; // 0x3
+    field public static final int EVERY_DURATION = 511; // 0x1ff
+    field public static final int INPUT_DURATION = 2; // 0x2
+    field public static final int INPUT_INDEX = 1; // 0x1
+    field public static final int LAYOUT_MEASURE_DURATION = 4; // 0x4
+    field public static final int LAYOUT_MEASURE_INDEX = 2; // 0x2
+    field public static final int SWAP_DURATION = 64; // 0x40
+    field public static final int SWAP_INDEX = 6; // 0x6
+    field public static final int SYNC_DURATION = 16; // 0x10
+    field public static final int SYNC_INDEX = 4; // 0x4
+    field public static final int TOTAL_DURATION = 1; // 0x1
+    field public static final int TOTAL_INDEX = 0; // 0x0
+  }
+
   public class ListFragment extends android.support.v4.app.Fragment {
     ctor public ListFragment();
     method public android.widget.ListAdapter getListAdapter();
@@ -6024,6 +6356,7 @@ package android.support.v4.app {
     method public android.support.v4.app.NotificationCompat.Builder setCategory(java.lang.String);
     method public android.support.v4.app.NotificationCompat.Builder setChannel(java.lang.String);
     method public android.support.v4.app.NotificationCompat.Builder setColor(int);
+    method public android.support.v4.app.NotificationCompat.Builder setColorized(boolean);
     method public android.support.v4.app.NotificationCompat.Builder setContent(android.widget.RemoteViews);
     method public android.support.v4.app.NotificationCompat.Builder setContentInfo(java.lang.CharSequence);
     method public android.support.v4.app.NotificationCompat.Builder setContentIntent(android.app.PendingIntent);
@@ -6413,6 +6746,7 @@ package android.support.v4.content {
     method public static boolean startActivities(android.content.Context, android.content.Intent[]);
     method public static boolean startActivities(android.content.Context, android.content.Intent[], android.os.Bundle);
     method public static void startActivity(android.content.Context, android.content.Intent, android.os.Bundle);
+    method public static void startForegroundService(android.content.Context, android.content.Intent);
   }
 
   public class CursorLoader extends android.support.v4.content.AsyncTaskLoader {
@@ -6533,9 +6867,6 @@ package android.support.v4.content {
     field public static final int PERMISSION_GRANTED = 0; // 0x0
   }
 
-  public static abstract class PermissionChecker.PermissionResult implements java.lang.annotation.Annotation {
-  }
-
   public final class SharedPreferencesCompat {
   }
 
@@ -6604,6 +6935,7 @@ package android.support.v4.content.res {
     method public static android.content.res.ColorStateList getColorStateList(android.content.res.Resources, int, android.content.res.Resources.Theme) throws android.content.res.Resources.NotFoundException;
     method public static android.graphics.drawable.Drawable getDrawable(android.content.res.Resources, int, android.content.res.Resources.Theme) throws android.content.res.Resources.NotFoundException;
     method public static android.graphics.drawable.Drawable getDrawableForDensity(android.content.res.Resources, int, int, android.content.res.Resources.Theme) throws android.content.res.Resources.NotFoundException;
+    method public static android.graphics.Typeface getFont(android.content.Context, int) throws android.content.res.Resources.NotFoundException;
   }
 
 }
@@ -6650,22 +6982,6 @@ package android.support.v4.graphics {
 
   public final class PaintCompat {
     method public static boolean hasGlyph(android.graphics.Paint, java.lang.String);
-  }
-
-  public class TypefaceCompat {
-    method public static void create(android.content.Context, android.support.v4.graphics.fonts.FontRequest, android.support.v4.graphics.TypefaceCompat.FontRequestCallback);
-  }
-
-  public static abstract class TypefaceCompat.FontRequestCallback {
-    ctor public TypefaceCompat.FontRequestCallback();
-    method public abstract void onTypefaceRequestFailed(int);
-    method public abstract void onTypefaceRetrieved(android.graphics.Typeface);
-    field public static final int FAIL_REASON_FONT_LOAD_ERROR = -3; // 0xfffffffd
-    field public static final int FAIL_REASON_FONT_NOT_FOUND = 1; // 0x1
-    field public static final int FAIL_REASON_FONT_UNAVAILABLE = 2; // 0x2
-    field public static final int FAIL_REASON_MALFORMED_QUERY = 3; // 0x3
-    field public static final int FAIL_REASON_PROVIDER_NOT_FOUND = -1; // 0xffffffff
-    field public static final int FAIL_REASON_WRONG_CERTIFICATES = -2; // 0xfffffffe
   }
 
 }
@@ -6734,15 +7050,14 @@ package android.support.v4.graphics.drawable {
 
 package android.support.v4.graphics.fonts {
 
-  public final class FontRequest implements android.os.Parcelable {
+  public final class FontRequest {
     ctor public FontRequest(java.lang.String, java.lang.String, java.lang.String, java.util.List<java.util.List<byte[]>>);
-    method public int describeContents();
+    ctor public FontRequest(java.lang.String, java.lang.String, java.lang.String, int);
     method public java.util.List<java.util.List<byte[]>> getCertificates();
+    method public int getCertificatesArrayResId();
     method public java.lang.String getProviderAuthority();
     method public java.lang.String getProviderPackage();
     method public java.lang.String getQuery();
-    method public void writeToParcel(android.os.Parcel, int);
-    field public static final android.os.Parcelable.Creator<android.support.v4.graphics.fonts.FontRequest> CREATOR;
   }
 
 }
@@ -6858,6 +7173,7 @@ package android.support.v4.media {
     method public android.support.v4.media.session.MediaSessionCompat.Token getSessionToken();
     method public boolean isConnected();
     method public void search(java.lang.String, android.os.Bundle, android.support.v4.media.MediaBrowserCompat.SearchCallback);
+    method public void sendCustomAction(java.lang.String, android.os.Bundle, android.support.v4.media.MediaBrowserCompat.CustomActionCallback);
     method public void subscribe(java.lang.String, android.support.v4.media.MediaBrowserCompat.SubscriptionCallback);
     method public void subscribe(java.lang.String, android.os.Bundle, android.support.v4.media.MediaBrowserCompat.SubscriptionCallback);
     method public void unsubscribe(java.lang.String);
@@ -6871,6 +7187,13 @@ package android.support.v4.media {
     method public void onConnected();
     method public void onConnectionFailed();
     method public void onConnectionSuspended();
+  }
+
+  public static abstract class MediaBrowserCompat.CustomActionCallback {
+    ctor public MediaBrowserCompat.CustomActionCallback();
+    method public void onError(java.lang.String, android.os.Bundle, android.os.Bundle);
+    method public void onProgressUpdate(java.lang.String, android.os.Bundle, android.os.Bundle);
+    method public void onResult(java.lang.String, android.os.Bundle, android.os.Bundle);
   }
 
   public static abstract class MediaBrowserCompat.ItemCallback {
@@ -6917,6 +7240,7 @@ package android.support.v4.media {
     method public void notifyChildrenChanged(java.lang.String);
     method public void notifyChildrenChanged(java.lang.String, android.os.Bundle);
     method public android.os.IBinder onBind(android.content.Intent);
+    method public void onCustomAction(java.lang.String, android.os.Bundle, android.support.v4.media.MediaBrowserServiceCompat.Result<android.os.Bundle>);
     method public abstract android.support.v4.media.MediaBrowserServiceCompat.BrowserRoot onGetRoot(java.lang.String, int, android.os.Bundle);
     method public abstract void onLoadChildren(java.lang.String, android.support.v4.media.MediaBrowserServiceCompat.Result<java.util.List<android.support.v4.media.MediaBrowserCompat.MediaItem>>);
     method public void onLoadChildren(java.lang.String, android.support.v4.media.MediaBrowserServiceCompat.Result<java.util.List<android.support.v4.media.MediaBrowserCompat.MediaItem>>, android.os.Bundle);
@@ -6938,6 +7262,8 @@ package android.support.v4.media {
 
   public static class MediaBrowserServiceCompat.Result<T> {
     method public void detach();
+    method public void sendError(android.os.Bundle);
+    method public void sendProgressUpdate(android.os.Bundle);
     method public void sendResult(T);
   }
 
@@ -7091,7 +7417,7 @@ package android.support.v4.media.session {
     ctor public MediaButtonReceiver();
     method public static android.app.PendingIntent buildMediaButtonPendingIntent(android.content.Context, long);
     method public static android.app.PendingIntent buildMediaButtonPendingIntent(android.content.Context, android.content.ComponentName, long);
-    method public static deprecated android.view.KeyEvent handleIntent(android.support.v4.media.session.MediaSessionCompat, android.content.Intent);
+    method public static android.view.KeyEvent handleIntent(android.support.v4.media.session.MediaSessionCompat, android.content.Intent);
     method public void onReceive(android.content.Context, android.content.Intent);
   }
 
@@ -7122,7 +7448,7 @@ package android.support.v4.media.session {
     method public void registerCallback(android.support.v4.media.session.MediaControllerCompat.Callback);
     method public void registerCallback(android.support.v4.media.session.MediaControllerCompat.Callback, android.os.Handler);
     method public void removeQueueItem(android.support.v4.media.MediaDescriptionCompat);
-    method public void removeQueueItemAt(int);
+    method public deprecated void removeQueueItemAt(int);
     method public void sendCommand(java.lang.String, android.os.Bundle, android.os.ResultReceiver);
     method public static void setMediaController(android.app.Activity, android.support.v4.media.session.MediaControllerCompat);
     method public void setVolumeTo(int, int);
@@ -7235,7 +7561,7 @@ package android.support.v4.media.session {
     method public void onPrepareFromSearch(java.lang.String, android.os.Bundle);
     method public void onPrepareFromUri(android.net.Uri, android.os.Bundle);
     method public void onRemoveQueueItem(android.support.v4.media.MediaDescriptionCompat);
-    method public void onRemoveQueueItemAt(int);
+    method public deprecated void onRemoveQueueItemAt(int);
     method public void onRewind();
     method public void onSeekTo(long);
     method public void onSetCaptioningEnabled(boolean);
@@ -7443,9 +7769,29 @@ package android.support.v4.os {
     method public abstract void onCancel();
   }
 
+  public final class ConfigurationCompat {
+    method public static android.support.v4.os.LocaleListCompat getLocales(android.content.res.Configuration);
+  }
+
   public final class EnvironmentCompat {
     method public static java.lang.String getStorageState(java.io.File);
     field public static final java.lang.String MEDIA_UNKNOWN = "unknown";
+  }
+
+  public final class LocaleListCompat {
+    method public static android.support.v4.os.LocaleListCompat create(java.util.Locale...);
+    method public static android.support.v4.os.LocaleListCompat forLanguageTags(java.lang.String);
+    method public java.util.Locale get(int);
+    method public static android.support.v4.os.LocaleListCompat getAdjustedDefault();
+    method public static android.support.v4.os.LocaleListCompat getDefault();
+    method public static android.support.v4.os.LocaleListCompat getEmptyLocaleList();
+    method public java.util.Locale getFirstMatch(java.lang.String[]);
+    method public int indexOf(java.util.Locale);
+    method public boolean isEmpty();
+    method public int size();
+    method public java.lang.String toLanguageTags();
+    method public java.lang.Object unwrap();
+    method public static android.support.v4.os.LocaleListCompat wrap(java.lang.Object);
   }
 
   public class OperationCanceledException extends java.lang.RuntimeException {
@@ -7529,11 +7875,15 @@ package android.support.v4.provider {
     method public abstract boolean renameTo(java.lang.String);
   }
 
-  public class FontsContract {
+  public class FontsContractCompat {
+    method public static android.graphics.Typeface buildTypeface(android.content.Context, android.os.CancellationSignal, android.support.v4.provider.FontsContractCompat.FontInfo[]);
+    method public static android.support.v4.provider.FontsContractCompat.FontFamilyResult fetchFonts(android.content.Context, android.os.CancellationSignal, android.support.v4.graphics.fonts.FontRequest) throws android.content.pm.PackageManager.NameNotFoundException;
+    method public static void requestFont(android.content.Context, android.support.v4.graphics.fonts.FontRequest, android.support.v4.provider.FontsContractCompat.FontRequestCallback, android.os.Handler);
   }
 
-  public static final class FontsContract.Columns {
-    ctor public FontsContract.Columns();
+  public static final class FontsContractCompat.Columns {
+    ctor public FontsContractCompat.Columns();
+    field public static final java.lang.String FILE_ID = "file_id";
     field public static final java.lang.String ITALIC = "font_italic";
     field public static final java.lang.String RESULT_CODE = "result_code";
     field public static final int RESULT_CODE_FONT_NOT_FOUND = 1; // 0x1
@@ -7543,6 +7893,34 @@ package android.support.v4.provider {
     field public static final java.lang.String TTC_INDEX = "font_ttc_index";
     field public static final java.lang.String VARIATION_SETTINGS = "font_variation_settings";
     field public static final java.lang.String WEIGHT = "font_weight";
+  }
+
+  public static class FontsContractCompat.FontFamilyResult {
+    method public android.support.v4.provider.FontsContractCompat.FontInfo[] getFonts();
+    method public int getStatusCode();
+    field public static final int STATUS_OK = 0; // 0x0
+    field public static final int STATUS_UNEXPECTED_DATA_PROVIDED = 2; // 0x2
+    field public static final int STATUS_WRONG_CERTIFICATES = 1; // 0x1
+  }
+
+  public static class FontsContractCompat.FontInfo {
+    method public int getResultCode();
+    method public int getTtcIndex();
+    method public android.net.Uri getUri();
+    method public int getWeight();
+    method public boolean isItalic();
+  }
+
+  public static class FontsContractCompat.FontRequestCallback {
+    ctor public FontsContractCompat.FontRequestCallback();
+    method public void onTypefaceRequestFailed(int);
+    method public void onTypefaceRetrieved(android.graphics.Typeface);
+    field public static final int FAIL_REASON_FONT_LOAD_ERROR = -3; // 0xfffffffd
+    field public static final int FAIL_REASON_FONT_NOT_FOUND = 1; // 0x1
+    field public static final int FAIL_REASON_FONT_UNAVAILABLE = 2; // 0x2
+    field public static final int FAIL_REASON_MALFORMED_QUERY = 3; // 0x3
+    field public static final int FAIL_REASON_PROVIDER_NOT_FOUND = -1; // 0xffffffff
+    field public static final int FAIL_REASON_WRONG_CERTIFICATES = -2; // 0xfffffffe
   }
 
 }
@@ -7613,9 +7991,6 @@ package android.support.v4.text.util {
     method public static final boolean addLinks(android.text.Spannable, java.util.regex.Pattern, java.lang.String);
     method public static final boolean addLinks(android.text.Spannable, java.util.regex.Pattern, java.lang.String, android.text.util.Linkify.MatchFilter, android.text.util.Linkify.TransformFilter);
     method public static final boolean addLinks(android.text.Spannable, java.util.regex.Pattern, java.lang.String, java.lang.String[], android.text.util.Linkify.MatchFilter, android.text.util.Linkify.TransformFilter);
-  }
-
-  public static abstract class LinkifyCompat.LinkifyMask implements java.lang.annotation.Annotation {
   }
 
 }
@@ -7911,6 +8286,7 @@ package android.support.v4.view {
     field public static final int SOURCE_JOYSTICK = 16777232; // 0x1000010
     field public static final int SOURCE_KEYBOARD = 257; // 0x101
     field public static final int SOURCE_MOUSE = 8194; // 0x2002
+    field public static final int SOURCE_ROTARY_ENCODER = 4194304; // 0x400000
     field public static final int SOURCE_STYLUS = 16386; // 0x4002
     field public static final int SOURCE_TOUCHPAD = 1048584; // 0x100008
     field public static final int SOURCE_TOUCHSCREEN = 4098; // 0x1002
@@ -8047,6 +8423,7 @@ package android.support.v4.view {
     field public static final deprecated int AXIS_RX = 12; // 0xc
     field public static final deprecated int AXIS_RY = 13; // 0xd
     field public static final deprecated int AXIS_RZ = 14; // 0xe
+    field public static final int AXIS_SCROLL = 26; // 0x1a
     field public static final deprecated int AXIS_SIZE = 3; // 0x3
     field public static final deprecated int AXIS_THROTTLE = 19; // 0x13
     field public static final deprecated int AXIS_TILT = 25; // 0x19
@@ -8382,7 +8759,9 @@ package android.support.v4.view {
   }
 
   public final deprecated class ViewConfigurationCompat {
+    method public static float getScaledHorizontalScrollFactor(android.view.ViewConfiguration, android.content.Context);
     method public static deprecated int getScaledPagingTouchSlop(android.view.ViewConfiguration);
+    method public static float getScaledVerticalScrollFactor(android.view.ViewConfiguration, android.content.Context);
     method public static deprecated boolean hasPermanentMenuKey(android.view.ViewConfiguration);
   }
 

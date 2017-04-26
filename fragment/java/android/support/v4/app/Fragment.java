@@ -18,6 +18,7 @@ package android.support.v4.app;
 
 import static android.support.annotation.RestrictTo.Scope.LIBRARY_GROUP;
 
+import android.animation.Animator;
 import android.app.Activity;
 import android.content.ComponentCallbacks;
 import android.content.Context;
@@ -54,6 +55,7 @@ import android.widget.AdapterView;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
 
 final class FragmentState implements Parcelable {
     final String mClassName;
@@ -334,6 +336,10 @@ public class Fragment implements ComponentCallbacks, OnCreateContextMenuListener
     // removal animations.
     float mPostponedAlpha;
 
+    // The cached value from onGetLayoutInflater(Bundle) that will be returned from
+    // getLayoutInflater()
+    LayoutInflater mLayoutInflater;
+
     /**
      * State information that has been retrieved from a fragment instance
      * through {@link FragmentManager#saveFragmentInstanceState(Fragment)
@@ -435,7 +441,7 @@ public class Fragment implements ComponentCallbacks, OnCreateContextMenuListener
                 clazz = context.getClassLoader().loadClass(fname);
                 sClassMap.put(fname, clazz);
             }
-            Fragment f = (Fragment)clazz.newInstance();
+            Fragment f = (Fragment) clazz.getConstructor().newInstance();
             if (args != null) {
                 args.setClassLoader(f.getClass().getClassLoader());
                 f.setArguments(args);
@@ -453,6 +459,12 @@ public class Fragment implements ComponentCallbacks, OnCreateContextMenuListener
             throw new InstantiationException("Unable to instantiate fragment " + fname
                     + ": make sure class name exists, is public, and has an"
                     + " empty constructor that is public", e);
+        } catch (NoSuchMethodException e) {
+            throw new InstantiationException("Unable to instantiate fragment " + fname
+                    + ": could not find Fragment constructor", e);
+        } catch (InvocationTargetException e) {
+            throw new InstantiationException("Unable to instantiate fragment " + fname
+                    + ": calling Fragment constructor caused an exception", e);
         }
     }
 
@@ -618,6 +630,7 @@ public class Fragment implements ComponentCallbacks, OnCreateContextMenuListener
      * @param requestCode Optional request code, for convenience if you
      * are going to call back with {@link #onActivityResult(int, int, Intent)}.
      */
+    @SuppressWarnings("ReferenceEquality")
     public void setTargetFragment(Fragment fragment, int requestCode) {
         // Don't allow a caller to set a target fragment in another FragmentManager,
         // but there's a snag: people do set target fragments before fragments get added.
@@ -1174,9 +1187,45 @@ public class Fragment implements ComponentCallbacks, OnCreateContextMenuListener
     }
 
     /**
-     * Use {@link #onGetLayoutInflater(Bundle)} instead
+     * Returns the cached LayoutInflater used to inflate Views of this Fragment. If
+     * {@link #onGetLayoutInflater(Bundle)} has not been called {@link #onGetLayoutInflater(Bundle)}
+     * will be called with a {@code null} argument and that value will be cached.
+     * <p>
+     * The cached LayoutInflater will be replaced immediately prior to
+     * {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)} and cleared immediately after
+     * {@link #onDetach()}.
+     *
+     * @return The LayoutInflater used to inflate Views of this Fragment.
+     */
+    public final LayoutInflater getLayoutInflater() {
+        if (mLayoutInflater == null) {
+            return performGetLayoutInflater(null);
+        }
+        return mLayoutInflater;
+    }
+
+    /**
+     * Calls {@link #onGetLayoutInflater(Bundle)} and caches the result for use by
+     * {@link #getLayoutInflater()}.
+     *
+     * @param savedInstanceState If the fragment is being re-created from
+     * a previous saved state, this is the state.
+     * @return The LayoutInflater used to inflate Views of this Fragment.
+     */
+    LayoutInflater performGetLayoutInflater(Bundle savedInstanceState) {
+        LayoutInflater layoutInflater = onGetLayoutInflater(savedInstanceState);
+        mLayoutInflater = layoutInflater;
+        return mLayoutInflater;
+    }
+
+    /**
+     * Override {@link #onGetLayoutInflater(Bundle)} when you need to change the
+     * LayoutInflater or call {@link #getLayoutInflater()} when you want to
+     * retrieve the current LayoutInflater.
+     *
      * @hide
-     * @deprecated Use {@link #onGetLayoutInflater(Bundle)} instead.
+     * @deprecated Override {@link #onGetLayoutInflater(Bundle)} or call
+     * {@link #getLayoutInflater()} instead of this method.
      */
     @Deprecated
     @RestrictTo(LIBRARY_GROUP)
@@ -1294,9 +1343,41 @@ public class Fragment implements ComponentCallbacks, OnCreateContextMenuListener
     }
 
     /**
-     * Called when a fragment loads an animation.
+     * Called when a fragment loads an animation. Note that if
+     * {@link FragmentTransaction#setCustomAnimations(int, int)} was called with
+     * {@link Animator} resources instead of {@link Animation} resources, {@code nextAnim}
+     * will be an animator resource.
+     *
+     * @param transit The value set in {@link FragmentTransaction#setTransition(int)} or 0 if not
+     *                set.
+     * @param enter {@code true} when the fragment is added/attached/shown or {@code false} when
+     *              the fragment is removed/detached/hidden.
+     * @param nextAnim The resource set in
+     *                 {@link FragmentTransaction#setCustomAnimations(int, int)},
+     *                 {@link FragmentTransaction#setCustomAnimations(int, int, int, int)}, or
+     *                 0 if neither was called. The value will depend on the current operation.
      */
     public Animation onCreateAnimation(int transit, boolean enter, int nextAnim) {
+        return null;
+    }
+
+    /**
+     * Called when a fragment loads an animator. This will be called when
+     * {@link #onCreateAnimation(int, boolean, int)} returns null. Note that if
+     * {@link FragmentTransaction#setCustomAnimations(int, int)} was called with
+     * {@link Animation} resources instead of {@link Animator} resources, {@code nextAnim}
+     * will be an animation resource.
+     *
+     * @param transit The value set in {@link FragmentTransaction#setTransition(int)} or 0 if not
+     *                set.
+     * @param enter {@code true} when the fragment is added/attached/shown or {@code false} when
+     *              the fragment is removed/detached/hidden.
+     * @param nextAnim The resource set in
+     *                 {@link FragmentTransaction#setCustomAnimations(int, int)},
+     *                 {@link FragmentTransaction#setCustomAnimations(int, int, int, int)}, or
+     *                 0 if neither was called. The value will depend on the current operation.
+     */
+    public Animator onCreateAnimator(int transit, boolean enter, int nextAnim) {
         return null;
     }
 
@@ -2512,6 +2593,7 @@ public class Fragment implements ComponentCallbacks, OnCreateContextMenuListener
     void performDetach() {
         mCalled = false;
         onDetach();
+        mLayoutInflater = null;
         if (!mCalled) {
             throw new SuperNotCalledException("Fragment " + this
                     + " did not call through to super.onDetach()");
@@ -2616,6 +2698,17 @@ public class Fragment implements ComponentCallbacks, OnCreateContextMenuListener
         ensureAnimationInfo().mAnimatingAway = view;
     }
 
+    void setAnimator(Animator animator) {
+        ensureAnimationInfo().mAnimator = animator;
+    }
+
+    Animator getAnimator() {
+        if (mAnimationInfo == null) {
+            return null;
+        }
+        return mAnimationInfo.mAnimator;
+    }
+
     int getStateAfterAnimating() {
         if (mAnimationInfo == null) {
             return 0;
@@ -2664,6 +2757,10 @@ public class Fragment implements ComponentCallbacks, OnCreateContextMenuListener
         // meaning we need to wait a bit on completely destroying it.  This is the
         // view that is animating.
         View mAnimatingAway;
+
+        // Non-null if the fragment's view hierarchy is currently animating away with an
+        // animator instead of an animation.
+        Animator mAnimator;
 
         // If mAnimatingAway != null, this is the state we should move to once the
         // animation is done.

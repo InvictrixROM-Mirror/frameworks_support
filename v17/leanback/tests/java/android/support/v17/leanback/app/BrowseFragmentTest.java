@@ -23,6 +23,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import android.content.Intent;
+import android.os.Build;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
@@ -70,8 +71,14 @@ public class BrowseFragmentTest {
         PollingCheck.waitFor(WAIT_TRANSIITON_TIMEOUT, new PollingCheck.PollingCheckCondition() {
             @Override
             public boolean canProceed() {
-                return mActivity.getBrowseTestFragment() != null
-                        && mActivity.getBrowseTestFragment().mEntranceTransitionEnded;
+                if (Build.VERSION.SDK_INT >= 21) {
+                    return mActivity.getBrowseTestFragment() != null
+                            && mActivity.getBrowseTestFragment().mEntranceTransitionEnded;
+                } else {
+                    // when entrance transition not supported, wait main fragment loaded.
+                    return mActivity.getBrowseTestFragment() != null
+                            && mActivity.getBrowseTestFragment().getMainFragment() != null;
+                }
             }
         });
     }
@@ -182,6 +189,25 @@ public class BrowseFragmentTest {
             @Override
             public void run() {
                 mActivity.recreate();
+            }
+        });
+    }
+
+
+    @Test
+    public void lateLoadingHeaderDisabled() throws Throwable {
+        final long dataLoadingDelay = 1000;
+        Intent intent = new Intent();
+        intent.putExtra(BrowseFragmentTestActivity.EXTRA_LOAD_DATA_DELAY, dataLoadingDelay);
+        intent.putExtra(BrowseFragmentTestActivity.EXTRA_HEADERS_STATE,
+                BrowseFragment.HEADERS_DISABLED);
+        mActivity = activityTestRule.launchActivity(intent);
+        waitForEntranceTransitionFinished();
+        PollingCheck.waitFor(new PollingCheck.PollingCheckCondition() {
+            @Override
+            public boolean canProceed() {
+                return mActivity.getBrowseTestFragment().getGridView() != null
+                        && mActivity.getBrowseTestFragment().getGridView().getChildCount() > 0;
             }
         });
     }

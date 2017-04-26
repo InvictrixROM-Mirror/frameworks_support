@@ -403,6 +403,10 @@
         <attr name="tooltipFrameBackground" format="reference" />
         <!-- Foreground color to use for tooltips -->
         <attr name="tooltipForegroundColor" format="reference|color" />
+
+        <!-- Color used for error states and things that need to be drawn to
+             the user's attention. -->
+        <attr name="colorError" format="reference|color" />
     </declare-styleable>
 
 
@@ -1108,6 +1112,7 @@
         <attr name="android:textColorLink"/>
         <attr name="android:textStyle" />
         <attr name="android:typeface" />
+        <attr name="android:fontFamily" />
         <attr name="textAllCaps" />
         <attr name="android:shadowColor"/>
         <attr name="android:shadowDy"/>
@@ -1213,6 +1218,24 @@
         <attr name="paddingBottomNoButtons" format="dimension" />
         <!-- Top padding to use when no title is present. -->
         <attr name="paddingTopNoTitle" format="dimension" />
+    </declare-styleable>
+
+    <!-- Attributes that are read when parsing a <fontfamily> tag. -->
+    <declare-styleable name="FontFamily">
+        <!-- The authority of the Font Provider to be used for the request. -->
+        <attr name="fontProviderAuthority" format="string" />
+        <!-- The package for the Font Provider to be used for the request. This is used to verify
+        the identity of the provider. -->
+        <attr name="fontProviderPackage" format="string" />
+        <!-- The query to be sent over to the provider. Refer to your font provider's documentation
+        on the format of this string. -->
+        <attr name="fontProviderQuery" format="string" />
+        <!-- The sets of hashes for the certificates the provider should be signed with. This is
+        used to verify the identity of the provider, and is only required if the provider is not
+        part of the system image. This value may point to one list or a list of lists, where each
+        individual list represents one collection of signature hashes. Refer to your font provider's
+        documentation for these values. -->
+        <attr name="fontProviderCerts" format="reference" />
     </declare-styleable>
 
 </resources>
