@@ -81,10 +81,10 @@ class NotificationCompatApi26 {
                     .setVisibility(visibility)
                     .setPublicVersion(publicVersion)
                     .setRemoteInputHistory(remoteInputHistory)
-                    .setChannel(channelId)
+                    .setChannelId(channelId)
                     .setBadgeIconType(badgeIcon)
                     .setShortcutId(shortcutId)
-                    .setTimeout(timeoutMs);
+                    .setTimeoutAfter(timeoutMs);
             if (colorizedSet) {
                 mB.setColorized(colorized);
             }
@@ -116,21 +116,5 @@ class NotificationCompatApi26 {
         public Notification build() {
             return mB.build();
         }
-    }
-
-    public static String getChannel(Notification n) {
-        return n.getChannel();
-    }
-
-    public static int getBadgeIcon(Notification n) {
-        return n.getBadgeIconType();
-    }
-
-    public static String getShortcutId(Notification n) {
-        return n.getShortcutId();
-    }
-
-    public static long getTimeout(Notification n) {
-        return n.getTimeout();
     }
 }
