@@ -504,7 +504,8 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
     /**
      * override child visibility
      */
-    int mChildVisibility = -1;
+    @Visibility
+    int mChildVisibility;
 
     /**
      * Pixels that scrolled in secondary forward direction. Negative value means backward.
@@ -668,6 +669,7 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
 
     public GridLayoutManager(BaseGridView baseGridView) {
         mBaseGridView = baseGridView;
+        mChildVisibility = -1;
     }
 
     public void setOrientation(int orientation) {
@@ -3188,9 +3190,13 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
             final View focused = recyclerView.findFocus();
             final int focusedIndex = findImmediateChildIndex(focused);
             final int focusedPos = getAdapterPositionByIndex(focusedIndex);
+            // Even if focusedPos != NO_POSITION, findViewByPosition could return null if the view
+            // is ignored or getLayoutPosition does not match the adapter position of focused view.
+            final View immediateFocusedChild = (focusedPos == NO_POSITION) ? null
+                    : findViewByPosition(focusedPos);
             // Add focusables of focused item.
-            if (focusedPos != NO_POSITION) {
-                findViewByPosition(focusedPos).addFocusables(views,  direction, focusableMode);
+            if (immediateFocusedChild != null) {
+                immediateFocusedChild.addFocusables(views,  direction, focusableMode);
             }
             if (mGrid == null || getChildCount() == 0) {
                 // no grid information, or no child, bail out.
@@ -3201,7 +3207,7 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
                 return true;
             }
             // Add focusables of neighbor depending on the focus search direction.
-            final int focusedRow = mGrid != null && focusedPos != NO_POSITION
+            final int focusedRow = mGrid != null && immediateFocusedChild != null
                     ? mGrid.getLocation(focusedPos).row : NO_POSITION;
             final int focusableCount = views.size();
             int inc = movement == NEXT_ITEM || movement == NEXT_ROW ? 1 : -1;
@@ -3217,9 +3223,9 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
                 if (child.getVisibility() != View.VISIBLE || !child.hasFocusable()) {
                     continue;
                 }
-                // if there wasn't any focusing item,  add the very first focusable
+                // if there wasn't any focused item, add the very first focusable
                 // items and stop.
-                if (focusedPos == NO_POSITION) {
+                if (immediateFocusedChild == null) {
                     child.addFocusables(views,  direction, focusableMode);
                     if (views.size() > focusableCount) {
                         break;
@@ -3313,6 +3319,15 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
     boolean hasCreatedFirstItem() {
         int count = getItemCount();
         return count == 0 || mBaseGridView.findViewHolderForAdapterPosition(0) != null;
+    }
+
+    boolean isItemFullyVisible(int pos) {
+        RecyclerView.ViewHolder vh = mBaseGridView.findViewHolderForAdapterPosition(pos);
+        if (vh == null) {
+            return false;
+        }
+        return vh.itemView.getLeft() >= 0 && vh.itemView.getRight() < mBaseGridView.getWidth()
+                && vh.itemView.getTop() >= 0 && vh.itemView.getBottom() < mBaseGridView.getHeight();
     }
 
     boolean canScrollTo(View view) {
@@ -3609,11 +3624,10 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
         saveContext(recycler, state);
         switch (action) {
             case AccessibilityNodeInfoCompat.ACTION_SCROLL_BACKWARD:
-                // try to focus all the way to the last visible item on the same row.
-                processSelectionMoves(false, -mState.getItemCount());
+                processSelectionMoves(false, -1);
                 break;
             case AccessibilityNodeInfoCompat.ACTION_SCROLL_FORWARD:
-                processSelectionMoves(false, mState.getItemCount());
+                processSelectionMoves(false, 1);
                 break;
         }
         leaveContext();
@@ -3678,11 +3692,12 @@ final class GridLayoutManager extends RecyclerView.LayoutManager {
     public void onInitializeAccessibilityNodeInfo(Recycler recycler, State state,
             AccessibilityNodeInfoCompat info) {
         saveContext(recycler, state);
-        if (mScrollEnabled && !hasCreatedFirstItem()) {
+        int count = state.getItemCount();
+        if (mScrollEnabled && count > 1 && !isItemFullyVisible(0)) {
             info.addAction(AccessibilityNodeInfoCompat.ACTION_SCROLL_BACKWARD);
             info.setScrollable(true);
         }
-        if (mScrollEnabled && !hasCreatedLastItem()) {
+        if (mScrollEnabled && count > 1 && !isItemFullyVisible(count - 1)) {
             info.addAction(AccessibilityNodeInfoCompat.ACTION_SCROLL_FORWARD);
             info.setScrollable(true);
         }

@@ -45,13 +45,12 @@ import android.content.pm.ResolveInfo;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
 import android.graphics.Bitmap;
+import android.os.Build;
 import android.support.test.filters.LargeTest;
-import android.support.test.filters.MediumTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.v4.BaseInstrumentationTestCase;
 import android.support.v4.app.TestSupportActivity;
-import android.support.v4.os.BuildCompat;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -86,7 +85,7 @@ public class ShortcutManagerCompatTest extends BaseInstrumentationTestCase<TestS
     @SmallTest
     @TargetApi(26)
     public void testIsRequestPinShortcutSupported_v26() throws Throwable {
-        if (!BuildCompat.isAtLeastO()) {
+        if (!(Build.VERSION.SDK_INT >= 26)) {
             return;
         }
 
@@ -104,7 +103,7 @@ public class ShortcutManagerCompatTest extends BaseInstrumentationTestCase<TestS
     @SmallTest
     @TargetApi(26)
     public void testRequestPinShortcut_v26()  throws Throwable {
-        if (!BuildCompat.isAtLeastO()) {
+        if (!(Build.VERSION.SDK_INT >= 26)) {
             return;
         }
 
@@ -124,7 +123,7 @@ public class ShortcutManagerCompatTest extends BaseInstrumentationTestCase<TestS
     @SmallTest
     @TargetApi(26)
     public void testCreateShortcutResultIntent_v26()  throws Throwable {
-        if (!BuildCompat.isAtLeastO()) {
+        if (!(Build.VERSION.SDK_INT >= 26)) {
             return;
         }
 
@@ -146,7 +145,7 @@ public class ShortcutManagerCompatTest extends BaseInstrumentationTestCase<TestS
     @SmallTest
     @Test
     public void testIsRequestPinShortcutSupported_v4() throws Throwable {
-        if (BuildCompat.isAtLeastO()) {
+        if (Build.VERSION.SDK_INT >= 26) {
             return;
         }
         setMockPm(mockResolveInfo(null));
@@ -173,7 +172,7 @@ public class ShortcutManagerCompatTest extends BaseInstrumentationTestCase<TestS
     @LargeTest
     @Test
     public void testRequestPinShortcut_v4_noCallback()  throws Throwable {
-        if (BuildCompat.isAtLeastO()) {
+        if (Build.VERSION.SDK_INT >= 26) {
             return;
         }
 
@@ -185,10 +184,10 @@ public class ShortcutManagerCompatTest extends BaseInstrumentationTestCase<TestS
         verifyLegacyIntent(receiver.blockingGetIntent());
     }
 
-    @MediumTest
+    @LargeTest
     @Test
     public void testRequestPinShortcut_v4_withCallback()  throws Throwable {
-        if (BuildCompat.isAtLeastO()) {
+        if (Build.VERSION.SDK_INT >= 26) {
             return;
         }
 
@@ -209,7 +208,7 @@ public class ShortcutManagerCompatTest extends BaseInstrumentationTestCase<TestS
     @SmallTest
     @Test
     public void testCreateShortcutResultIntent_v4() throws Throwable {
-        if (BuildCompat.isAtLeastO()) {
+        if (Build.VERSION.SDK_INT >= 26) {
             return;
         }
 
