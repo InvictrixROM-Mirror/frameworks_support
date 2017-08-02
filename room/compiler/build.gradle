@@ -24,6 +24,14 @@ sourceSets {
     main.java.srcDirs += antlrOut
 }
 project.ext.noDocs = true
+
+// Temporary hack to stop AS to adding two guavas into test's classpath
+configurations.all {
+    resolutionStrategy {
+        force libs.guava
+    }
+}
+
 dependencies {
     // taken from ButterKnife
     def logger = new com.android.build.gradle.internal.LoggerWrapper(project.logger)
@@ -37,6 +45,7 @@ dependencies {
     compile libs.xerial
     compile libs.apache.commons.codec
     testCompile libs.google_compile_testing
+    testCompile project(":paging:common")
     testCompile libs.junit
     testCompile libs.ij_annotations
     testCompile libs.mockito_core
@@ -48,8 +57,6 @@ dependencies {
             include : "*.jar")
     testCompile files(org.gradle.internal.jvm.Jvm.current().getToolsJar())
 }
-
-archivesBaseName = "compiler"
 
 def generateAntlrTask = task('generateAntlrGrammar', type: JavaExec) {
     def outFolder = file(antlrOut)

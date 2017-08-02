@@ -58,6 +58,7 @@ public class RoomOpenHelper extends SupportSQLiteOpenHelper.Callback {
     public void onCreate(SupportSQLiteDatabase db) {
         updateIdentity(db);
         mDelegate.createAllTables(db);
+        mDelegate.onCreate(db);
     }
 
     @Override
@@ -76,6 +77,12 @@ public class RoomOpenHelper extends SupportSQLiteOpenHelper.Callback {
             }
         }
         if (!migrated) {
+            if (mConfiguration == null || mConfiguration.requireMigration) {
+                throw new IllegalStateException("A migration from " + oldVersion + " to "
+                + newVersion + " is necessary. Please provide a Migration in the builder or call"
+                        + " fallbackToDestructiveMigration in the builder in which case Room will"
+                        + " re-create all of the tables.");
+            }
             mDelegate.dropAllTables(db);
             mDelegate.createAllTables(db);
         }
@@ -133,6 +140,8 @@ public class RoomOpenHelper extends SupportSQLiteOpenHelper.Callback {
         protected abstract void createAllTables(SupportSQLiteDatabase database);
 
         protected abstract void onOpen(SupportSQLiteDatabase database);
+
+        protected abstract void onCreate(SupportSQLiteDatabase database);
 
         /**
          * Called after a migration run to validate database integrity.

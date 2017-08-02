@@ -5,23 +5,17 @@ dependencies {
     api project(':support-core-ui')
     api project(':support-media-compat')
     api project(':support-fragment')
-    api project(':support-recyclerview-v7')
+    api project(':recyclerview-v7')
 
-    androidTestImplementation (libs.test_runner) {
-        exclude module: 'support-annotations'
-    }
-    androidTestImplementation (libs.espresso_core) {
-        exclude module: 'support-annotations'
-    }
-    androidTestImplementation libs.mockito_core
-    androidTestImplementation libs.dexmaker_mockito
-    androidTestImplementation libs.multidex
+    androidTestImplementation libs.test_runner,      { exclude module: 'support-annotations' }
+    androidTestImplementation libs.espresso_core,    { exclude module: 'support-annotations' }
+    androidTestImplementation libs.mockito_core,     { exclude group: 'net.bytebuddy' } // DexMaker has it"s own MockMaker
+    androidTestImplementation libs.dexmaker_mockito, { exclude group: 'net.bytebuddy' } // DexMaker has it"s own MockMaker
 }
 
 android {
     defaultConfig {
         minSdkVersion 17
-        multiDexEnabled true
     }
 
     sourceSets {
@@ -30,7 +24,6 @@ android {
                 'jbmr2',
                 'kitkat',
                 'api21',
-                'api23',
                 'src'
         ]
         main.res.srcDir 'res'

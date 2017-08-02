@@ -21,6 +21,7 @@ import android.arch.persistence.room.PrimaryKey
 import android.arch.persistence.room.Query
 import android.arch.persistence.room.Relation
 import android.arch.persistence.room.ext.LifecyclesTypeNames
+import android.arch.persistence.room.ext.PagingTypeNames
 import android.arch.persistence.room.ext.ReactiveStreamsTypeNames
 import android.arch.persistence.room.ext.RoomRxJava2TypeNames
 import android.arch.persistence.room.ext.RxJava2TypeNames
@@ -30,18 +31,19 @@ import android.arch.persistence.room.testing.TestInvocation
 import android.arch.persistence.room.testing.TestProcessor
 import android.arch.persistence.room.verifier.DatabaseVerifier
 import android.arch.persistence.room.writer.ClassWriter
-import android.arch.persistence.room.writer.EntityCursorConverterWriter
 import com.google.auto.common.MoreElements
 import com.google.common.truth.Truth
 import com.google.testing.compile.CompileTester
 import com.google.testing.compile.JavaFileObjects
 import com.google.testing.compile.JavaSourcesSubjectFactory
 import com.squareup.javapoet.ClassName
-import com.squareup.javapoet.TypeSpec
 import org.mockito.Mockito
+import org.mockito.Mockito.doReturn
+import org.mockito.Mockito.mock
 import java.io.File
 import javax.lang.model.element.Element
-import javax.lang.model.element.Modifier
+import javax.lang.model.type.TypeKind
+import javax.lang.model.type.TypeMirror
 import javax.tools.JavaFileObject
 
 object COMMON {
@@ -83,6 +85,11 @@ object COMMON {
     val RX2_ROOM by lazy {
         loadJavaCode("common/input/Rx2Room.java", RoomRxJava2TypeNames.RX_ROOM.toString())
     }
+
+    val LIVE_LAZY_LIST_PROVIDER by lazy {
+        loadJavaCode("common/input/LiveLazyListProvider.java",
+                PagingTypeNames.LIVE_LAZY_LIST_PROVIDER.toString())
+    }
 }
 fun testCodeGenScope(): CodeGenScope {
     return CodeGenScope(Mockito.mock(ClassWriter::class.java))
@@ -119,4 +126,16 @@ fun createVerifierFromEntities(invocation: TestInvocation) : DatabaseVerifier {
     }
     return DatabaseVerifier.create(invocation.context, Mockito.mock(Element::class.java),
             entities)!!
+}
+
+/**
+ * Create mocks of [Element] and [TypeMirror] so that they can be used for instantiating a fake
+ * [android.arch.persistence.room.vo.Field].
+ */
+fun mockElementAndType(): Pair<Element, TypeMirror> {
+    val element = mock(Element::class.java)
+    val type = mock(TypeMirror::class.java)
+    doReturn(TypeKind.DECLARED).`when`(type).kind
+    doReturn(type).`when`(element).asType()
+    return element to type
 }

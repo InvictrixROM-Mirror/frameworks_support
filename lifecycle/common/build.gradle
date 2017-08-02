@@ -9,6 +9,5 @@ dependencies {
     compile libs.support.annotations
 }
 
-archivesBaseName = "common"
-
 createAndroidCheckstyle(project)
+version = "1.0.0-SNAPSHOT"

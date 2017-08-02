@@ -17,11 +17,13 @@
 package android.arch.persistence.room.integration.testapp.test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -29,10 +31,12 @@ import android.arch.persistence.room.Room;
 import android.arch.persistence.room.integration.testapp.TestDatabase;
 import android.arch.persistence.room.integration.testapp.dao.BlobEntityDao;
 import android.arch.persistence.room.integration.testapp.dao.PetDao;
+import android.arch.persistence.room.integration.testapp.dao.ProductDao;
 import android.arch.persistence.room.integration.testapp.dao.UserDao;
 import android.arch.persistence.room.integration.testapp.dao.UserPetDao;
 import android.arch.persistence.room.integration.testapp.vo.BlobEntity;
 import android.arch.persistence.room.integration.testapp.vo.Pet;
+import android.arch.persistence.room.integration.testapp.vo.Product;
 import android.arch.persistence.room.integration.testapp.vo.User;
 import android.arch.persistence.room.integration.testapp.vo.UserAndAllPets;
 import android.content.Context;
@@ -63,6 +67,7 @@ public class SimpleEntityReadWriteTest {
     private BlobEntityDao mBlobEntityDao;
     private PetDao mPetDao;
     private UserPetDao mUserPetDao;
+    private ProductDao mProductDao;
 
     @Before
     public void createDb() {
@@ -72,6 +77,7 @@ public class SimpleEntityReadWriteTest {
         mPetDao = db.getPetDao();
         mUserPetDao = db.getUserPetDao();
         mBlobEntityDao = db.getBlobEntityDao();
+        mProductDao = db.getProductDao();
     }
 
     @Test
@@ -81,6 +87,20 @@ public class SimpleEntityReadWriteTest {
         mUserDao.insert(user);
         List<User> byName = mUserDao.findUsersByName("george");
         assertThat(byName.get(0), equalTo(user));
+    }
+
+    @Test
+    public void insertNull() throws Exception {
+        @SuppressWarnings("ConstantConditions")
+        Product product = new Product(1, null);
+        Throwable throwable = null;
+        try {
+            mProductDao.insert(product);
+        } catch (Throwable t) {
+            throwable = t;
+        }
+        assertNotNull("Was expecting an exception", throwable);
+        assertThat(throwable, instanceOf(SQLiteConstraintException.class));
     }
 
     @Test
@@ -223,6 +243,16 @@ public class SimpleEntityReadWriteTest {
     }
 
     @Test
+    public void deleteEverything() {
+        User user = TestUtil.createUser(3);
+        mUserDao.insert(user);
+        assertThat(mUserDao.count(), is(1));
+        int count = mUserDao.deleteEverything();
+        assertThat(count, is(1));
+        assertThat(mUserDao.count(), is(0));
+    }
+
+    @Test
     public void findByBoolean() {
         User user1 = TestUtil.createUser(3);
         user1.setAdmin(true);
@@ -288,6 +318,20 @@ public class SimpleEntityReadWriteTest {
         mUserDao.insertAll(usersArr);
         mUserDao.incrementIds(1);
         assertThat(mUserDao.loadIds(), is(Arrays.asList(3, 5, 7)));
+    }
+
+    @Test
+    public void incrementAgeOfAll() {
+        User[] users = TestUtil.createUsersArray(3, 5, 7);
+        users[0].setAge(3);
+        users[1].setAge(5);
+        users[2].setAge(7);
+        mUserDao.insertAll(users);
+        assertThat(mUserDao.count(), is(3));
+        mUserDao.incrementAgeOfAll();
+        for (User user : mUserDao.loadByIds(3, 5, 7)) {
+            assertThat(user.getAge(), is(user.getId() + 1));
+        }
     }
 
     @Test
@@ -424,5 +468,28 @@ public class SimpleEntityReadWriteTest {
         }
         assertTrue("SQLiteConstraintException expected", caught);
         assertThat(mUserDao.count(), is(0));
+    }
+
+    @Test
+    public void multipleInParamsFollowedByASingleParam_delete() {
+        User user = TestUtil.createUser(3);
+        user.setAge(30);
+        mUserDao.insert(user);
+        assertThat(mUserDao.deleteByAgeAndIds(20, Arrays.asList(3, 5)), is(0));
+        assertThat(mUserDao.count(), is(1));
+        assertThat(mUserDao.deleteByAgeAndIds(30, Arrays.asList(3, 5)), is(1));
+        assertThat(mUserDao.count(), is(0));
+    }
+
+    @Test
+    public void multipleInParamsFollowedByASingleParam_update() {
+        User user = TestUtil.createUser(3);
+        user.setAge(30);
+        user.setWeight(10f);
+        mUserDao.insert(user);
+        assertThat(mUserDao.updateByAgeAndIds(3f, 20, Arrays.asList(3, 5)), is(0));
+        assertThat(mUserDao.loadByIds(3)[0].getWeight(), is(10f));
+        assertThat(mUserDao.updateByAgeAndIds(3f, 30, Arrays.asList(3, 5)), is(1));
+        assertThat(mUserDao.loadByIds(3)[0].getWeight(), is(3f));
     }
 }

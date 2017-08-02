@@ -19,6 +19,7 @@ package android.arch.persistence.room.testing;
 import android.app.Instrumentation;
 import android.arch.persistence.db.SupportSQLiteDatabase;
 import android.arch.persistence.db.SupportSQLiteOpenHelper;
+import android.arch.persistence.db.framework.FrameworkSQLiteOpenHelperFactory;
 import android.arch.persistence.room.DatabaseConfiguration;
 import android.arch.persistence.room.Room;
 import android.arch.persistence.room.RoomDatabase;
@@ -88,6 +89,18 @@ public class MigrationTestHelper extends TestWatcher {
      * @param instrumentation The instrumentation instance.
      * @param assetsFolder    The asset folder in the assets directory.
      */
+    public MigrationTestHelper(Instrumentation instrumentation, String assetsFolder) {
+        this(instrumentation, assetsFolder, new FrameworkSQLiteOpenHelperFactory());
+    }
+
+    /**
+     * Creates a new migration helper. It uses the Instrumentation context to load the schema
+     * (falls back to the app resources) and the target context to create the database.
+     *
+     * @param instrumentation The instrumentation instance.
+     * @param assetsFolder    The asset folder in the assets directory.
+     * @param openFactory     Factory class that allows creation of {@link SupportSQLiteOpenHelper}
+     */
     public MigrationTestHelper(Instrumentation instrumentation, String assetsFolder,
             SupportSQLiteOpenHelper.Factory openFactory) {
         mInstrumentation = instrumentation;
@@ -128,7 +141,8 @@ public class MigrationTestHelper extends TestWatcher {
         SchemaBundle schemaBundle = loadSchema(version);
         RoomDatabase.MigrationContainer container = new RoomDatabase.MigrationContainer();
         DatabaseConfiguration configuration = new DatabaseConfiguration(
-                mInstrumentation.getTargetContext(), name, mOpenFactory, container, true);
+                mInstrumentation.getTargetContext(), name, mOpenFactory, container, null, true,
+                true);
         RoomOpenHelper roomOpenHelper = new RoomOpenHelper(configuration,
                 new CreatingDelegate(schemaBundle.getDatabase()),
                 schemaBundle.getDatabase().getIdentityHash());
@@ -170,7 +184,8 @@ public class MigrationTestHelper extends TestWatcher {
         RoomDatabase.MigrationContainer container = new RoomDatabase.MigrationContainer();
         container.addMigrations(migrations);
         DatabaseConfiguration configuration = new DatabaseConfiguration(
-                mInstrumentation.getTargetContext(), name, mOpenFactory, container, true);
+                mInstrumentation.getTargetContext(), name, mOpenFactory, container, null, true,
+                true);
         RoomOpenHelper roomOpenHelper = new RoomOpenHelper(configuration,
                 new MigratingDelegate(schemaBundle.getDatabase(), validateDroppedTables),
                 schemaBundle.getDatabase().getIdentityHash());
@@ -300,7 +315,7 @@ public class MigrationTestHelper extends TestWatcher {
 
     private static TableInfo.Column toColumn(EntityBundle entity, FieldBundle field) {
         return new TableInfo.Column(field.getColumnName(), field.getAffinity(),
-                findPrimaryKeyPosition(entity, field));
+                field.isNonNull(), findPrimaryKeyPosition(entity, field));
     }
 
     private static int findPrimaryKeyPosition(EntityBundle entity, FieldBundle field) {
@@ -343,8 +358,9 @@ public class MigrationTestHelper extends TestWatcher {
             if (mVerifyDroppedTables) {
                 // now ensure tables that should be removed are removed.
                 Cursor cursor = db.query("SELECT name FROM sqlite_master WHERE type='table'"
-                                + " AND name NOT IN(?, ?)",
-                        new String[]{Room.MASTER_TABLE_NAME, "android_metadata"});
+                                + " AND name NOT IN(?, ?, ?)",
+                        new String[]{Room.MASTER_TABLE_NAME, "android_metadata",
+                                "sqlite_sequence"});
                 //noinspection TryFinallyCanBeTryWithResources
                 try {
                     while (cursor.moveToNext()) {
@@ -394,8 +410,11 @@ public class MigrationTestHelper extends TestWatcher {
         }
 
         @Override
-        protected void onOpen(SupportSQLiteDatabase database) {
+        protected void onCreate(SupportSQLiteDatabase database) {
+        }
 
+        @Override
+        protected void onOpen(SupportSQLiteDatabase database) {
         }
     }
 }

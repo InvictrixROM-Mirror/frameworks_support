@@ -31,7 +31,7 @@ android {
 
 dependencies {
     compile project(":lifecycle:common")
-    compile project(":arch:runtime")
+    compile project(":arch:common")
     // necessary for IJ to resolve dependencies.
     compile libs.support.annotations
 
@@ -44,5 +44,4 @@ dependencies {
 }
 
 createAndroidCheckstyle(project)
-
-archivesBaseName = "runtime"
+version = "1.0.0-SNAPSHOT"

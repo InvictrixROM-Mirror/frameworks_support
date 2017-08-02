@@ -16,7 +16,6 @@
 import org.gradle.internal.os.OperatingSystem
 
 def root = ext.supportRootFolder
-ext.usePrebuilts = "true" // for doclava
 ext.inAppToolkitProject = rootProject.name == "app-toolkit"
 
 if (ext.inAppToolkitProject) {
@@ -98,25 +97,16 @@ def zipFlatfootDocsTask = rootProject.tasks.create(name : "createFlatfootDocsArc
 buildServerAnchorTask.dependsOn zipFlatfootDocsTask
 zipFlatfootDocsTask.dependsOn rootProject.tasks["generateDocs"]
 
-// Disable API checks for now.
-checkApiRelease.enabled = false
-checkApi.enabled = false
-generateApi.enabled = false
-
 buildServerAnchorTask.dependsOn createArchive
 
 rootProject.ext.flatfootProjectGroups = [
         "room" : "android.arch.persistence.room",
         "lifecycle" : "android.arch.lifecycle",
         "arch" : "android.arch.core",
+        "paging" : "android.arch.paging",
         "navigation" : "android.arch.navigation"]
 
 subprojects {
-    configurations.all {
-        resolutionStrategy {
-            force "com.google.guava:guava-jdk5:17.0"
-        }
-    }
     repos.addMavenRepositories(project.repositories)
     if (project.name == 'doclava' || project.name == 'jdiff') {
         project.tasks.whenTaskAdded { task ->
@@ -129,11 +119,14 @@ subprojects {
 
     def mavenGroup = project.getPath().split(":")[1]
     def finalGroup = rootProject.flatfootProjectGroups[mavenGroup]
+
     if (finalGroup == null) {
         return
     }
     project.group = finalGroup
-    project.version = flatfoot.release_version
+    if (!project.version) {
+        project.version = flatfoot.release_version
+    }
 
     if (project.getPath().contains("integration-tests")) {
         // disable upload tasks
@@ -235,8 +228,17 @@ subprojects {
 
 def createKotlinCheckstyle(Project project) {
     def fs = files();
-    fs += files(project.sourceSets.main.allJava.srcDirs.collect{fileTree(it)})
-    fs += files(project.sourceSets.test.allJava.srcDirs.collect{fileTree(it)})
+    if (project.sourceSets.hasProperty('main')) {
+        fs += files(project.sourceSets.main.allJava.srcDirs.collect { fileTree(it) })
+    }
+    if (project.sourceSets.hasProperty('test')) {
+        fs += files(project.sourceSets.test.allJava.srcDirs.collect { fileTree(it) })
+    }
+    if (project.hasProperty('android')) {
+        fs += files(project.android.sourceSets.main.java.getSrcDirs().collect {fileTree(it)})
+        fs += files(project.android.sourceSets.test.java.getSrcDirs().collect {fileTree(it)})
+        fs += files(project.android.sourceSets.androidTest.java.getSrcDirs().collect {fileTree(it)})
+    }
     fs = fs.filter{file -> file.name.endsWith(".kt")}
     def kotlinCheckstyle = createCheckstyleTask(project, 'checkstyleKotlin',
             "${project.rootProject.ext.supportRootFolder}/app-toolkit/kotlin-checkstyle.xml",
@@ -245,8 +247,7 @@ def createKotlinCheckstyle(Project project) {
     project.tasks.findByName("check").dependsOn(kotlinCheckstyle)
     // poor man's line length check
     def lineCheck = project.tasks.create(name : "lineLengthCheck") {
-        (project.sourceSets.main.allJava.getSourceDirectories() +
-            project.sourceSets.test.allJava.getSourceDirectories()).each { sourceDir ->
+        fs.each { sourceDir ->
                   fileTree(dir : sourceDir, include : "**/*.kt").each{ file ->
                       file.readLines().eachWithIndex { line, index ->
                           if (line.size() > 100) {

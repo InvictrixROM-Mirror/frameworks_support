@@ -37,6 +37,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Base class for all Room databases. All classes that are annotated with {@link Database} must
@@ -55,6 +57,21 @@ public abstract class RoomDatabase {
     private SupportSQLiteOpenHelper mOpenHelper;
     private final InvalidationTracker mInvalidationTracker;
     private boolean mAllowMainThreadQueries;
+
+    @Nullable
+    protected List<Callback> mCallbacks;
+
+    private final ReentrantLock mCloseLock = new ReentrantLock();
+
+    /**
+     * {@link InvalidationTracker} uses this lock to prevent the database from closing while it is
+     * querying database updates.
+     *
+     * @return The lock for {@link #close()}.
+     */
+    Lock getCloseLock() {
+        return mCloseLock;
+    }
 
     /**
      * Creates a RoomDatabase.
@@ -75,6 +92,7 @@ public abstract class RoomDatabase {
     @CallSuper
     public void init(DatabaseConfiguration configuration) {
         mOpenHelper = createOpenHelper(configuration);
+        mCallbacks = configuration.callbacks;
         mAllowMainThreadQueries = configuration.allowMainThreadQueries;
     }
 
@@ -121,7 +139,12 @@ public abstract class RoomDatabase {
      */
     public void close() {
         if (isOpen()) {
-            mOpenHelper.close();
+            try {
+                mCloseLock.lock();
+                mOpenHelper.close();
+            } finally {
+                mCloseLock.unlock();
+            }
         }
     }
 
@@ -285,10 +308,12 @@ public abstract class RoomDatabase {
         private final Class<T> mDatabaseClass;
         private final String mName;
         private final Context mContext;
+        private ArrayList<Callback> mCallbacks;
 
         private SupportSQLiteOpenHelper.Factory mFactory;
         private boolean mInMemory;
         private boolean mAllowMainThreadQueries;
+        private boolean mRequireMigration;
         /**
          * Migrations, mapped by from-to pairs.
          */
@@ -298,6 +323,7 @@ public abstract class RoomDatabase {
             mContext = context;
             mDatabaseClass = klass;
             mName = name;
+            mRequireMigration = true;
             mMigrationContainer = new MigrationContainer();
         }
 
@@ -355,6 +381,39 @@ public abstract class RoomDatabase {
         }
 
         /**
+         * When the database version on the device does not match the latest schema version, Room
+         * runs necessary {@link Migration}s on the database.
+         * <p>
+         * If it cannot find the set of {@link Migration}s that will bring the database to the
+         * current version, it will throw an {@link IllegalStateException}.
+         * <p>
+         * You can call this method to change this behavior to re-create the database instead of
+         * crashing.
+         * <p>
+         * Note that this will delete all of the data in the database tables managed by Room.
+         *
+         * @return this
+         */
+        public Builder<T> fallbackToDestructiveMigration() {
+            mRequireMigration = false;
+            return this;
+        }
+
+        /**
+         * Adds a {@link Callback} to this database.
+         *
+         * @param callback The callback.
+         * @return this
+         */
+        public Builder<T> addCallback(@NonNull Callback callback) {
+            if (mCallbacks == null) {
+                mCallbacks = new ArrayList<>();
+            }
+            mCallbacks.add(callback);
+            return this;
+        }
+
+        /**
          * Creates the databases and initializes it.
          * <p>
          * By default, all RoomDatabases use in memory storage for TEMP tables and enables recursive
@@ -377,7 +436,7 @@ public abstract class RoomDatabase {
             }
             DatabaseConfiguration configuration =
                     new DatabaseConfiguration(mContext, mName, mFactory, mMigrationContainer,
-                            mAllowMainThreadQueries);
+                            mCallbacks, mAllowMainThreadQueries, mRequireMigration);
             T db = Room.getGeneratedImplementation(mDatabaseClass, DB_IMPL_SUFFIX);
             db.init(configuration);
             return db;
@@ -473,6 +532,29 @@ public abstract class RoomDatabase {
                 }
             }
             return result;
+        }
+    }
+
+    /**
+     * Callback for {@link RoomDatabase}.
+     */
+    public abstract static class Callback {
+
+        /**
+         * Called when the database is created for the first time. This is called after all the
+         * tables are created.
+         *
+         * @param db The database.
+         */
+        public void onCreate(@NonNull SupportSQLiteDatabase db) {
+        }
+
+        /**
+         * Called when the database has been opened.
+         *
+         * @param db The database.
+         */
+        public void onOpen(@NonNull SupportSQLiteDatabase db) {
         }
     }
 }

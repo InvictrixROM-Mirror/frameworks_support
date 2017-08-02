@@ -26,6 +26,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RestrictTo;
 import android.support.annotation.VisibleForTesting;
+import android.support.annotation.WorkerThread;
 import android.support.v4.util.ArrayMap;
 import android.support.v4.util.ArraySet;
 import android.util.Log;
@@ -37,6 +38,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
 
 /**
  * InvalidationTracker keeps a list of tables modified by queries and notifies its callbacks about
@@ -339,16 +341,20 @@ public class InvalidationTracker {
     Runnable mRefreshRunnable = new Runnable() {
         @Override
         public void run() {
-            if (!ensureInitialization()) {
-                return;
-            }
-            if (mDatabase.inTransaction()
-                    || !mPendingRefresh.compareAndSet(true, false)) {
-                // no pending refresh
-                return;
-            }
+            final Lock closeLock = mDatabase.getCloseLock();
             boolean hasUpdatedTable = false;
             try {
+                closeLock.lock();
+
+                if (!ensureInitialization()) {
+                    return;
+                }
+
+                if (mDatabase.inTransaction()
+                        || !mPendingRefresh.compareAndSet(true, false)) {
+                    // no pending refresh
+                    return;
+                }
                 mCleanupStatement.executeUpdateDelete();
                 mQueryArgs[0] = mMaxVersion;
                 Cursor cursor = mDatabase.query(SELECT_UPDATED_TABLES_SQL, mQueryArgs);
@@ -370,6 +376,8 @@ public class InvalidationTracker {
                 // may happen if db is closed. just log.
                 Log.e(Room.LOG_TAG, "Cannot run invalidation tracker. Is the db closed?",
                         exception);
+            } finally {
+                closeLock.unlock();
             }
             if (hasUpdatedTable) {
                 synchronized (mObserverMap) {
@@ -394,6 +402,18 @@ public class InvalidationTracker {
         if (mPendingRefresh.compareAndSet(false, true)) {
             AppToolkitTaskExecutor.getInstance().executeOnDiskIO(mRefreshRunnable);
         }
+    }
+
+    /**
+     * Check versions for tables, and run observers synchronously if tables have been updated.
+     *
+     * @hide
+     */
+    @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
+    @WorkerThread
+    public void refreshVersionsSync() {
+        syncTriggers();
+        mRefreshRunnable.run();
     }
 
     /**

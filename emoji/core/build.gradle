@@ -4,25 +4,26 @@ ext {
     fontDir = project(':noto-emoji-compat').projectDir
 }
 
-evaluationDependsOn(':noto-emoji-compat')
-dependencies {
-    api project(':support-compat')
-    api files(project(':noto-emoji-compat').configurations.parser.artifacts.getFiles())
+configurations {
+    repackage
+}
 
-    androidTestImplementation (libs.test_runner) {
-        exclude module: 'support-annotations'
-    }
-    androidTestImplementation (libs.espresso_core) {
-        exclude module: 'support-annotations'
-    }
-    androidTestImplementation libs.mockito_core
-    androidTestImplementation libs.dexmaker_mockito
+dependencies {
+    repackage project(path: ':noto-emoji-compat', configuration: "parser")
+    // Wrap the noto-emoji-compat dependency in a FileCollection so that the Android Gradle plugin
+    // treats this as local jar and package it inside the aar.
+    api files(configurations.repackage)
+
+    api project(':support-compat')
+
+    androidTestImplementation libs.test_runner,      { exclude module: 'support-annotations' }
+    androidTestImplementation libs.espresso_core,    { exclude module: 'support-annotations' }
+    androidTestImplementation libs.mockito_core,     { exclude group: 'net.bytebuddy' } // DexMaker has it"s own MockMaker
+    androidTestImplementation libs.dexmaker_mockito, { exclude group: 'net.bytebuddy' } // DexMaker has it"s own MockMaker
     androidTestImplementation project(':support-testutils')
 }
 
 android {
-    compileSdkVersion project.ext.currentSdk
-
     defaultConfig {
         minSdkVersion 14
     }

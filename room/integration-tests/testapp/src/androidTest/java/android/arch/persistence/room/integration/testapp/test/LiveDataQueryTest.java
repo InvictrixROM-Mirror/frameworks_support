@@ -35,6 +35,7 @@ import android.arch.persistence.room.integration.testapp.vo.User;
 import android.arch.persistence.room.integration.testapp.vo.UserAndAllPets;
 import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.MediumTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -43,7 +44,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -206,6 +206,7 @@ public class LiveDataQueryTest extends TestDatabaseTest {
         assertThat(withPets.pets, is(Arrays.asList(pets)));
     }
 
+    @MediumTest
     @Test
     public void handleGc() throws ExecutionException, InterruptedException, TimeoutException {
         LiveData<User> liveData = mUserDao.liveUserById(3);
@@ -261,13 +262,10 @@ public class LiveDataQueryTest extends TestDatabaseTest {
     }
 
     private static void forceGc() {
-        // Use a random index in the list to detect the garbage collection each time because
-        // .get() may accidentally trigger a strong reference during collection.
-        ArrayList<WeakReference<byte[]>> leak = new ArrayList<>();
-        do {
-            WeakReference<byte[]> arr = new WeakReference<>(new byte[100]);
-            leak.add(arr);
-        } while (leak.get((int) (Math.random() * leak.size())).get() != null);
+        Runtime.getRuntime().gc();
+        Runtime.getRuntime().runFinalization();
+        Runtime.getRuntime().gc();
+        Runtime.getRuntime().runFinalization();
     }
 
     static class TestLifecycleOwner implements LifecycleOwner {

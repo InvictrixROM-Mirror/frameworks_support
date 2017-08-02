@@ -19,7 +19,6 @@
     <uses-sdk android:targetSdkVersion="${target-sdk-version}"/>
 
     <application
-        android:name="android.support.multidex.MultiDexApplication"
         android:supportsRtl="true"
         android:theme="@style/Theme.Design">
 
@@ -89,6 +88,10 @@
         <activity
             android:name="android.support.design.widget.AppBarWithScrollbarsActivity"
             android:theme="@style/Theme.AppCompat.Light.DarkActionBar"/>
+
+        <activity
+            android:name="android.support.design.widget.AppBarHorizontalScrollingActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar"/>
 
     </application>
 

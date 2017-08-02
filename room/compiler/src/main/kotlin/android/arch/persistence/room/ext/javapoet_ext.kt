@@ -78,6 +78,21 @@ object RoomTypeNames {
             ClassName.get("android.arch.persistence.room.util", "TableInfo.Column")
     val TABLE_INFO_FOREIGN_KEY : ClassName =
             ClassName.get("android.arch.persistence.room.util", "TableInfo.ForeignKey")
+    val LIMIT_OFFSET_DATA_SOURCE : ClassName =
+            ClassName.get("android.arch.persistence.room.paging", "LimitOffsetDataSource")
+}
+
+object ArchTypeNames {
+    val APP_EXECUTOR : ClassName =
+            ClassName.get("android.arch.core.executor", "AppToolkitTaskExecutor")
+}
+
+object PagingTypeNames {
+    val COUNTED_DATA_SOURCE : ClassName =
+            ClassName.get("android.arch.util.paging", "CountedDataSource")
+    val LIVE_LAZY_LIST_PROVIDER: ClassName =
+            ClassName.get("android.arch.util.paging", "LiveLazyListProvider")
+
 }
 
 object LifecyclesTypeNames {
@@ -95,10 +110,13 @@ object CommonTypeNames {
     val LIST = ClassName.get("java.util", "List")
     val SET = ClassName.get("java.util", "Set")
     val STRING = ClassName.get("java.lang", "String")
+    val INTEGER = ClassName.get("java.lang", "Integer")
 }
 
 object RxJava2TypeNames {
     val FLOWABLE = ClassName.get("io.reactivex", "Flowable")
+    val MAYBE = ClassName.get("io.reactivex", "Maybe")
+    val SINGLE = ClassName.get("io.reactivex", "Single")
 }
 
 object ReactiveStreamsTypeNames {
@@ -107,6 +125,8 @@ object ReactiveStreamsTypeNames {
 
 object RoomRxJava2TypeNames {
     val RX_ROOM = ClassName.get("android.arch.persistence.room", "RxRoom")
+    val RX_EMPTY_RESULT_SET_EXCEPTION = ClassName.get("android.arch.persistence.room",
+            "EmptyResultSetException")
 }
 
 fun TypeName.defaultValue() : String {

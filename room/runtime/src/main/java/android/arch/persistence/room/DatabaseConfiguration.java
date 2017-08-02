@@ -22,6 +22,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RestrictTo;
 
+import java.util.List;
+
 /**
  * Configuration class for a {@link RoomDatabase}.
  */
@@ -49,10 +51,18 @@ public class DatabaseConfiguration {
     @NonNull
     public final RoomDatabase.MigrationContainer migrationContainer;
 
+    @Nullable
+    public final List<RoomDatabase.Callback> callbacks;
+
     /**
      * Whether Room should throw an exception for queries run on the main thread.
      */
     public final boolean allowMainThreadQueries;
+
+    /**
+     * If true, Room should crash if a migration is missing.
+     */
+    public final boolean requireMigration;
 
     /**
      * Creates a database configuration with the given values.
@@ -61,7 +71,10 @@ public class DatabaseConfiguration {
      * @param name Name of the database, can be null if it is in memory.
      * @param sqliteOpenHelperFactory The open helper factory to use.
      * @param migrationContainer The migration container for migrations.
+     * @param callbacks The list of callbacks for database events.
      * @param allowMainThreadQueries Whether to allow main thread reads/writes or not.
+     * @param requireMigration True if Room should require a valid migration if version changes,
+     *                        instead of recreating the tables.
      *
      * @hide
      */
@@ -69,11 +82,15 @@ public class DatabaseConfiguration {
     public DatabaseConfiguration(@NonNull Context context, @Nullable String name,
             @NonNull SupportSQLiteOpenHelper.Factory sqliteOpenHelperFactory,
             @NonNull RoomDatabase.MigrationContainer migrationContainer,
-            boolean allowMainThreadQueries) {
+            @Nullable List<RoomDatabase.Callback> callbacks,
+            boolean allowMainThreadQueries,
+            boolean requireMigration) {
         this.sqliteOpenHelperFactory = sqliteOpenHelperFactory;
         this.context = context;
         this.name = name;
         this.migrationContainer = migrationContainer;
+        this.callbacks = callbacks;
         this.allowMainThreadQueries = allowMainThreadQueries;
+        this.requireMigration = requireMigration;
     }
 }

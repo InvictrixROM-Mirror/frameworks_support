@@ -26,6 +26,8 @@ import android.arch.persistence.room.Update;
 import android.arch.persistence.room.integration.testapp.TestDatabase;
 import android.arch.persistence.room.integration.testapp.vo.AvgWeightByAge;
 import android.arch.persistence.room.integration.testapp.vo.User;
+import android.arch.util.paging.CountedDataSource;
+import android.arch.util.paging.LiveLazyListProvider;
 import android.database.Cursor;
 
 import org.reactivestreams.Publisher;
@@ -35,6 +37,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import io.reactivex.Flowable;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 
 @SuppressWarnings("SameParameterValue")
 @Dao
@@ -67,6 +71,9 @@ public abstract class UserDao {
     @Delete
     public abstract int deleteAll(User[] users);
 
+    @Query("delete from user")
+    public abstract int deleteEverything();
+
     @Update
     public abstract int update(User user);
 
@@ -93,6 +100,9 @@ public abstract class UserDao {
 
     @Query("update user set mId = mId + :amount")
     public abstract void incrementIds(int amount);
+
+    @Query("update user set mAge = mAge + 1")
+    public abstract void incrementAgeOfAll();
 
     @Query("select mId from user order by mId ASC")
     public abstract List<Integer> loadIds();
@@ -124,6 +134,18 @@ public abstract class UserDao {
     @Query("select * from user where mId = :id")
     public abstract Flowable<User> flowableUserById(int id);
 
+    @Query("select * from user where mId = :id")
+    public abstract Maybe<User> maybeUserById(int id);
+
+    @Query("select * from user where mId IN (:ids)")
+    public abstract Maybe<List<User>> maybeUsersByIds(int... ids);
+
+    @Query("select * from user where mId = :id")
+    public abstract Single<User> singleUserById(int id);
+
+    @Query("select * from user where mId IN (:ids)")
+    public abstract Single<List<User>> singleUsersByIds(int... ids);
+
     @Query("select COUNT(*) from user")
     public abstract Flowable<Integer> flowableCountUsers();
 
@@ -131,6 +153,7 @@ public abstract class UserDao {
     public abstract Publisher<Integer> publisherCountUsers();
 
     @Query("SELECT mBirthday from User where mId = :id")
+
     public abstract Date getBirthday(int id);
 
     @Query("SELECT COUNT(*) from user")
@@ -156,4 +179,51 @@ public abstract class UserDao {
             }
         });
     }
+
+    @Query("SELECT * FROM user where mAge > :age")
+    public abstract LiveLazyListProvider<User> loadPagedByAge(int age);
+
+    @Query("SELECT * FROM user ORDER BY mAge DESC")
+    public abstract CountedDataSource<User> loadUsersByAgeDesc();
+
+    @Query("DELETE FROM User WHERE mId IN (:ids) AND mAge == :age")
+    public abstract int deleteByAgeAndIds(int age, List<Integer> ids);
+
+    @Query("UPDATE User set mWeight = :weight WHERE mId IN (:ids) AND mAge == :age")
+    public abstract int updateByAgeAndIds(float weight, int age, List<Integer> ids);
+
+    // QueryLoader
+
+    @Query("SELECT COUNT(*) from user")
+    public abstract Integer getUserCount();
+
+    //   name desc
+    @Query("SELECT * from user ORDER BY mName DESC LIMIT :limit OFFSET :offset")
+    public abstract List<User> userNameLimitOffset(int limit, int offset);
+
+    @Query("SELECT * from user WHERE mName < :key ORDER BY mName DESC LIMIT :limit")
+    public abstract List<User> userNameLoadAfter(String key, int limit);
+
+    @Query("SELECT * from user WHERE mName > :key ORDER BY mName ASC LIMIT :limit")
+    public abstract List<User> userNameLoadBefore(String key, int limit);
+
+    //    last asc, first desc, id asc
+    @Query("SELECT * from user"
+            + " ORDER BY mLastName DESC, mName ASC, mId DESC"
+            + " LIMIT :limit OFFSET :offset")
+    public abstract List<User> userComplexLimitOffset(int limit, int offset);
+
+    @Query("SELECT * from user"
+            + " WHERE mLastName < :lastName or (mLastName = :lastName and (mName > :name or (mName = :name and mId < :id)))"
+            + " ORDER BY mLastName DESC, mName ASC, mId DESC"
+            + " LIMIT :limit")
+    public abstract List<User> userComplexLoadAfter(String lastName, String name, int id, int limit);
+
+    @Query("SELECT * from user"
+            + " WHERE mLastName > :lastName or (mLastName = :lastName and (mName < :name or (mName = :name and mId > :id)))"
+            + " ORDER BY mLastName ASC, mName DESC, mId ASC"
+            + " LIMIT :limit")
+    public abstract List<User> userComplexLoadBefore(String lastName, String name, int id, int limit);
+
+
 }
