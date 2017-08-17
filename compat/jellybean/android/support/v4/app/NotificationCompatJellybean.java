@@ -18,17 +18,12 @@ package android.support.v4.app;
 
 import android.app.Notification;
 import android.app.PendingIntent;
-import android.content.Context;
-import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 import android.util.SparseArray;
-import android.widget.RemoteViews;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.List;
 
 @RequiresApi(16)
@@ -58,147 +53,6 @@ class NotificationCompatJellybean {
     private static Field sActionTitleField;
     private static Field sActionIntentField;
     private static boolean sActionsAccessFailed;
-
-    public static class Builder implements NotificationBuilderWithBuilderAccessor,
-            NotificationBuilderWithActions {
-        private Notification.Builder b;
-        private final Bundle mExtras;
-        private List<Bundle> mActionExtrasList = new ArrayList<Bundle>();
-        private RemoteViews mContentView;
-        private RemoteViews mBigContentView;
-
-        public Builder(Context context, Notification n,
-                CharSequence contentTitle, CharSequence contentText, CharSequence contentInfo,
-                RemoteViews tickerView, int number,
-                PendingIntent contentIntent, PendingIntent fullScreenIntent, Bitmap largeIcon,
-                int progressMax, int progress, boolean progressIndeterminate,
-                boolean useChronometer, int priority, CharSequence subText, boolean localOnly,
-                Bundle extras, String groupKey, boolean groupSummary, String sortKey,
-                RemoteViews contentView, RemoteViews bigContentView) {
-            b = new Notification.Builder(context)
-                .setWhen(n.when)
-                .setSmallIcon(n.icon, n.iconLevel)
-                .setContent(n.contentView)
-                .setTicker(n.tickerText, tickerView)
-                .setSound(n.sound, n.audioStreamType)
-                .setVibrate(n.vibrate)
-                .setLights(n.ledARGB, n.ledOnMS, n.ledOffMS)
-                .setOngoing((n.flags & Notification.FLAG_ONGOING_EVENT) != 0)
-                .setOnlyAlertOnce((n.flags & Notification.FLAG_ONLY_ALERT_ONCE) != 0)
-                .setAutoCancel((n.flags & Notification.FLAG_AUTO_CANCEL) != 0)
-                .setDefaults(n.defaults)
-                .setContentTitle(contentTitle)
-                .setContentText(contentText)
-                .setSubText(subText)
-                .setContentInfo(contentInfo)
-                .setContentIntent(contentIntent)
-                .setDeleteIntent(n.deleteIntent)
-                .setFullScreenIntent(fullScreenIntent,
-                        (n.flags & Notification.FLAG_HIGH_PRIORITY) != 0)
-                .setLargeIcon(largeIcon)
-                .setNumber(number)
-                .setUsesChronometer(useChronometer)
-                .setPriority(priority)
-                .setProgress(progressMax, progress, progressIndeterminate);
-            mExtras = new Bundle();
-            if (extras != null) {
-                mExtras.putAll(extras);
-            }
-            if (localOnly) {
-                mExtras.putBoolean(NotificationCompatExtras.EXTRA_LOCAL_ONLY, true);
-            }
-            if (groupKey != null) {
-                mExtras.putString(NotificationCompatExtras.EXTRA_GROUP_KEY, groupKey);
-                if (groupSummary) {
-                    mExtras.putBoolean(NotificationCompatExtras.EXTRA_GROUP_SUMMARY, true);
-                } else {
-                    mExtras.putBoolean(NotificationManagerCompat.EXTRA_USE_SIDE_CHANNEL, true);
-                }
-            }
-            if (sortKey != null) {
-                mExtras.putString(NotificationCompatExtras.EXTRA_SORT_KEY, sortKey);
-            }
-            mContentView = contentView;
-            mBigContentView = bigContentView;
-        }
-
-        @Override
-        public void addAction(NotificationCompatBase.Action action) {
-            mActionExtrasList.add(writeActionAndGetExtras(b, action));
-        }
-
-        @Override
-        public Notification.Builder getBuilder() {
-            return b;
-        }
-
-        @Override
-        public Notification build() {
-            Notification notif = b.build();
-            // Merge in developer provided extras, but let the values already set
-            // for keys take precedence.
-            Bundle extras = getExtras(notif);
-            Bundle mergeBundle = new Bundle(mExtras);
-            for (String key : mExtras.keySet()) {
-                if (extras.containsKey(key)) {
-                    mergeBundle.remove(key);
-                }
-            }
-            extras.putAll(mergeBundle);
-            SparseArray<Bundle> actionExtrasMap = buildActionExtrasMap(mActionExtrasList);
-            if (actionExtrasMap != null) {
-                // Add the action extras sparse array if any action was added with extras.
-                getExtras(notif).putSparseParcelableArray(
-                        NotificationCompatExtras.EXTRA_ACTION_EXTRAS, actionExtrasMap);
-            }
-            if (mContentView != null) {
-                notif.contentView = mContentView;
-            }
-            if (mBigContentView != null) {
-                notif.bigContentView = mBigContentView;
-            }
-            return notif;
-        }
-    }
-
-    public static void addBigTextStyle(NotificationBuilderWithBuilderAccessor b,
-            CharSequence bigContentTitle, boolean useSummary,
-            CharSequence summaryText, CharSequence bigText) {
-        Notification.BigTextStyle style = new Notification.BigTextStyle(b.getBuilder())
-            .setBigContentTitle(bigContentTitle)
-            .bigText(bigText);
-        if (useSummary) {
-            style.setSummaryText(summaryText);
-        }
-    }
-
-    public static void addBigPictureStyle(NotificationBuilderWithBuilderAccessor b,
-            CharSequence bigContentTitle, boolean useSummary,
-            CharSequence summaryText, Bitmap bigPicture, Bitmap bigLargeIcon,
-            boolean bigLargeIconSet) {
-        Notification.BigPictureStyle style = new Notification.BigPictureStyle(b.getBuilder())
-            .setBigContentTitle(bigContentTitle)
-            .bigPicture(bigPicture);
-        if (bigLargeIconSet) {
-            style.bigLargeIcon(bigLargeIcon);
-        }
-        if (useSummary) {
-            style.setSummaryText(summaryText);
-        }
-    }
-
-    public static void addInboxStyle(NotificationBuilderWithBuilderAccessor b,
-            CharSequence bigContentTitle, boolean useSummary,
-            CharSequence summaryText, ArrayList<CharSequence> texts) {
-        Notification.InboxStyle style = new Notification.InboxStyle(b.getBuilder())
-            .setBigContentTitle(bigContentTitle);
-        if (useSummary) {
-            style.setSummaryText(summaryText);
-        }
-        for (CharSequence text: texts) {
-            style.addLine(text);
-        }
-    }
 
     /** Return an SparseArray for action extras or null if none was needed. */
     public static SparseArray<Bundle> buildActionExtrasMap(List<Bundle> actionExtrasList) {
@@ -366,22 +220,7 @@ class NotificationCompatJellybean {
         return !sActionsAccessFailed;
     }
 
-    public static NotificationCompatBase.Action[] getActionsFromParcelableArrayList(
-            ArrayList<Parcelable> parcelables,
-            NotificationCompatBase.Action.Factory actionFactory,
-            RemoteInputCompatBase.RemoteInput.Factory remoteInputFactory) {
-        if (parcelables == null) {
-            return null;
-        }
-        NotificationCompatBase.Action[] actions = actionFactory.newArray(parcelables.size());
-        for (int i = 0; i < actions.length; i++) {
-            actions[i] = getActionFromBundle((Bundle) parcelables.get(i),
-                    actionFactory, remoteInputFactory);
-        }
-        return actions;
-    }
-
-    private static NotificationCompatBase.Action getActionFromBundle(Bundle bundle,
+    static NotificationCompatBase.Action getActionFromBundle(Bundle bundle,
             NotificationCompatBase.Action.Factory actionFactory,
             RemoteInputCompatBase.RemoteInput.Factory remoteInputFactory) {
         Bundle extras = bundle.getBundle(KEY_EXTRAS);
@@ -403,19 +242,7 @@ class NotificationCompatJellybean {
                 allowGeneratedReplies);
     }
 
-    public static ArrayList<Parcelable> getParcelableArrayListForActions(
-            NotificationCompatBase.Action[] actions) {
-        if (actions == null) {
-            return null;
-        }
-        ArrayList<Parcelable> parcelables = new ArrayList<Parcelable>(actions.length);
-        for (NotificationCompatBase.Action action : actions) {
-            parcelables.add(getBundleForAction(action));
-        }
-        return parcelables;
-    }
-
-    private static Bundle getBundleForAction(NotificationCompatBase.Action action) {
+    static Bundle getBundleForAction(NotificationCompatBase.Action action) {
         Bundle bundle = new Bundle();
         bundle.putInt(KEY_ICON, action.getIcon());
         bundle.putCharSequence(KEY_TITLE, action.getTitle());
