@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import android.support.LibraryVersions
 import android.support.SupportLibraryExtension
 
 apply plugin: android.support.FlatfootAndroidLibraryPlugin
@@ -42,7 +43,7 @@ dependencies {
     compile(libs.junit) {
         exclude module: 'hamcrest-core'
     }
-    compile libs.mockito_core
+    compile libs.mockito_core, { exclude group: 'net.bytebuddy' }
 
     testCompile libs.junit
     testCompile libs.support.annotations
@@ -64,6 +65,7 @@ android.libraryVariants.all { variant ->
     }
 }
 
+version = LibraryVersions.ARCH_CORE_TESTING.toString()
 supportLibrary {
     name 'Android Core-Testing'
     publish true
